@@ -28,6 +28,8 @@ class ChineseLearningApp {
             Common: 55
         };
 
+        this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE = 20; // 20% chance for Legendary on a guaranteed pull
+
         this.DEFAULT_WORDS_VERSION = '4.0';
         this.gachaPool = this.defineGachaPool();
         this.init();
@@ -70,7 +72,7 @@ class ChineseLearningApp {
         }
     }
 
-    setupEventListeners() {
+setupEventListeners() {
         // Auth
         document.getElementById('login-tab').addEventListener('click', () => this.showAuthForm('login'));
         document.getElementById('register-tab').addEventListener('click', () => this.showAuthForm('register'));
@@ -127,6 +129,13 @@ class ChineseLearningApp {
         } else {
             this.showScreen('auth-screen');
         }
+    }
+
+    showAuthForm(type) {
+        document.getElementById('login-tab').classList.toggle('active', type === 'login');
+        document.getElementById('register-tab').classList.toggle('active', type === 'register');
+        document.getElementById('login-form').classList.toggle('hidden', type !== 'login');
+        document.getElementById('register-form').classList.toggle('hidden', type !== 'register');
     }
 
     initializeUserProperties() {
@@ -438,14 +447,6 @@ class ChineseLearningApp {
         this.currentUser.diamonds += this.LEVEL_UP_DIAMOND_BONUS;
         this.currentUser.sentenceWritingCompleted = false;
 
-        // Reset progress for the subsets only, not all words.
-        (this.currentUser.reviewLowerLevelWords || []).forEach(word => {
-            if (this.currentUser.wordProgress[word]) this.currentUser.wordProgress[word].correct = 0;
-        });
-        (this.currentUser.listeningLowerLevelWords || []).forEach(word => {
-            if (this.currentUser.listeningProgress[word]) this.currentUser.listeningProgress[word].correct = 0;
-        });
-
         this.generatePracticeSubsets();
         this.saveUserData();
     }
@@ -481,11 +482,9 @@ class ChineseLearningApp {
     updateProgressDetails() {
         const currentLevel = this.currentUser.level;
 
-        // --- 1. RENDER WORD REVIEW PROGRESS ---
+        // Word Review
         const reviewContainer = document.getElementById('word-review-progress');
         let reviewHTML = '<h4>Word Review Progress</h4>';
-
-        // Current Level for Word Review
         let required = this.CURRENT_LEVEL_COMPLETIONS;
         let levelWords = this.getWordsForLevel(currentLevel);
         let totalRequired = levelWords.length * required;
@@ -493,16 +492,9 @@ class ChineseLearningApp {
         levelWords.forEach(word => { totalCompleted += Math.min(this.currentUser.wordProgress[word]?.correct || 0, required); });
         let levelProgress = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
         if (levelWords.length > 0) {
-            reviewHTML += `
-                <div class="level-progress-item ${levelProgress >= 100 ? 'completed' : ''}">
-                    <div class="level-header"><h5>Level ${currentLevel} (Current)</h5></div>
-                    <div class="level-progress-bar">
-                        <div class="level-progress-fill" style="width: ${levelProgress}%">${levelProgress}%</div>
-                    </div>
-                </div>`;
+            reviewHTML += `<div class="level-progress-item ${levelProgress >= 100 ? 'completed' : ''}"><div class="level-header"><h5>Level ${currentLevel} (Current)</h5></div><div class="level-progress-bar"><div class="level-progress-fill" style="width: ${levelProgress}%">${levelProgress}%</div></div></div>`;
         }
 
-        // Lower Levels for Word Review
         required = this.LOWER_LEVEL_COMPLETIONS_REVIEW;
         levelWords = this.currentUser.reviewLowerLevelWords || [];
         totalRequired = levelWords.length * required;
@@ -510,21 +502,13 @@ class ChineseLearningApp {
         levelWords.forEach(word => { totalCompleted += Math.min(this.currentUser.wordProgress[word]?.correct || 0, required); });
         levelProgress = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
         if (levelWords.length > 0) {
-            reviewHTML += `
-                <div class="level-progress-item ${levelProgress >= 100 ? 'completed' : ''}">
-                    <div class="level-header"><h5>Lower Levels (Review Subset)</h5></div>
-                    <div class="level-progress-bar">
-                        <div class="level-progress-fill" style="width: ${levelProgress}%">${levelProgress}%</div>
-                    </div>
-                </div>`;
+            reviewHTML += `<div class="level-progress-item ${levelProgress >= 100 ? 'completed' : ''}"><div class="level-header"><h5>Lower Levels</h5></div><div class="level-progress-bar"><div class="level-progress-fill" style="width: ${levelProgress}%">${levelProgress}%</div></div></div>`;
         }
         reviewContainer.innerHTML = reviewHTML;
 
-        // --- 2. RENDER WORD WRITING PROGRESS ---
+        // Word Writing
         const writingContainer = document.getElementById('word-writing-progress');
         let writingHTML = '<h4>Word Writing Progress</h4>';
-
-        // Current Level for Word Writing
         required = this.LISTENING_CURRENT_LEVEL_COMPLETIONS;
         levelWords = this.getWordsForLevel(currentLevel);
         totalRequired = levelWords.length * required;
@@ -532,16 +516,9 @@ class ChineseLearningApp {
         levelWords.forEach(word => { totalCompleted += Math.min(this.currentUser.listeningProgress[word]?.correct || 0, required); });
         levelProgress = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
         if (levelWords.length > 0) {
-            writingHTML += `
-                <div class="level-progress-item ${levelProgress >= 100 ? 'completed' : ''}">
-                    <div class="level-header"><h5>Level ${currentLevel} (Current)</h5></div>
-                    <div class="level-progress-bar">
-                        <div class="level-progress-fill" style="width: ${levelProgress}%">${levelProgress}%</div>
-                    </div>
-                </div>`;
+            writingHTML += `<div class="level-progress-item ${levelProgress >= 100 ? 'completed' : ''}"><div class="level-header"><h5>Level ${currentLevel} (Current)</h5></div><div class="level-progress-bar"><div class="level-progress-fill" style="width: ${levelProgress}%">${levelProgress}%</div></div></div>`;
         }
 
-        // Lower Levels for Word Writing (Checklist)
         const requiredLowerLevelWords = this.currentUser.listeningLowerLevelWords || [];
         if (requiredLowerLevelWords.length > 0) {
             writingHTML += '<div class="listening-word-list"><h5>Lower Level Practice Words</h5><div class="listening-word-grid">';
@@ -553,17 +530,11 @@ class ChineseLearningApp {
         }
         writingContainer.innerHTML = writingHTML;
 
-        // --- 3. RENDER SENTENCE WRITING PROGRESS ---
+        // Sentence Writing
         const sentenceContainer = document.getElementById('sentence-writing-progress');
         let sentenceHTML = '<h4>Sentence Writing Progress</h4>';
         const sentenceProgress = this.currentUser.sentenceWritingCompleted ? 100 : 0;
-        sentenceHTML += `
-            <div class="level-progress-item ${sentenceProgress >= 100 ? 'completed' : ''}">
-                <div class="level-header"><h5>Practice Task</h5></div>
-                <div class="level-progress-bar">
-                    <div class="level-progress-fill" style="width: ${sentenceProgress}%">${sentenceProgress}%</div>
-                </div>
-            </div>`;
+        sentenceHTML += `<div class="level-progress-item ${sentenceProgress >= 100 ? 'completed' : ''}"><div class="level-header"><h5>Practice Task</h5></div><div class="level-progress-bar"><div class="level-progress-fill" style="width: ${sentenceProgress}%">${sentenceProgress}%</div></div></div>`;
         sentenceContainer.innerHTML = sentenceHTML;
     }
 
@@ -606,10 +577,7 @@ class ChineseLearningApp {
     downloadWordList() {
         const defaultWords = JSON.parse(localStorage.getItem('defaultWords'));
         const userWords = JSON.parse(localStorage.getItem(`words_${this.currentUser.username}`) || '{}');
-        const activeWordList = { ...defaultWords };
-        for (const level in userWords) {
-            activeWordList[level] = userWords[level];
-        }
+        const activeWordList = { ...defaultWords, ...userWords };
         const dataStr = JSON.stringify(activeWordList, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
         const filename = `wordlist-${this.currentUser.username}-${new Date().toISOString().split('T')[0]}.json`;
@@ -656,8 +624,7 @@ class ChineseLearningApp {
             currentUser: this.currentUser,
             userWords: JSON.parse(localStorage.getItem(`words_${this.currentUser.username}`) || '{}'),
             exportDate: new Date().toISOString(),
-            appVersion: '1.0',
-            resetInstructions: 'To restore this data, use the Restore button in Developer Mode'
+            appVersion: '1.0'
         };
         const dataStr = JSON.stringify(userData, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -667,7 +634,7 @@ class ChineseLearningApp {
         link.href = URL.createObjectURL(dataBlob);
         link.download = filename;
         link.click();
-        alert(`Backup created: ${filename}\n\nThis backup includes:\n• Level ${this.currentUser.level} progress\n• ${Object.keys(this.currentUser.wordProgress).length} words with progress\n• ${this.currentUser.testScores.length} test scores`);
+        alert(`Backup created: ${filename}`);
     }
 
     importUserData(event) {
@@ -794,6 +761,7 @@ class ChineseLearningApp {
     startSentenceWriting() {
         if (this.currentUser.sentenceWritingCompleted) {
             alert("You've already completed the sentence writing task for this level!");
+            this.showDashboard();
             return;
         }
         this.showScreen('sentence-writing-screen');
@@ -801,9 +769,7 @@ class ChineseLearningApp {
     }
 
     displaySentenceWritingWords() {
-        console.log("Generating words for sentence writing...");
         const words = this.generateSentenceWritingWords();
-        console.log("Generated words:", words);
         const grid = document.getElementById('sentence-word-grid');
         grid.innerHTML = '';
         words.forEach(word => {
@@ -812,13 +778,11 @@ class ChineseLearningApp {
             wordDiv.textContent = word;
             grid.appendChild(wordDiv);
         });
-        console.log("Finished displaying words.");
     }
 
     generateSentenceWritingWords() {
         const allWords = this.getAllWordsUpToLevel(this.currentUser.level);
 
-        // 5 words based on most "crosses" (mistakes)
         const wordsByCrosses = allWords
             .map(word => ({
                 word: word,
@@ -830,7 +794,6 @@ class ChineseLearningApp {
 
         const topCrossedWords = wordsByCrosses.slice(0, 5);
 
-        // 5 "smart random" words
         const exclusionList = new Set([
             ...topCrossedWords,
             ...(this.currentUser.reviewLowerLevelWords || []),
@@ -940,7 +903,13 @@ class ChineseLearningApp {
             results.push(this._performSingleDraw());
         } else {
             const rng = Math.random();
-            let guaranteedRarity = (rng < 0.20) ? 'Legendary' : 'Epic';
+            let guaranteedRarity;
+            // Use the new global variable for the 20% chance
+            if (rng < (this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE / 100)) {
+                guaranteedRarity = 'Legendary';
+            } else {
+                guaranteedRarity = 'Epic';
+            }
             const possibleItems = this.gachaPool.filter(item => item.rarity === guaranteedRarity);
             const guaranteedItem = possibleItems[Math.floor(Math.random() * possibleItems.length)];
             results.push(guaranteedItem);

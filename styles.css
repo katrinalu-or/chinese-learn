@@ -789,21 +789,22 @@ body {
 
 .tooltip-text {
     visibility: hidden;
-    width: 180px;
+    width: 220px; /* Increased width for more text */
     background-color: #333;
     color: #fff;
     text-align: center;
     border-radius: 6px;
-    padding: 8px;
+    padding: 8px 10px; /* Adjusted padding */
     position: absolute;
     z-index: 1;
     bottom: 150%;
     left: 50%;
-    margin-left: -90px;
+    margin-left: -110px; /* Half of the new width */
     opacity: 0;
     transition: opacity 0.3s;
     font-size: 0.9rem;
     font-weight: normal;
+    white-space: pre-line; /* This respects the line break in the HTML */
 }
 
 .tooltip-icon:hover .tooltip-text {
