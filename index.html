@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快樂學中文</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Login/Register Screen -->
+    <div id="auth-screen" class="screen">
+        <div class="auth-container">
+            <h1>快樂學中文</h1>
+            <div class="auth-tabs">
+                <button id="login-tab" class="tab-button active">Login</button>
+                <button id="register-tab" class="tab-button">Register</button>
+            </div>
+
+            <div id="login-form" class="auth-form">
+                <h2>Login</h2>
+                <input type="text" id="login-username" placeholder="Username" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <button id="login-btn">Login</button>
+            </div>
+
+            <div id="register-form" class="auth-form hidden">
+                <h2>Create Account</h2>
+                <input type="text" id="register-username" placeholder="Username" required>
+                <input type="password" id="register-password" placeholder="Password" required>
+                <input type="password" id="register-confirm" placeholder="Confirm Password" required>
+                <button id="register-btn">Create Account</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard-screen" class="screen hidden">
+        <div class="header">
+            <h1>快樂學中文</h1>
+            <div class="user-info">
+                <span id="username-display"></span> - Level <span id="level-display">1</span>
+                <button id="collections-btn">Collections</button>
+                <button id="developer-mode-btn">Developer Mode</button>
+                <button id="logout-btn">Logout</button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="activity-card active" id="word-review-card">
+                <h3>Word Review</h3>
+                <p>Practice recognizing Chinese characters.</p>
+            </div>
+            <div class="activity-card active" id="word-writing-card">
+                <h3>Word Writing</h3>
+                <p>Listen and practice writing words.</p>
+            </div>
+            <div class="activity-card active" id="sentence-writing-card">
+                <h3>Sentence Writing</h3>
+                <p>Practice forming sentences with key words.</p>
+            </div>
+            <div class="activity-card disabled">
+                <h3>Coming Soon</h3>
+                <p>Activity 4</p>
+            </div>
+            <div class="activity-card disabled">
+                <h3>Coming Soon</h3>
+                <p>Activity 5</p>
+            </div>
+            <div class="activity-card progress-card" id="progress-card">
+                <h3>Progress</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <p id="progress-text">0%</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Word Review Activity -->
+    <div id="word-review-screen" class="screen hidden">
+        <div class="header page-header">
+            <button id="back-to-dashboard">← Back</button>
+            <h2>Word Review</h2>
+            <div class="header-right score-display">
+                Score: <span id="current-score">0</span>/20
+            </div>
+        </div>
+
+        <div class="word-display">
+            <div class="word-card">
+                <div class="chinese-word" id="chinese-word">準備中...</div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="cross-btn" class="action-btn cross">✗</button>
+                <button id="check-btn" class="action-btn check">✓</button>
+            </div>
+
+            <div class="progress-info" id="word-counter">
+                0/20
+            </div>
+        </div>
+    </div>
+
+    <!-- Word Writing Activity Screen -->
+    <div id="word-writing-screen" class="screen hidden">
+        <div class="header page-header">
+            <button id="back-from-writing">← Back</button>
+            <h2>Word Writing</h2>
+            <div class="header-right"></div>
+        </div>
+
+        <div class="word-display">
+            <div class="word-card">
+                <div class="chinese-word" id="writing-chinese-word">準備中...</div>
+                <button id="replay-audio-btn" class="replay-audio-btn">🔊</button>
+            </div>
+
+            <div class="action-buttons">
+                <button id="writing-cross-btn" class="action-btn cross">✗</button>
+                <button id="writing-check-btn" class="action-btn check">✓</button>
+            </div>
+
+            <div class="progress-info" id="writing-word-counter">
+                0/10
+            </div>
+        </div>
+    </div>
+
+    <!-- Sentence Writing Activity Screen -->
+    <div id="sentence-writing-screen" class="screen hidden">
+        <div class="header page-header">
+            <button id="back-from-sentence">← Back</button>
+            <h2>Sentence Writing</h2>
+            <div class="header-right"></div>
+        </div>
+
+        <div class="sentence-writing-container">
+            <div class="sentence-instructions">
+                <h3>Practice Words</h3>
+                <p>Use the following 10 words to practice forming sentences. When you're done, mark this activity as complete.</p>
+            </div>
+            <!-- This is the DIV that was missing its ID -->
+            <div class="sentence-word-grid" id="sentence-word-grid">
+                <!-- 10 words will be populated here -->
+            </div>
+            <div class="action-buttons">
+                <button id="sentence-cross-btn" class="action-btn cross">✗</button>
+                <button id="sentence-check-btn" class="action-btn check">✓</button>
+            </div>
+            <p class="completion-status-text">Click ✓ to mark this task as complete for this level.</p>
+        </div>
+    </div>
+
+    <!-- Progress Detail Screen -->
+    <div id="progress-screen" class="screen hidden">
+        <div class="header page-header">
+            <button id="back-from-progress">← Back</button>
+            <h2>Level Progress</h2>
+            <div class="header-right"></div>
+        </div>
+
+        <div class="progress-details">
+            <div class="word-progress" id="word-review-progress">
+                <!-- Word Review progress will be populated here -->
+            </div>
+            <div class="word-progress" id="word-writing-progress">
+                <!-- Word Writing progress will be populated here -->
+            </div>
+            <div class="word-progress" id="sentence-writing-progress">
+                <!-- Sentence Writing progress will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Developer Mode -->
+    <div id="developer-screen" class="screen hidden">
+        <div class="header">
+            <button id="back-from-dev">← Back</button>
+            <h2>Developer Mode</h2>
+            <div class="dev-actions">
+            </div>
+        </div>
+
+        <div class="developer-content">
+            <div class="backup-section">
+                <h3>Data Management</h3>
+                <p>💡 Use backup to save your progress to a file. Use restore to load progress from a backup file.</p>
+                <div class="data-actions">
+                    <button id="backup-btn" class="dev-btn">💾 Backup Data</button>
+                    <button id="restore-btn" class="dev-btn">📂 Restore Data</button>
+                </div>
+            </div>
+
+            <div class="wordlist-section">
+                <h3>Word List Management</h3>
+                <p>Download the current word list as a JSON file, edit it, and upload it to apply changes. You can also reset all levels to the default word lists.</p>
+                <div class="wordlist-actions">
+                    <button id="download-wordlist-btn" class="dev-btn">📥 Download Word List</button>
+                    <button id="upload-wordlist-btn" class="dev-btn">📤 Upload Word List</button>
+                    <button id="reset-wordlist-btn" class="reset-btn">🔄 Reset to Default</button>
+                </div>
+            </div>
+
+            <div class="reset-section">
+                <h3>Reset Level</h3>
+                <div class="reset-controls">
+                    <div class="reset-info">
+                        <p>Current Level: <strong id="current-level-display">1</strong></p>
+                        <p>⚠️ This will reset your level and clear all word progress. This action cannot be undone!</p>
+                    </div>
+                    <div class="reset-input">
+                        <label for="reset-level-select">Reset to Level:</label>
+                        <select id="reset-level-select">
+                            <option value="1">Level 1</option>
+                            <option value="2">Level 2</option>
+                            <option value="3">Level 3</option>
+                            <option value="4">Level 4</option>
+                            <option value="5">Level 5</option>
+                        </select>
+                        <button id="reset-level-btn" class="reset-btn">Reset Level</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collections Screen -->
+    <div id="collections-screen" class="screen hidden">
+        <div class="header page-header">
+            <button id="back-from-collections">← Back</button>
+            <h2>Collections</h2>
+            <div class="header-right">
+                <div class="diamond-display">
+                    <span class="diamond-icon">💎</span>
+                    <span id="diamond-count">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="gacha-container">
+            <div class="gacha-controls">
+                <button id="draw-gacha-btn" class="gacha-draw-btn">Draw (1💎)</button>
+                <div class="gacha-draw-wrapper">
+                    <button id="draw-ten-gacha-btn" class="gacha-draw-btn multi-draw">Draw 10 (10💎)</button>
+                    <div class="tooltip-icon">?
+                        <span class="tooltip-text">Guarantees one Epic or Legendary item!</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collection-grid-container">
+                <h3>Greek Gods Collection</h3>
+                <div class="collection-grid" id="collection-grid">
+                    <!-- Collection items will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gacha Modals -->
+    <div id="gacha-result-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="gacha-result-rarity"></h2>
+            <img id="gacha-result-image" src="" alt="Gacha Result">
+            <h3 id="gacha-result-name"></h3>
+            <button id="close-gacha-modal-btn">Awesome!</button>
+        </div>
+    </div>
+    <div id="gacha-multi-result-modal" class="modal-overlay hidden">
+        <div class="modal-content multi-result-modal">
+            <h2>Your 10 Draws!</h2>
+            <div id="multi-result-grid" class="multi-result-grid"></div>
+            <button id="close-multi-gacha-modal-btn">Awesome!</button>
+        </div>
+    </div>
+
+    <!-- File Inputs -->
+    <input type="file" id="import-file" accept=".json" style="display: none;">
+    <input type="file" id="import-wordlist-file" accept=".json" style="display: none;">
+
+    <script src="script.js"></script>
+</body>
+</html>

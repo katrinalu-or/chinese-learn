@@ -1,0 +1,1085 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background-image: url('background.png');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh;
+    color: #333;
+}
+
+.screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Auth Screen */
+.auth-container {
+    max-width: 450px;
+    margin: auto;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 3rem;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.auth-container h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.auth-tabs {
+    display: flex;
+    margin-bottom: 2rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 1rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.tab-button.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.auth-form input {
+    padding: 1.2rem;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: rgba(255,255,255,0.8);
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.auth-form button {
+    padding: 1.2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.auth-form button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+/* Header */
+.header {
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(10px);
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #333;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.header.page-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+}
+
+.header.page-header h2 {
+    text-align: center;
+    grid-column: 2;
+}
+
+.header .header-right {
+    grid-column: 3;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.header h1, .header h2 {
+    font-weight: 300;
+    letter-spacing: 1px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-info button, .dev-btn {
+    padding: 0.7rem 1.5rem;
+    background: rgba(0,0,0,0.05);
+    color: #333;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.user-info button:hover, .dev-btn:hover {
+    background: rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2.5rem;
+    padding: 3rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    flex: 1;
+}
+
+.activity-card {
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.activity-card.active {
+    cursor: pointer;
+}
+
+.activity-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.5s;
+}
+
+.activity-card.active:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+}
+
+.activity-card.active:hover::before {
+    left: 100%;
+}
+
+.activity-card.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: rgba(200, 200, 200, 0.3);
+}
+
+#word-writing-card {
+    cursor: pointer;
+}
+#word-writing-card:not(.disabled):hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+}
+
+.activity-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 600;
+}
+
+.progress-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    cursor: pointer;
+}
+
+.progress-card h3 {
+    color: white;
+    -webkit-text-fill-color: white;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 25px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 15px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #fff, #f8f9fa);
+    border-radius: 15px;
+    transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Word Review & Writing Screens */
+.word-display {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+}
+
+.word-card {
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(15px);
+    padding: 4rem;
+    border-radius: 25px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+    margin-bottom: 4rem;
+    border: 1px solid rgba(255,255,255,0.3);
+    animation: wordSlideIn 0.5s ease-out;
+    position: relative;
+}
+
+.replay-audio-btn {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.replay-audio-btn:hover {
+    background: #495057;
+    transform: scale(1.1);
+}
+
+@keyframes wordSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chinese-word {
+    font-size: 5rem;
+    font-weight: bold;
+    text-align: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    min-width: 200px;
+    font-family: serif;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 3rem;
+    margin-bottom: 2rem;
+}
+
+.action-btn {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: none;
+    font-size: 3rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transition: all 0.3s;
+}
+
+.action-btn:hover::before {
+    width: 100px;
+    height: 100px;
+}
+
+.action-btn.cross {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.action-btn.check {
+    background: linear-gradient(135deg, #27ae60, #229954);
+}
+
+.action-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.3);
+}
+
+.action-btn:active {
+    transform: scale(0.95);
+}
+
+.score-display, .progress-info {
+    color: #555;
+    font-size: 1.3rem;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Sentence Writing Screen */
+.sentence-writing-container {
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.sentence-instructions {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+.sentence-instructions h3 {
+    margin-bottom: 1rem;
+}
+
+.sentence-word-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    background: #fff;
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+
+.sentence-word-item {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+.completion-status-text {
+    font-weight: 500;
+    color: #555;
+}
+
+/* Center the buttons specifically on the Sentence Writing page */
+.sentence-writing-container .action-buttons {
+    justify-content: center;
+}
+
+/* Progress Screen */
+.progress-details {
+    padding: 3rem;
+    max-width: 900px;
+    margin: 0 auto;
+    color: #333;
+}
+
+.level-info, .word-progress {
+    background: #ffffff;
+    backdrop-filter: blur(10px);
+    padding: 2.5rem;
+    border-radius: 20px;
+    margin-bottom: 2rem;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.word-progress h4 {
+    margin-bottom: 2rem;
+    font-size: 1.6rem;
+    text-align: center;
+    color: #333;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 1rem;
+}
+
+.listening-word-list {
+    margin-top: 1.5rem;
+}
+
+.listening-word-list h5 {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 1rem;
+}
+
+.listening-word-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+}
+
+.listening-word-item {
+    padding: 0.5rem 0.75rem;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    text-align: center;
+    color: #495057;
+    transition: all 0.3s ease;
+}
+
+.listening-word-item.completed {
+    background-color: #e6f9f0;
+    border-color: #2dce89;
+    color: #2dce89;
+    font-weight: bold;
+    text-decoration: line-through;
+}
+
+.advancement-status ul {
+    display: none;
+}
+
+.level-progress-item {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.level-progress-item.completed {
+    background: rgba(39, 174, 96, 0.1);
+    border: 1px solid rgba(39, 174, 96, 0.3);
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.1);
+}
+
+.level-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.level-header h5 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #333;
+    font-weight: 600;
+}
+
+.level-stats {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.level-progress-item.completed .level-stats {
+    color: #2ecc71;
+    text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+}
+
+.level-progress-bar {
+    width: 100%;
+    height: 25px;
+    background: rgba(0,0,0,0.15); /* Darkened background for contrast */
+    border-radius: 15px;
+    overflow: hidden;
+    /* margin-bottom is removed as the percentage is now inside */
+    position: relative;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.level-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #5E72E4 0%, #9065E0 100%);
+    border-radius: 15px;
+    transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+
+    /* New styles for positioning the percentage label */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.level-progress-item.completed .level-progress-fill {
+    background: linear-gradient(90deg, #2dce89 0%, #2dcecc 100%);
+    box-shadow: 0 2px 15px rgba(45, 206, 137, 0.5);
+}
+
+.level-progress-fill::after {
+    content: '';
+    display: none;
+}
+
+/* Hide the old, separate percentage label */
+.level-percentage {
+    display: none;
+}
+
+.level-progress-item.completed .level-percentage {
+    color: #2ecc71;
+    font-size: 1.3rem;
+    text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+}
+
+/* Developer Mode */
+.dev-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    min-width: 100px;
+}
+
+.backup-section, .reset-section, .wordlist-section {
+    background: #ffffff;
+    padding: 1.5rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+
+.backup-section h3, .wordlist-section h3 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.backup-section p, .wordlist-section p {
+    color: #555;
+    margin: 0;
+}
+
+.data-actions, .wordlist-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    border-top: 1px solid rgba(0,0,0,0.1);
+    padding-top: 1.5rem;
+}
+
+.reset-section {
+    background: #fff5f5;
+    border: 1px solid #fcc2c3;
+}
+
+.reset-section h3 {
+    color: #e74c3c;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.reset-section h3::before {
+    content: '⚠️';
+    font-size: 1.2em;
+}
+
+.reset-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.reset-info p {
+    margin: 0.5rem 0;
+    color: #444;
+}
+
+.reset-info strong {
+    color: #e74c3c;
+    font-size: 1.2em;
+}
+
+.reset-input {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.reset-input label {
+    color: #333;
+    font-weight: 600;
+    min-width: 120px;
+}
+
+.reset-input select {
+    padding: 0.8rem;
+    border-radius: 8px;
+    border: 1px solid rgba(231, 76, 60, 0.5);
+    background: rgba(255,255,255,0.9);
+    font-size: 1rem;
+    min-width: 120px;
+}
+
+.reset-btn {
+    padding: 0.8rem 2rem;
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+}
+
+.reset-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.5);
+    background: linear-gradient(135deg, #c0392b, #a93226);
+}
+
+/* Collections & Gacha */
+.gacha-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.gacha-controls {
+    background: #ffffff;
+    padding: 1.5rem 2rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.diamond-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.diamond-icon {
+    font-size: 1.5em;
+    line-height: 1;
+}
+
+.gacha-draw-btn {
+    padding: 1rem 2.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #f5a623, #f8e71c);
+    color: #333;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(245, 166, 35, 0.4);
+}
+
+.gacha-draw-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 166, 35, 0.6);
+}
+
+.gacha-draw-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tooltip-icon {
+    position: relative;
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background-color: #adb5bd;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    font-weight: bold;
+    line-height: 24px;
+    cursor: help;
+    font-size: 1rem;
+    user-select: none;
+}
+
+.tooltip-text {
+    visibility: hidden;
+    width: 180px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 150%;
+    left: 50%;
+    margin-left: -90px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.9rem;
+    font-weight: normal;
+}
+
+.tooltip-icon:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+}
+
+.gacha-draw-btn.multi-draw {
+    background: linear-gradient(135deg, #7928ca, #ff0080);
+    color: white;
+    box-shadow: 0 4px 15px rgba(121, 40, 202, 0.4);
+}
+
+.gacha-draw-btn.multi-draw:hover {
+    box-shadow: 0 6px 20px rgba(121, 40, 202, 0.6);
+}
+
+.collection-grid-container {
+    background: #ffffff;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+
+.collection-grid-container h3 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.8rem;
+    color: #333;
+}
+
+.collection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1.5rem;
+}
+
+.collection-item {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.item-count-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 10px;
+    line-height: 1.2;
+}
+
+.collection-item-image {
+    width: 100%;
+    height: 120px;
+    object-fit: contain;
+    margin-bottom: 1rem;
+}
+
+.collection-item-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.collection-item:not(.owned) {
+    filter: none;
+    opacity: 1;
+    background: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 185px;
+}
+
+.collection-item:not(.owned) .collection-item-image {
+    display: none;
+}
+
+.collection-item:not(.owned) .collection-item-name::before {
+    content: '???';
+    color: #adb5bd;
+    font-size: 2.5rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+.collection-item:not(.owned) .collection-item-name {
+    display: none;
+}
+
+.collection-item.Common { border-color: #adb5bd; }
+.collection-item.Rare { border-color: #4B89DA; }
+.collection-item.Epic { border-color: #8A4EDA; }
+.collection-item.Legendary { border-color: #F5A623; }
+
+/* Modals */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    width: 90%;
+    max-width: 400px;
+    animation: modal-pop 0.3s ease-out;
+}
+
+@keyframes modal-pop {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+#gacha-result-image {
+    width: 80%;
+    max-width: 250px;
+    margin: 1rem 0;
+}
+
+#gacha-result-rarity {
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+#gacha-result-rarity.Common { color: #adb5bd; }
+#gacha-result-rarity.Rare { color: #4B89DA; }
+#gacha-result-rarity.Epic { color: #8A4EDA; }
+#gacha-result-rarity.Legendary { color: #F5A623; }
+
+#close-gacha-modal-btn, #close-multi-gacha-modal-btn {
+    margin-top: 1.5rem;
+    padding: 0.8rem 2rem;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.modal-content.multi-result-modal {
+    max-width: 800px;
+}
+
+.multi-result-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.multi-result-item {
+    text-align: center;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.multi-result-item img {
+    width: 100%;
+    height: 100px;
+    object-fit: contain;
+}
+
+.rarity-text {
+    font-size: 0.8em;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 0.25rem;
+}
+
+.rarity-text.Common { color: #868e96; }
+.rarity-text.Rare { color: #4B89DA; }
+.rarity-text.Epic { color: #8A4EDA; }
+.rarity-text.Legendary { color: #F5A623; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        padding: 2rem 1rem;
+    }
+
+    .chinese-word {
+        font-size: 3.5rem;
+    }
+
+    .action-btn {
+        width: 80px;
+        height: 80px;
+        font-size: 2rem;
+    }
+
+    .word-card {
+        padding: 2.5rem 1.5rem;
+    }
+
+    .action-buttons {
+        gap: 2rem;
+    }
+
+    .dev-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .level-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .level-stats {
+        align-self: flex-end;
+    }
+
+    .multi-result-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-container {
+        margin: 1rem;
+        padding: 2rem;
+    }
+
+    .header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .user-info {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .multi-result-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
