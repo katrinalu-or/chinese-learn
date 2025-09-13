@@ -5,7 +5,7 @@ class ChineseLearningApp {
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
         this.WORDS_PER_SESSION = 20;
-        this.CURRENT_LEVEL_COMPLETIONS = 1; // change back to 3
+        this.CURRENT_LEVEL_COMPLETIONS = 2;
         this.LOWER_LEVEL_COMPLETIONS_REVIEW = 1; // For Word Review
         this.REVIEW_LOWER_LEVEL_PERCENTAGE = 30; // 30% for Word Review
 
@@ -13,7 +13,7 @@ class ChineseLearningApp {
 
         // Listening Activity Config
         this.LISTENING_WORDS_PER_SESSION = 10;
-        this.LISTENING_CURRENT_LEVEL_COMPLETIONS = 1; // change back to 2
+        this.LISTENING_CURRENT_LEVEL_COMPLETIONS = 2;
         this.LISTENING_LOWER_LEVEL_COMPLETIONS = 1;
         this.LISTENING_LOWER_LEVEL_PERCENTAGE = 30;
 
@@ -72,7 +72,7 @@ class ChineseLearningApp {
         }
     }
 
-setupEventListeners() {
+    setupEventListeners() {
         // Auth
         document.getElementById('login-tab').addEventListener('click', () => this.showAuthForm('login'));
         document.getElementById('register-tab').addEventListener('click', () => this.showAuthForm('register'));
@@ -903,13 +903,7 @@ setupEventListeners() {
             results.push(this._performSingleDraw());
         } else {
             const rng = Math.random();
-            let guaranteedRarity;
-            // Use the new global variable for the 20% chance
-            if (rng < (this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE / 100)) {
-                guaranteedRarity = 'Legendary';
-            } else {
-                guaranteedRarity = 'Epic';
-            }
+            let guaranteedRarity = (rng < (this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE / 100)) ? 'Legendary' : 'Epic';
             const possibleItems = this.gachaPool.filter(item => item.rarity === guaranteedRarity);
             const guaranteedItem = possibleItems[Math.floor(Math.random() * possibleItems.length)];
             results.push(guaranteedItem);
