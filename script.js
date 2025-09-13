@@ -28,7 +28,7 @@ class ChineseLearningApp {
             Common: 55
         };
 
-        this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE = 20; // 20% chance for Legendary on a guaranteed pull
+        this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE = 15; // 15% chance for Legendary on a guaranteed pull
 
         this.DEFAULT_WORDS_VERSION = '4.0';
         this.gachaPool = this.defineGachaPool();
@@ -46,9 +46,11 @@ class ChineseLearningApp {
             { id: 'zeus', name: 'Zeus', rarity: 'Legendary', image: 'greek/zeus.png' },
             { id: 'poseidon', name: 'Poseidon', rarity: 'Epic', image: 'greek/poseidon.png' },
             { id: 'hades', name: 'Hades', rarity: 'Epic', image: 'greek/hades.png' },
+            { id: 'hercules', name: 'Hercules', rarity: 'Epic', image: 'greek/hercules.png' },
             { id: 'hera', name: 'Hera', rarity: 'Rare', image: 'greek/hera.png' },
             { id: 'athena', name: 'Athena', rarity: 'Rare', image: 'greek/athena.png' },
             { id: 'apollo', name: 'Apollo', rarity: 'Rare', image: 'greek/apollo.png' },
+            { id: 'demeter', name: 'Demeter', rarity: 'Common', image: 'greek/demeter.png' },
             { id: 'ares', name: 'Ares', rarity: 'Common', image: 'greek/ares.png' },
             { id: 'artemis', name: 'Artemis', rarity: 'Common', image: 'greek/artemis.png' },
             { id: 'hermes', name: 'Hermes', rarity: 'Common', image: 'greek/hermes.png' },
@@ -57,18 +59,26 @@ class ChineseLearningApp {
     }
 
     initializeDefaultWords() {
+        // Updated version to ensure this new list is loaded.
+        const LATEST_WORDS_VERSION = '6.0';
         const storedVersion = localStorage.getItem('defaultWordsVersion');
-        if (storedVersion !== this.DEFAULT_WORDS_VERSION) {
-            console.log('Default word list is outdated. Updating now...');
+
+        if (storedVersion !== LATEST_WORDS_VERSION) {
+            console.log('Default word list is outdated. Updating to v' + LATEST_WORDS_VERSION);
             const defaultWords = {
-                1: ['大', '中間', '小時候', '木頭', '山', '月亮', '水果', '火', '日記', '門口', '愛心', '天氣', '上面', '下雨', '早安', '手', '車子', '走路', '出來', '土地', '女生', '男生', '竹子', '一塊田', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '一百', '一千', '一萬', '明天', '昨天', '今天'],
-                2: ['在哪裡', '多少', '尖尖的', '平平的', '石頭', '刀子', '出去', '未來', '日本', '目 （眼睛）', '白色', '黑色', '粉紅色', '紅色', '藍色', '綠色', '黃色', '橘色', '紫色', '咖啡色', '灰色', '沒有', '看電視', '馬上', '太陽', '太棒了', '回來', '家人', '正在', '正好', '他們', '雲', '做完', '你好嗎', '說話', '古老', '要不要', '吃東西', '他和她', '兩個人', '只有', '貝', '買菜', '罵人', '又來了', '左邊', '右邊', '冷水', '冰塊'],
-                3: ['哥哥', '弟弟', '姐姐', '妹妹', '爸爸', '爺爺', '奶奶', '阿姨', '舅舅', '阿公', '阿嬤', '可以', '想法', '所以', '玩遊戲', '我也不知道'],
-                4: ['重要', '困難', '容易', '特別', '一般', '基本', '主要', '可能', '必須', '應該'],
-                5: ['發展', '改變', '影響', '創造', '建立', '提高', '解決', '實現', '達到', '獲得']
+                1: ['大', '中間', '小時候', '木頭', '山', '水果', '火', '早安', '手', '車子', '走路', '出來', '土地', '女生', '男生', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '一百', '一千', '一萬', '昨天', '今天', '明天', '後天'],
+                2: ['白色', '黑色', '粉紅色', '紅色', '藍色', '綠色', '黃色', '橘色', '紫色', '咖啡色', '灰色', '太陽', '月亮', '下雨', '天氣', '太棒了', '回來', '家人', '正在', '正好', '他們', '雲', '做完', '你好嗎', '說話', '古老', '要不要', '吃東西', '他和她', '兩個人', '只有', '貝', '買菜', '冷水', '冰塊', '日記', '天空', '風'],
+                3: ['哥哥', '弟弟', '姐姐', '妹妹', '爸爸', '爺爺', '奶奶', '阿姨', '舅舅', '阿公', '阿嬤', '可以', '想法', '所以', '玩遊戲', '我也不知道', '沒有', '看電視', '馬上', '門口', '愛心', '上面', '竹子', '一塊田', '在哪裡', '多少', '尖尖的', '平平的', '石頭', '刀子', '出去', '未來', '日本', '目 （眼睛）', '罵人', '又來了', '左邊', '右邊'],
+                4: ['花', '草', '拍手', '這個', '分類', '向外走', '頭髮', '找手機', '課本', '地上', '真的', '假的', '朋友', '裡面', '外面', '叫外賣', '哭笑不得', '如果', '牛肉', '羊肉', '豬肉', '雞肉', '鴨肉', '每天', '看電視', '都要', '給', '很會', '為什麼', '以為'],
+                5: ['第一次', '起來', '自己', '再一次', '做事情', '因為', '就是', '最喜歡', '結果', '長大', '海邊', '冬天', '春天', '夏天', '秋天', '長高', '更多', '時間', '美國', '中國', '日本', '住在', '重要', '重來', '誰', '生氣', '力氣', '米', '公車', '公主'],
+                6: ['故事', '最近', '馬路', '跑步', '國王', '王子', '一直', '一句話', '吃光光', '脫光', '過來', '拿東西', '有用', '用力', '一點點', '合在一起', '衣服', '還有', '還給我', '現在', '出現', '等一下', '看見', '見面', '能力', '可能', '能不能', '天才', '我剛剛才', '才能'],
+                7: ['先來', '趕快', '怎麼', '多久', '正常', '非常', '平常', '房間', '紅包', '包起來', '快樂', '可樂', '毛巾', '走得慢', '跑得快', '正方形', '圓形', '三角形', '長方形', '地方', '陪家人', '喝牛奶', '一定', '新年', '放在', '下午', '可愛', '愛吃', '站著', '已經'],
+                8: ['忘記', '經過', '記得', '糖果', '彩虹', '好乖', '同時', '同樣的', '一樣', '手拉手', '收東西', '永遠', '永久', '草莓', '切開', '全部', '而且', '需要', '寫字', '中文', '工作', '請假', '請問', '害怕', '打雷', '閃電', '帶東西', '月亮', '太陽', '入口'],
+                9: ['青菜', '晴天', '籃球', '足球', '加油', '隊長', '結束', '比賽', '老師', '開始', '對不對', '對面', '對不起', '顏色', '充電', '充滿', '出發', '發生', '發現', '一件衣服', '奇怪', '好奇', '小鳥', '唱歌', '穿衣服', '覺得', '睡覺', '學校', '學生', '電影'],
+                10: ['影子', '休息']
             };
             localStorage.setItem('defaultWords', JSON.stringify(defaultWords));
-            localStorage.setItem('defaultWordsVersion', this.DEFAULT_WORDS_VERSION);
+            localStorage.setItem('defaultWordsVersion', LATEST_WORDS_VERSION);
         }
     }
 
@@ -93,7 +103,8 @@ class ChineseLearningApp {
         document.getElementById('check-btn').addEventListener('click', () => this.handleWordResponse(true));
         document.getElementById('cross-btn').addEventListener('click', () => this.handleWordResponse(false));
         document.getElementById('back-from-writing').addEventListener('click', () => this.showDashboard());
-        document.getElementById('replay-audio-btn').addEventListener('click', () => this.speak(document.getElementById('writing-chinese-word').textContent));
+        document.getElementById('replay-audio-btn').addEventListener('click', () => this.speak(this.currentActivity.currentAnswer));
+        document.getElementById('show-answer-btn').addEventListener('click', () => this.showWritingAnswer());
         document.getElementById('writing-check-btn').addEventListener('click', () => this.handleWritingResponse(true));
         document.getElementById('writing-cross-btn').addEventListener('click', () => this.handleWritingResponse(false));
         document.getElementById('back-from-sentence').addEventListener('click', () => this.showDashboard());
@@ -129,13 +140,6 @@ class ChineseLearningApp {
         } else {
             this.showScreen('auth-screen');
         }
-    }
-
-    showAuthForm(type) {
-        document.getElementById('login-tab').classList.toggle('active', type === 'login');
-        document.getElementById('register-tab').classList.toggle('active', type === 'register');
-        document.getElementById('login-form').classList.toggle('hidden', type !== 'login');
-        document.getElementById('register-form').classList.toggle('hidden', type !== 'register');
     }
 
     initializeUserProperties() {
@@ -310,7 +314,6 @@ class ChineseLearningApp {
     canAdvanceLevel() {
         const currentLevel = this.currentUser.level;
 
-        // Word Review Check
         const reviewCurrentWords = this.getWordsForLevel(currentLevel);
         for (let word of reviewCurrentWords) {
             if ((this.currentUser.wordProgress[word]?.correct || 0) < this.CURRENT_LEVEL_COMPLETIONS) return false;
@@ -319,7 +322,6 @@ class ChineseLearningApp {
             if ((this.currentUser.wordProgress[word]?.correct || 0) < this.LOWER_LEVEL_COMPLETIONS_REVIEW) return false;
         }
 
-        // Word Writing Check
         const writingCurrentWords = this.getWordsForLevel(currentLevel);
         for (let word of writingCurrentWords) {
             if ((this.currentUser.listeningProgress[word]?.correct || 0) < this.LISTENING_CURRENT_LEVEL_COMPLETIONS) return false;
@@ -328,10 +330,8 @@ class ChineseLearningApp {
             if ((this.currentUser.listeningProgress[word]?.correct || 0) < this.LISTENING_LOWER_LEVEL_COMPLETIONS) return false;
         }
 
-        // Sentence Writing Check
         if (!this.currentUser.sentenceWritingCompleted) return false;
 
-        // Ensure level is not empty to prevent auto-advancing
         return reviewCurrentWords.length > 0 || writingCurrentWords.length > 0;
     }
 
@@ -467,7 +467,7 @@ class ChineseLearningApp {
         if (listenCount + reviewCount > shuffled.length) {
             console.warn("Percentages for subsets add up to more than 100%. Overlap may occur.");
             this.currentUser.listeningLowerLevelWords = shuffled.slice(0, listenCount);
-            this.currentUser.reviewLowerLevelWords = shuffled.slice(0, reviewCount); // Fallback to overlap
+            this.currentUser.reviewLowerLevelWords = shuffled.slice(0, reviewCount);
         } else {
             this.currentUser.listeningLowerLevelWords = shuffled.slice(0, listenCount);
             this.currentUser.reviewLowerLevelWords = shuffled.slice(listenCount, listenCount + reviewCount);
@@ -482,7 +482,6 @@ class ChineseLearningApp {
     updateProgressDetails() {
         const currentLevel = this.currentUser.level;
 
-        // Word Review
         const reviewContainer = document.getElementById('word-review-progress');
         let reviewHTML = '<h4>Word Review Progress</h4>';
         let required = this.CURRENT_LEVEL_COMPLETIONS;
@@ -506,7 +505,6 @@ class ChineseLearningApp {
         }
         reviewContainer.innerHTML = reviewHTML;
 
-        // Word Writing
         const writingContainer = document.getElementById('word-writing-progress');
         let writingHTML = '<h4>Word Writing Progress</h4>';
         required = this.LISTENING_CURRENT_LEVEL_COMPLETIONS;
@@ -530,7 +528,6 @@ class ChineseLearningApp {
         }
         writingContainer.innerHTML = writingHTML;
 
-        // Sentence Writing
         const sentenceContainer = document.getElementById('sentence-writing-progress');
         let sentenceHTML = '<h4>Sentence Writing Progress</h4>';
         const sentenceProgress = this.currentUser.sentenceWritingCompleted ? 100 : 0;
@@ -698,7 +695,12 @@ class ChineseLearningApp {
             return;
         }
         const sessionList = this.generateSessionWords(availableWords, this.LISTENING_WORDS_PER_SESSION);
-        this.currentActivity = { type: 'word-writing', words: sessionList, currentIndex: 0 };
+        this.currentActivity = {
+            type: 'word-writing',
+            words: sessionList,
+            currentIndex: 0,
+            currentAnswer: null
+        };
         this.showScreen('word-writing-screen');
         this.displayCurrentWritingWord();
     }
@@ -706,14 +708,26 @@ class ChineseLearningApp {
     displayCurrentWritingWord() {
         const activity = this.currentActivity;
         const word = activity.words[activity.currentIndex];
+        activity.currentAnswer = word; // Store the answer
+
         const wordEl = document.getElementById('writing-chinese-word');
-        wordEl.textContent = word;
+        wordEl.textContent = '???';
+        wordEl.classList.add('answer-hidden');
+
         document.getElementById('writing-word-counter').textContent = `${activity.currentIndex + 1}/${activity.words.length}`;
         setTimeout(() => this.speak(word), 300);
     }
 
+    showWritingAnswer() {
+        if (this.currentActivity && this.currentActivity.type === 'word-writing') {
+            const wordEl = document.getElementById('writing-chinese-word');
+            wordEl.textContent = this.currentActivity.currentAnswer;
+            wordEl.classList.remove('answer-hidden');
+        }
+    }
+
     handleWritingResponse(isCorrect) {
-        const word = this.currentActivity.words[this.currentActivity.currentIndex];
+        const word = this.currentActivity.currentAnswer;
         if (!this.currentUser.listeningProgress[word]) {
             this.currentUser.listeningProgress[word] = { correct: 0 };
         }
