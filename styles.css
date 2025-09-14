@@ -669,13 +669,6 @@ body {
 }
 
 /* Developer Mode */
-.version-info {
-    color: #868e96;
-    font-weight: 500;
-    font-size: 1.0rem;
-    margin-right: 1rem; /* Add some space between it and other potential buttons */
-}
-
 .dev-actions {
     display: flex;
     gap: 1rem;
@@ -879,7 +872,7 @@ body {
     white-space: pre-line;
 }
 
-.tooltip-icon.active .tooltip-text {
+.tooltip-text.show {
     visibility: visible;
     opacity: 1;
 }
@@ -918,7 +911,6 @@ body {
     font-size: 1.8rem;
     color: #333;
 }
-
 .collection-subtitle {
     text-align: center;
     margin-bottom: 1rem;

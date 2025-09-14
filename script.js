@@ -22,10 +22,10 @@ class ChineseLearningApp {
 
         // Gacha probabilities (must add up to 100)
         this.GACHA_PROBABILITIES = {
-            Legendary: 5,
+            Legendary: 2,
             Epic: 10,
             Rare: 30,
-            Common: 55
+            Common: 58
         };
 
         this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE = 15; // 15% chance for Legendary on a guaranteed pull
@@ -65,14 +65,13 @@ class ChineseLearningApp {
             const defaultWords = {
                 1: ['大', '中間', '小時候', '木頭', '山', '水果', '火', '早安', '手', '車子', '走路', '出來', '土地', '女生', '男生', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '一百', '一千', '一萬', '昨天', '今天', '明天', '後天'],
                 2: ['白色', '黑色', '粉紅色', '紅色', '藍色', '綠色', '黃色', '橘色', '紫色', '咖啡色', '灰色', '太陽', '月亮', '下雨', '天氣', '太棒了', '回來', '家人', '正在', '正好', '他們', '雲', '做完', '你好嗎', '說話', '古老', '要不要', '吃東西', '他和她', '兩個人', '只有', '貝', '買菜', '冷水', '冰塊', '日記', '天空', '風'],
-                3: ['哥哥', '弟弟', '姐姐', '妹妹', '爸爸', '爺爺', '奶奶', '阿姨', '舅舅', '阿公', '阿嬤', '可以', '想法', '所以', '玩遊戲', '我也不知道', '沒有', '看電視', '馬上', '門口', '愛心', '上面', '竹子', '一塊田', '在哪裡', '多少', '尖尖的', '平平的', '石頭', '刀子', '出去', '未來', '日本', '目 （眼睛）', '罵人', '又來了', '左邊', '右邊'],
-                4: ['花', '草', '拍手', '這個', '分類', '向外走', '頭髮', '找手機', '課本', '地上', '真的', '假的', '朋友', '裡面', '外面', '叫外賣', '哭笑不得', '如果', '牛肉', '羊肉', '豬肉', '雞肉', '鴨肉', '每天', '看電視', '都要', '給', '很會', '為什麼', '以為'],
-                5: ['第一次', '起來', '自己', '再一次', '做事情', '因為', '就是', '最喜歡', '結果', '長大', '海邊', '冬天', '春天', '夏天', '秋天', '長高', '更多', '時間', '美國', '中國', '日本', '住在', '重要', '重來', '誰', '生氣', '力氣', '米', '公車', '公主'],
-                6: ['故事', '最近', '馬路', '跑步', '國王', '王子', '一直', '一句話', '吃光光', '脫光', '過來', '拿東西', '有用', '用力', '一點點', '合在一起', '衣服', '還有', '還給我', '現在', '出現', '等一下', '看見', '見面', '能力', '可能', '能不能', '天才', '我剛剛才', '才能'],
-                7: ['先來', '趕快', '怎麼', '多久', '正常', '非常', '平常', '房間', '紅包', '包起來', '快樂', '可樂', '毛巾', '走得慢', '跑得快', '正方形', '圓形', '三角形', '長方形', '地方', '陪家人', '喝牛奶', '一定', '新年', '放在', '下午', '可愛', '愛吃', '站著', '已經'],
-                8: ['忘記', '經過', '記得', '糖果', '彩虹', '好乖', '同時', '同樣的', '一樣', '手拉手', '收東西', '永遠', '永久', '草莓', '切開', '全部', '而且', '需要', '寫字', '中文', '工作', '請假', '請問', '害怕', '打雷', '閃電', '帶東西', '月亮', '太陽', '入口'],
-                9: ['青菜', '晴天', '籃球', '足球', '加油', '隊長', '結束', '比賽', '老師', '開始', '對不對', '對面', '對不起', '顏色', '充電', '充滿', '出發', '發生', '發現', '一件衣服', '奇怪', '好奇', '小鳥', '唱歌', '穿衣服', '覺得', '睡覺', '學校', '學生', '電影'],
-                10: ['影子', '休息']
+                3: ['哥哥', '弟弟', '姐姐', '妹妹', '爸爸', '爺爺', '奶奶', '阿姨', '舅舅', '阿公', '阿嬤', '可以', '想法', '所以', '玩遊戲', '我也不知道', '沒有', '看電視', '馬上', '門口', '愛心', '上面', '竹子', '一塊田', '在哪裡', '多少', '尖尖的', '平平的', '石頭', '刀子', '出去', '未來', '日本', '目 （眼睛）', '罵人', '又來了', '左邊', '右邊', '為什麼', '以為'],
+                4: ['花', '草', '拍手', '這個', '分類', '向外走', '頭髮', '找手機', '課本', '地上', '真的', '假的', '朋友', '裡面', '外面', '叫外賣', '哭笑不得', '如果', '牛肉', '羊肉', '豬肉', '雞肉', '鴨肉', '每天', '都要', '給', '很會', '力氣', '米', '公車', '公主'],
+                5: ['第一次', '起來', '自己', '再一次', '做事情', '因為', '就是', '最喜歡', '結果', '長大', '海邊', '冬天', '春天', '夏天', '秋天', '長高', '更多', '時間', '美國', '中國', '住在', '重要', '重來', '誰', '生氣', '故事', '最近', '馬路', '跑步', '國王', '王子'],
+                6: ['一直', '一句話', '吃光光', '脫光', '過來', '拿東西', '有用', '用力', '一點點', '合在一起', '衣服', '還有', '還給我', '現在', '出現', '等一下', '看見', '見面', '能力', '可能', '能不能', '天才', '我剛剛才', '才能', '放在', '下午', '可愛', '愛吃', '站著', '已經'],
+                7: ['先來', '趕快', '怎麼', '多久', '正常', '非常', '平常', '房間', '紅包', '包起來', '快樂', '可樂', '毛巾', '走得慢', '跑得快', '正方形', '圓形', '三角形', '長方形', '地方', '陪家人', '喝牛奶', '一定', '新年'],
+                8: ['忘記', '經過', '記得', '糖果', '彩虹', '好乖', '同時', '同樣的', '一樣', '手拉手', '收東西', '永遠', '永久', '草莓', '切開', '全部', '而且', '需要', '寫字', '中文', '工作', '請假', '請問', '害怕', '打雷', '閃電', '帶東西', '入口', '青菜', '晴天', '籃球', '足球', '加油', '隊長', '結束'],
+                9: ['比賽', '老師', '開始', '對不對', '對面', '對不起', '顏色', '充電', '充滿', '出發', '發生', '發現', '一件衣服', '奇怪', '好奇', '小鳥', '唱歌', '穿衣服', '覺得', '睡覺', '學校', '學生', '電影', '影子', '休息']
             };
             localStorage.setItem('defaultWords', JSON.stringify(defaultWords));
             localStorage.setItem('defaultWordsVersion', this.DEFAULT_WORDS_VERSION);
@@ -399,13 +398,34 @@ class ChineseLearningApp {
     }
 
     generateSessionWords(availableWords, desiredCount) {
-        if (availableWords.length === 0) return [];
-        let sessionWords = [];
-        const shuffledPool = [...availableWords].sort(() => 0.5 - Math.random());
-        while (sessionWords.length < desiredCount) {
-            sessionWords = sessionWords.concat(shuffledPool);
+        let sessionWords = [...availableWords]; // Start with all words that need practice.
+
+        const needed = desiredCount - sessionWords.length;
+
+        if (needed > 0) {
+            // If we need to fill more slots, get the full word list for the current level.
+            const currentLevelWords = this.getWordsForLevel(this.currentUser.level);
+
+            // Create a pool of filler words, excluding those already in the session.
+            const sessionWordsSet = new Set(sessionWords);
+            const fillerPool = currentLevelWords.filter(word => !sessionWordsSet.has(word));
+
+            // Shuffle the filler pool.
+            const shuffledFiller = fillerPool.sort(() => 0.5 - Math.random());
+
+            // Add the required number of filler words.
+            sessionWords.push(...shuffledFiller.slice(0, needed));
+
+            // If still not enough (e.g., current level has few words), repeat from the filler pool.
+            let stillNeeded = desiredCount - sessionWords.length;
+            while (stillNeeded > 0 && shuffledFiller.length > 0) {
+                sessionWords.push(...shuffledFiller.slice(0, stillNeeded));
+                stillNeeded = desiredCount - sessionWords.length;
+            }
         }
-        return sessionWords.slice(0, desiredCount);
+
+        // Shuffle the final list to mix required words and filler words.
+        return sessionWords.sort(() => 0.5 - Math.random()).slice(0, desiredCount);
     }
 
     displayCurrentWord() {
