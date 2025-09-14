@@ -3,26 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>快樂學中文</title>
+    <title>Mommy Academy: 中文大爆炸</title>
+    <!-- CORRECT, WORKING Calendar CSS Link -->
+    <link rel="stylesheet" href="https://unpkg.com/js-year-calendar@latest/dist/js-year-calendar.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <!-- Login/Register Screen -->
     <div id="auth-screen" class="screen">
         <div class="auth-container">
-            <h1>快樂學中文</h1>
+            <h1>Mommy Academy: 中文大爆炸</h1>
             <div class="auth-tabs">
                 <button id="login-tab" class="tab-button active">Login</button>
                 <button id="register-tab" class="tab-button">Register</button>
             </div>
-
             <div id="login-form" class="auth-form">
                 <h2>Login</h2>
                 <input type="text" id="login-username" placeholder="Username" required>
                 <input type="password" id="login-password" placeholder="Password" required>
                 <button id="login-btn">Login</button>
             </div>
-
             <div id="register-form" class="auth-form hidden">
                 <h2>Create Account</h2>
                 <input type="text" id="register-username" placeholder="Username" required>
@@ -36,7 +36,7 @@
     <!-- Main Dashboard -->
     <div id="dashboard-screen" class="screen hidden">
         <div class="header">
-            <h1>快樂學中文</h1>
+            <h1>Mommy Academy: 中文大爆炸</h1>
             <div class="user-info">
                 <span id="username-display"></span> - Level <span id="level-display">1</span>
                 <button id="collections-btn">Collections</button>
@@ -44,19 +44,18 @@
                 <button id="logout-btn">Logout</button>
             </div>
         </div>
-
         <div class="dashboard-grid">
             <div class="activity-card active" id="word-review-card">
-                <h3>Word Review</h3>
-                <p>Practice recognizing Chinese characters.</p>
+                <h3>單字閱讀</h3>
+                <p>Practice recognizing Chinese characters</p>
             </div>
             <div class="activity-card active" id="word-writing-card">
-                <h3>Word Writing</h3>
-                <p>Listen and practice writing words.</p>
+                <h3>單字書寫</h3>
+                <p>Listen and practice writing words</p>
             </div>
             <div class="activity-card active" id="sentence-writing-card">
-                <h3>Sentence Writing</h3>
-                <p>Practice forming sentences with key words.</p>
+                <h3>造句練習</h3>
+                <p>Practice forming sentences with key words</p>
             </div>
             <div class="activity-card disabled">
                 <h3>Coming Soon</h3>
@@ -85,17 +84,14 @@
                 Score: <span id="current-score">0</span>/20
             </div>
         </div>
-
         <div class="word-display">
             <div class="word-card">
                 <div class="chinese-word" id="chinese-word">準備中...</div>
             </div>
-
             <div class="action-buttons">
                 <button id="cross-btn" class="action-btn cross">✗</button>
                 <button id="check-btn" class="action-btn check">✓</button>
             </div>
-
             <div class="progress-info" id="word-counter">
                 0/20
             </div>
@@ -109,22 +105,18 @@
             <h2>Word Writing</h2>
             <div class="header-right"></div>
         </div>
-
         <div class="word-display">
             <div class="word-card">
                 <div class="chinese-word" id="writing-chinese-word">???</div>
                 <button id="replay-audio-btn" class="replay-audio-btn">🔊</button>
             </div>
-
             <div class="writing-controls">
                 <button id="show-answer-btn" class="show-answer-btn">Show Answer</button>
             </div>
-
             <div class="action-buttons">
                 <button id="writing-cross-btn" class="action-btn cross">✗</button>
                 <button id="writing-check-btn" class="action-btn check">✓</button>
             </div>
-
             <div class="progress-info" id="writing-word-counter">
                 0/10
             </div>
@@ -138,16 +130,12 @@
             <h2>Sentence Writing</h2>
             <div class="header-right"></div>
         </div>
-
         <div class="sentence-writing-container">
             <div class="sentence-instructions">
                 <h3>Practice Words</h3>
                 <p>Use the following 10 words to practice forming sentences. When you're done, mark this activity as complete.</p>
             </div>
-            <!-- This is the DIV that was missing its ID -->
-            <div class="sentence-word-grid" id="sentence-word-grid">
-                <!-- 10 words will be populated here -->
-            </div>
+            <div class="sentence-word-grid" id="sentence-word-grid"></div>
             <div class="action-buttons">
                 <button id="sentence-cross-btn" class="action-btn cross">✗</button>
                 <button id="sentence-check-btn" class="action-btn check">✓</button>
@@ -163,16 +151,14 @@
             <h2>Level Progress</h2>
             <div class="header-right"></div>
         </div>
-
         <div class="progress-details">
-            <div class="word-progress" id="word-review-progress">
-                <!-- Word Review progress will be populated here -->
-            </div>
-            <div class="word-progress" id="word-writing-progress">
-                <!-- Word Writing progress will be populated here -->
-            </div>
-            <div class="word-progress" id="sentence-writing-progress">
-                <!-- Sentence Writing progress will be populated here -->
+            <!-- Reordered sections -->
+            <div class="word-progress" id="word-review-progress"></div>
+            <div class="word-progress" id="word-writing-progress"></div>
+            <div class="word-progress" id="sentence-writing-progress"></div>
+            <div class="word-progress" id="activity-log-container">
+                <h4>Activity Log</h4>
+                <div id="activity-calendar"></div>
             </div>
         </div>
     </div>
@@ -183,9 +169,9 @@
             <button id="back-from-dev">← Back</button>
             <h2>Developer Mode</h2>
             <div class="dev-actions">
+                <span class="version-info">Version: 1.0</span>
             </div>
         </div>
-
         <div class="developer-content">
             <div class="backup-section">
                 <h3>Data Management</h3>
@@ -195,7 +181,6 @@
                     <button id="restore-btn" class="dev-btn">📂 Restore Data</button>
                 </div>
             </div>
-
             <div class="wordlist-section">
                 <h3>Word List Management</h3>
                 <p>Download the current word list as a JSON file, edit it, and upload it to apply changes. You can also reset all levels to the default word lists.</p>
@@ -205,7 +190,6 @@
                     <button id="reset-wordlist-btn" class="reset-btn">🔄 Reset to Default</button>
                 </div>
             </div>
-
             <div class="reset-section">
                 <h3>Reset Level</h3>
                 <div class="reset-controls">
@@ -241,9 +225,7 @@
                 </div>
             </div>
         </div>
-
         <div class="gacha-container">
-            <!-- Gacha Controls -->
             <div class="gacha-controls">
                 <button id="draw-gacha-btn" class="gacha-draw-btn">Draw (1💎)</button>
                 <div class="gacha-draw-wrapper">
@@ -254,13 +236,10 @@ Draw 10 guarantees one Epic or Legendary item!</span>
                     </div>
                 </div>
             </div>
-
-            <!-- Gacha Collection Grid -->
             <div class="collection-grid-container">
                 <h3>Greek Gods Collection</h3>
-                <div class="collection-grid" id="collection-grid">
-                    <!-- Collection items will be populated by JavaScript -->
-                </div>
+                <p class="collection-subtitle">Event: Sep 14 ~ Oct 15 2025</p>
+                <div class="collection-grid" id="collection-grid"></div>
             </div>
         </div>
     </div>
@@ -282,10 +261,15 @@ Draw 10 guarantees one Epic or Legendary item!</span>
         </div>
     </div>
 
+    <!-- Calendar Tooltip -->
+    <div id="calendar-tooltip" class="hidden"></div>
+
     <!-- File Inputs -->
     <input type="file" id="import-file" accept=".json" style="display: none;">
     <input type="file" id="import-wordlist-file" accept=".json" style="display: none;">
 
+    <!-- CORRECT, WORKING Calendar JS and App Script -->
+    <script src="https://unpkg.com/js-year-calendar@latest/dist/js-year-calendar.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

@@ -275,30 +275,6 @@ body {
     padding: 3rem;
 }
 
-.writing-controls {
-    margin-bottom: 2rem;
-}
-
-.show-answer-btn {
-    padding: 0.8rem 1.5rem;
-    background: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.show-answer-btn:hover {
-    background: #495057;
-}
-
-.chinese-word.answer-hidden {
-    color: #e9ecef;
-}
-
 .word-card {
     background: rgba(255,255,255,0.95);
     backdrop-filter: blur(15px);
@@ -351,6 +327,30 @@ body {
     -webkit-text-fill-color: transparent;
     min-width: 200px;
     font-family: serif;
+}
+
+.chinese-word.answer-hidden {
+    color: #e9ecef;
+}
+
+.writing-controls {
+    margin-bottom: 2rem;
+}
+
+.show-answer-btn {
+    padding: 0.8rem 1.5rem;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.show-answer-btn:hover {
+    background: #495057;
 }
 
 .action-buttons {
@@ -464,10 +464,71 @@ body {
 
 /* Progress Screen */
 .progress-details {
-    padding: 3rem;
+    padding: 2rem 1.5rem;
     max-width: 900px;
     margin: 0 auto;
     color: #333;
+}
+
+#activity-log-container {
+    position: relative;
+    background: #ffffff;
+    padding: 1.5rem;
+    border-radius: 20px;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+#activity-log-container h4 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.6rem;
+    color: #333;
+}
+/* Corrected styles for js-year-calendar */
+.calendar .calendar-header {
+    background-color: #667eea;
+    color: white;
+    border-radius: 10px 10px 0 0;
+}
+.calendar table.month th.month-title {
+    color: #667eea;
+}
+.calendar table.month th.day-header {
+    color: #888;
+}
+.calendar .day.has-event .day-content {
+    background: #28a745;
+    color: white !important;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(40, 167, 69, 0.4);
+}
+#calendar-tooltip {
+    position: fixed;
+    background: #333;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 1001;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    transform: translateY(10px);
+    font-size: 0.9rem;
+    max-width: 300px;
+}
+#calendar-tooltip.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+#calendar-tooltip ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+#calendar-tooltip li {
+    white-space: nowrap;
+    padding: 2px 0;
 }
 
 .level-info, .word-progress {
@@ -608,6 +669,13 @@ body {
 }
 
 /* Developer Mode */
+.version-info {
+    color: #868e96;
+    font-weight: 500;
+    font-size: 1.0rem;
+    margin-right: 1rem; /* Add some space between it and other potential buttons */
+}
+
 .dev-actions {
     display: flex;
     gap: 1rem;
@@ -811,7 +879,7 @@ body {
     white-space: pre-line;
 }
 
-.tooltip-icon:hover .tooltip-text {
+.tooltip-icon.active .tooltip-text {
     visibility: visible;
     opacity: 1;
 }
@@ -846,9 +914,17 @@ body {
 
 .collection-grid-container h3 {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 0.5rem;
     font-size: 1.8rem;
     color: #333;
+}
+
+.collection-subtitle {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #868e96;
+    font-size: 1rem;
+    font-weight: 500;
 }
 
 .collection-grid {
@@ -1017,58 +1093,39 @@ body {
 .rarity-text.Epic { color: #8A4EDA; }
 .rarity-text.Legendary { color: #F5A623; }
 
-
-/* --- NEW RESPONSIVE DESIGN --- */
-
-/* Tablet and Smaller Desktops */
+/* Responsive */
 @media (max-width: 1024px) {
     .dashboard-grid {
-        gap: 1.5rem;
-        padding: 1.5rem;
-    }
-    .activity-card {
-        padding: 1.5rem;
-        min-height: 200px;
+        grid-template-columns: repeat(2, 1fr);
     }
     .multi-result-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    .chinese-word {
-        font-size: 4rem;
+        grid-template-columns: repeat(4, 1fr);
     }
 }
 
-/* Phones and Small Devices */
 @media (max-width: 768px) {
     .dashboard-grid {
-        gap: 1rem;
-        padding: 1rem;
-    }
-    .activity-card {
-        padding: 1.2rem;
-        min-height: 160px;
-        border-radius: 15px;
-    }
-    .activity-card h3 {
-        font-size: 1.1rem;
-        margin-bottom: 0.5rem;
-    }
-    .activity-card p {
-        font-size: 0.8rem;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding: 2rem 1rem;
     }
 
     .chinese-word {
-        font-size: 3rem;
+        font-size: 3.5rem;
     }
 
     .action-btn {
-        width: 70px;
-        height: 70px;
-        font-size: 1.8rem;
+        width: 80px;
+        height: 80px;
+        font-size: 2rem;
     }
 
     .word-card {
-        padding: 2.5rem 1rem;
+        padding: 2.5rem 1.5rem;
+    }
+
+    .action-buttons {
+        gap: 2rem;
     }
 
     .dev-actions {
@@ -1076,16 +1133,27 @@ body {
         gap: 0.5rem;
     }
 
-    .multi-result-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .level-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
     }
 
-    .auth-container, .developer-content, .progress-details, .gacha-container {
-        padding: 1.5rem;
+    .level-stats {
+        align-self: flex-end;
+    }
+
+    .multi-result-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 480px) {
+    .auth-container {
+        margin: 1rem;
+        padding: 2rem;
+    }
+
     .header {
         padding: 1rem;
         flex-direction: column;
@@ -1095,9 +1163,5 @@ body {
     .user-info {
         flex-wrap: wrap;
         justify-content: center;
-        gap: 0.5rem;
-    }
-    .user-info button {
-        padding: 0.5rem 1rem;
     }
 }

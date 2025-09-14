@@ -5,15 +5,15 @@ class ChineseLearningApp {
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
         this.WORDS_PER_SESSION = 20;
-        this.CURRENT_LEVEL_COMPLETIONS = 2;
+        this.CURRENT_LEVEL_COMPLETIONS = 1;
         this.LOWER_LEVEL_COMPLETIONS_REVIEW = 1; // For Word Review
         this.REVIEW_LOWER_LEVEL_PERCENTAGE = 30; // 30% for Word Review
 
         this.LEVEL_UP_DIAMOND_BONUS = 2;
 
         // Listening Activity Config
-        this.LISTENING_WORDS_PER_SESSION = 10;
-        this.LISTENING_CURRENT_LEVEL_COMPLETIONS = 2;
+        this.LISTENING_WORDS_PER_SESSION = 12;
+        this.LISTENING_CURRENT_LEVEL_COMPLETIONS = 1;
         this.LISTENING_LOWER_LEVEL_COMPLETIONS = 1;
         this.LISTENING_LOWER_LEVEL_PERCENTAGE = 30;
 
@@ -30,7 +30,7 @@ class ChineseLearningApp {
 
         this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE = 15; // 15% chance for Legendary on a guaranteed pull
 
-        this.DEFAULT_WORDS_VERSION = '4.0';
+        this.DEFAULT_WORDS_VERSION = '6.0';
         this.gachaPool = this.defineGachaPool();
         this.init();
     }
@@ -59,12 +59,9 @@ class ChineseLearningApp {
     }
 
     initializeDefaultWords() {
-        // Updated version to ensure this new list is loaded.
-        const LATEST_WORDS_VERSION = '6.0';
         const storedVersion = localStorage.getItem('defaultWordsVersion');
-
-        if (storedVersion !== LATEST_WORDS_VERSION) {
-            console.log('Default word list is outdated. Updating to v' + LATEST_WORDS_VERSION);
+        if (storedVersion !== this.DEFAULT_WORDS_VERSION) {
+            console.log(`Default word list is outdated. Updating to v${this.DEFAULT_WORDS_VERSION}`);
             const defaultWords = {
                 1: ['大', '中間', '小時候', '木頭', '山', '水果', '火', '早安', '手', '車子', '走路', '出來', '土地', '女生', '男生', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '一百', '一千', '一萬', '昨天', '今天', '明天', '後天'],
                 2: ['白色', '黑色', '粉紅色', '紅色', '藍色', '綠色', '黃色', '橘色', '紫色', '咖啡色', '灰色', '太陽', '月亮', '下雨', '天氣', '太棒了', '回來', '家人', '正在', '正好', '他們', '雲', '做完', '你好嗎', '說話', '古老', '要不要', '吃東西', '他和她', '兩個人', '只有', '貝', '買菜', '冷水', '冰塊', '日記', '天空', '風'],
@@ -78,7 +75,7 @@ class ChineseLearningApp {
                 10: ['影子', '休息']
             };
             localStorage.setItem('defaultWords', JSON.stringify(defaultWords));
-            localStorage.setItem('defaultWordsVersion', LATEST_WORDS_VERSION);
+            localStorage.setItem('defaultWordsVersion', this.DEFAULT_WORDS_VERSION);
         }
     }
 
@@ -120,6 +117,24 @@ class ChineseLearningApp {
         document.getElementById('close-multi-gacha-modal-btn').addEventListener('click', () => this.closeGachaModal(true));
         document.getElementById('back-from-dev').addEventListener('click', () => this.showDashboard());
 
+        const tooltipIcon = document.querySelector('.tooltip-icon');
+        if (tooltipIcon) {
+            tooltipIcon.addEventListener('click', function(event) {
+                event.stopPropagation();
+                const tooltipText = this.querySelector('.tooltip-text');
+                const isVisible = tooltipText.style.visibility === 'visible';
+                tooltipText.style.visibility = isVisible ? 'hidden' : 'visible';
+                tooltipText.style.opacity = isVisible ? '0' : '1';
+            });
+        }
+        window.addEventListener('click', () => {
+            const openTooltip = document.querySelector('.tooltip-text');
+            if (openTooltip && openTooltip.style.visibility === 'visible') {
+                openTooltip.style.visibility = 'hidden';
+                openTooltip.style.opacity = '0';
+            }
+        });
+
         // Dev Mode
         document.getElementById('backup-btn').addEventListener('click', () => this.exportUserData());
         document.getElementById('restore-btn').addEventListener('click', () => document.getElementById('import-file').click());
@@ -142,12 +157,20 @@ class ChineseLearningApp {
         }
     }
 
+    showAuthForm(type) {
+        document.getElementById('login-tab').classList.toggle('active', type === 'login');
+        document.getElementById('register-tab').classList.toggle('active', type === 'register');
+        document.getElementById('login-form').classList.toggle('hidden', type !== 'login');
+        document.getElementById('register-form').classList.toggle('hidden', type !== 'register');
+    }
+
     initializeUserProperties() {
         this.currentUser.diamonds = this.currentUser.diamonds || 0;
         this.currentUser.listeningProgress = this.currentUser.listeningProgress || {};
         this.currentUser.listeningLowerLevelWords = this.currentUser.listeningLowerLevelWords || [];
         this.currentUser.reviewLowerLevelWords = this.currentUser.reviewLowerLevelWords || [];
         this.currentUser.sentenceWritingCompleted = this.currentUser.sentenceWritingCompleted || false;
+        this.currentUser.activityLog = this.currentUser.activityLog || [];
 
         if (Array.isArray(this.currentUser.collection)) {
             const newCollection = {};
@@ -217,6 +240,7 @@ class ChineseLearningApp {
             reviewLowerLevelWords: [],
             sentenceWritingCompleted: false,
             testScores: [],
+            activityLog: [],
             diamonds: 0,
             collection: {},
         };
@@ -259,7 +283,6 @@ class ChineseLearningApp {
         let totalRequired = 0;
         let totalCompleted = 0;
 
-        // Word Review Progress
         const reviewCurrentWords = this.getWordsForLevel(currentLevel);
         const reviewLowerWords = this.currentUser.reviewLowerLevelWords || [];
         reviewCurrentWords.forEach(word => {
@@ -271,7 +294,6 @@ class ChineseLearningApp {
             totalCompleted += Math.min(this.currentUser.wordProgress[word]?.correct || 0, this.LOWER_LEVEL_COMPLETIONS_REVIEW);
         });
 
-        // Word Writing Progress
         const writingCurrentWords = this.getWordsForLevel(currentLevel);
         const writingLowerWords = this.currentUser.listeningLowerLevelWords || [];
         writingCurrentWords.forEach(word => {
@@ -283,7 +305,6 @@ class ChineseLearningApp {
             totalCompleted += Math.min(this.currentUser.listeningProgress[word]?.correct || 0, this.LISTENING_LOWER_LEVEL_COMPLETIONS);
         });
 
-        // Sentence Writing Progress
         totalRequired += 1;
         if (this.currentUser.sentenceWritingCompleted) {
             totalCompleted += 1;
@@ -370,7 +391,7 @@ class ChineseLearningApp {
     getWordLevel(word) {
         const defaultWords = JSON.parse(localStorage.getItem('defaultWords'));
         const userWords = JSON.parse(localStorage.getItem(`words_${this.currentUser.username}`) || '{}');
-        for (let level = 1; level <= 5; level++) {
+        for (let level = 1; level <= 10; level++) {
             const levelWords = userWords[level] || defaultWords[level] || [];
             if (levelWords.includes(word)) return level;
         }
@@ -425,6 +446,7 @@ class ChineseLearningApp {
     finishWordReview() {
         const score = this.currentActivity.score;
         const total = this.currentActivity.words.length;
+        this.logActivity('Word Review', `${score}/${total}`);
         this.currentUser.diamonds++;
         this.currentUser.testScores.push({ type: 'word-review', score, total, date: new Date().toISOString() });
         this.saveUserData();
@@ -432,11 +454,11 @@ class ChineseLearningApp {
         const canAdvance = this.canAdvanceLevel();
         setTimeout(() => {
             if (canAdvance) {
-                alert(`Word Review Complete!\nScore: ${score}/${total} (${Math.round(score / total * 100)}%)\n\n🎉 Congratulations! You have completed Level ${this.currentUser.level}! You earned a bonus of ${this.LEVEL_UP_DIAMOND_BONUS} diamonds!`);
+                alert(`單字閱讀 Complete!\nScore: ${score}/${total} (${Math.round(score / total * 100)}%)\n\n🎉 Congratulations! You have completed Level ${this.currentUser.level}! You earned a bonus of ${this.LEVEL_UP_DIAMOND_BONUS} diamonds!`);
                 this.advanceLevel();
                 this.showDashboard();
             } else {
-                alert(`Word Review Complete!\nScore: ${score}/${total} (${Math.round(score / total * 100)}%)`);
+                alert(`單字閱讀 Complete!\nScore: ${score}/${total} (${Math.round(score / total * 100)}%)\nYou earned one diamond!`);
                 this.showDashboard();
             }
         }, 300);
@@ -476,6 +498,7 @@ class ChineseLearningApp {
 
     showProgressDetail() {
         this.showScreen('progress-screen');
+        this.initCalendar();
         this.updateProgressDetails();
     }
 
@@ -540,6 +563,15 @@ class ChineseLearningApp {
         document.getElementById('current-level-display').textContent = this.currentUser.level;
         const currentLevel = this.currentUser.level;
         const resetSelect = document.getElementById('reset-level-select');
+        for (let i = 1; i <= 10; i++) {
+            let option = resetSelect.querySelector(`option[value="${i}"]`);
+            if (!option) {
+                option = document.createElement('option');
+                option.value = i;
+                option.textContent = `Level ${i}`;
+                resetSelect.appendChild(option);
+            }
+        }
         Array.from(resetSelect.options).forEach(option => {
             option.disabled = parseInt(option.value) > currentLevel;
         });
@@ -565,6 +597,7 @@ class ChineseLearningApp {
         this.currentUser.reviewLowerLevelWords = [];
         this.currentUser.sentenceWritingCompleted = false;
         this.currentUser.testScores = [];
+        this.currentUser.activityLog = [];
         this.generatePracticeSubsets();
         this.saveUserData();
         document.getElementById('current-level-display').textContent = targetLevel;
@@ -668,6 +701,106 @@ class ChineseLearningApp {
         localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
     }
 
+    logActivity(name, score = '') {
+        this.currentUser.activityLog = this.currentUser.activityLog || [];
+        this.currentUser.activityLog.push({
+            date: new Date().toISOString(),
+            name: name,
+            score: score
+        });
+        this.saveUserData();
+    }
+
+    // --- Calendar ---
+    initCalendar() {
+        const calendarEl = document.getElementById('activity-calendar');
+        const tooltip = document.getElementById('calendar-tooltip');
+
+        if (this.calendar) {
+            this.calendar.destroy();
+        }
+
+        this.calendar = new Calendar(calendarEl, {
+            numberMonthsDisplayed: 1,
+            dataSource: this.getCalendarEvents(),
+            language: 'en',
+            startDate: new Date(),
+            weekStart: 1,
+            mouseOnDay: (e) => {
+                if (e.events.length > 0) {
+                    this.showCalendarTooltip(e.element, e.events, tooltip);
+                }
+            },
+            mouseOutDay: () => {
+                tooltip.classList.remove('visible');
+            },
+            clickDay: (e) => {
+                 if (e.events.length > 0) {
+                    this.showCalendarTooltip(e.element, e.events, tooltip);
+                 }
+            }
+        });
+    }
+
+    getCalendarEvents() {
+        // js-year-calendar requires a single event per day to show the dot.
+        // We group all logs by day.
+        const eventsByDay = (this.currentUser.activityLog || []).reduce((acc, log) => {
+            const dateKey = new Date(log.date).toISOString().split('T')[0];
+            if (!acc[dateKey]) {
+                acc[dateKey] = [];
+            }
+            acc[dateKey].push(log);
+            return acc;
+        }, {});
+
+        return Object.keys(eventsByDay).map(date => {
+            const dateObj = new Date(date);
+            return {
+                // The library needs a name, but we hide it with CSS
+                name: "Activity",
+                startDate: dateObj,
+                endDate: dateObj,
+                // We'll store the actual logs in a custom property
+                customData: eventsByDay[date]
+            };
+        });
+    }
+
+    showCalendarTooltip(dayElement, events, tooltip) {
+        // All events for a day are in the 'customData' of the *first* event object
+        const logs = events[0]?.customData;
+        if (!logs || logs.length === 0) {
+            tooltip.classList.remove('visible');
+            return;
+        }
+
+        let content = '<ul>';
+        logs.forEach(log => {
+            const time = new Date(log.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            content += `<li>${time} - ${log.name} ${log.score ? `(${log.score})` : ''}</li>`;
+        });
+        content += '</ul>';
+        tooltip.innerHTML = content;
+
+        const dayRect = dayElement.getBoundingClientRect();
+        tooltip.style.left = `${dayRect.left + window.scrollX + dayRect.width / 2}px`;
+        tooltip.style.top = `${dayRect.top + window.scrollY}px`;
+        tooltip.classList.add('visible');
+
+        const tooltipRect = tooltip.getBoundingClientRect();
+        let finalTop = dayRect.top + window.scrollY - tooltipRect.height - 10;
+        if (finalTop < window.scrollY) {
+            finalTop = dayRect.bottom + window.scrollY + 10;
+        }
+        tooltip.style.top = `${finalTop}px`;
+
+        let finalLeft = dayRect.left + window.scrollX - (tooltipRect.width / 2) + (dayRect.width / 2);
+        if (finalLeft < 0) finalLeft = 10;
+        if (finalLeft + tooltipRect.width > window.innerWidth) finalLeft = window.innerWidth - tooltipRect.width - 10;
+        tooltip.style.left = `${finalLeft}px`;
+    }
+
     // --- Word Writing (Listening) Activity ---
     speak(text) {
         if (!text || text === '準備中...' || !('speechSynthesis' in window)) {
@@ -708,7 +841,7 @@ class ChineseLearningApp {
     displayCurrentWritingWord() {
         const activity = this.currentActivity;
         const word = activity.words[activity.currentIndex];
-        activity.currentAnswer = word; // Store the answer
+        activity.currentAnswer = word;
 
         const wordEl = document.getElementById('writing-chinese-word');
         wordEl.textContent = '???';
@@ -738,14 +871,18 @@ class ChineseLearningApp {
 
         this.currentActivity.currentIndex++;
         if (this.currentActivity.currentIndex >= this.currentActivity.words.length) {
+            this.logActivity('Word Writing', 'Completed');
+            this.currentUser.diamonds++;
+            this.saveUserData();
+
             const canAdvance = this.canAdvanceLevel();
             setTimeout(() => {
                 if (canAdvance) {
-                    alert(`Listening session complete!\n\n🎉 Congratulations! You have completed Level ${this.currentUser.level}! You earned a bonus of ${this.LEVEL_UP_DIAMOND_BONUS} diamonds!`);
+                    alert(`單字書寫 complete!\n\n🎉 Congratulations! You have completed Level ${this.currentUser.level}! You earned a bonus of ${this.LEVEL_UP_DIAMOND_BONUS} diamonds!`);
                     this.advanceLevel();
                     this.showDashboard();
                 } else {
-                    alert("Listening session complete!");
+                    alert("單字書寫 complete!\nYou earned one diamond!");
                     this.showDashboard();
                 }
             }, 300);
@@ -832,15 +969,17 @@ class ChineseLearningApp {
     handleSentenceCompletion(isComplete) {
         if (isComplete) {
             this.currentUser.sentenceWritingCompleted = true;
+            this.logActivity('Sentence Writing', 'Completed');
+            this.currentUser.diamonds++;
             this.saveUserData();
             const canAdvance = this.canAdvanceLevel();
             setTimeout(() => {
                 if (canAdvance) {
-                    alert(`Task marked as complete!\n\n🎉 Congratulations! You have completed Level ${this.currentUser.level}! You earned a bonus of ${this.LEVEL_UP_DIAMOND_BONUS} diamonds!`);
+                    alert(`造句練習 marked as complete!\n\n🎉 Congratulations! You have completed Level ${this.currentUser.level}! You earned a bonus of ${this.LEVEL_UP_DIAMOND_BONUS} diamonds!`);
                     this.advanceLevel();
                     this.showDashboard();
                 } else {
-                    alert("Task marked as complete for this level!");
+                    alert("造句練習 marked as complete for this level!\nYou earned one diamond!");
                     this.showDashboard();
                 }
             }, 300);
