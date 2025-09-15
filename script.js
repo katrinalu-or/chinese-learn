@@ -610,6 +610,8 @@ class ChineseLearningApp {
             alert('Reset cancelled. You must type "RESET" exactly to confirm.');
             return;
         }
+
+        // Perform the reset
         this.currentUser.level = targetLevel;
         this.currentUser.wordProgress = {};
         this.currentUser.listeningProgress = {};
@@ -619,9 +621,13 @@ class ChineseLearningApp {
         this.currentUser.testScores = [];
         this.currentUser.activityLog = [];
         this.generatePracticeSubsets();
-        this.saveUserData();
-        document.getElementById('current-level-display').textContent = targetLevel;
-        alert(`✅ Successfully reset to Level ${targetLevel}!\n\nAll progress has been cleared.`);
+        this.saveUserData(); // Save the cleared data to localStorage
+
+        alert(`✅ Successfully reset to Level ${targetLevel}!\n\nReturning to the dashboard with a fresh state.`);
+
+        // Force a full re-initialization of the user state, then show the dashboard.
+        // This is like a "soft refresh" and guarantees all UI elements update.
+        this.checkLoggedInUser();
     }
 
     downloadWordList() {
