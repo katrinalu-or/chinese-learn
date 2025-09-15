@@ -169,7 +169,7 @@
             <button id="back-from-dev">← Back</button>
             <h2>Developer Mode</h2>
             <div class="dev-actions">
-                <span class="version-info">Version: 1.02</span>
+                <span class="version-info">Version: 1.03</span>
             </div>
         </div>
         <div class="developer-content">
@@ -226,13 +226,14 @@
             </div>
         </div>
         <div class="gacha-container">
+            <!-- Gacha Controls -->
             <div class="gacha-controls">
                 <button id="draw-gacha-btn" class="gacha-draw-btn">Draw (1💎)</button>
                 <div class="gacha-draw-wrapper">
                     <button id="draw-ten-gacha-btn" class="gacha-draw-btn multi-draw">Draw 10 (10💎)</button>
                     <div class="tooltip-icon">?
-                        <span class="tooltip-text">Epic probabilty is 10% and Legendary is 2%
-Draw 10 guarantees one Epic or Legendary item!</span>
+                        <!-- Give the tooltip an ID and remove the hardcoded text -->
+                        <span class="tooltip-text" id="gacha-tooltip-text"></span>
                     </div>
                 </div>
             </div>

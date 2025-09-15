@@ -39,6 +39,7 @@ class ChineseLearningApp {
         this.initializeDefaultWords();
         this.setupEventListeners();
         this.checkLoggedInUser();
+        this.setupDynamicContent();
     }
 
     defineGachaPool() {
@@ -143,6 +144,15 @@ class ChineseLearningApp {
         document.getElementById('upload-wordlist-btn').addEventListener('click', () => document.getElementById('import-wordlist-file').click());
         document.getElementById('import-wordlist-file').addEventListener('change', (e) => this.uploadWordList(e));
         document.getElementById('reset-wordlist-btn').addEventListener('click', () => this.resetWordListToDefault());
+    }
+
+    setupDynamicContent() {
+        // Set the gacha tooltip text dynamically
+        const tooltipText = document.getElementById('gacha-tooltip-text');
+        if (tooltipText) {
+            tooltipText.innerHTML = `Epic probability is ${this.GACHA_PROBABILITIES.Epic}% and Legendary is ${this.GACHA_PROBABILITIES.Legendary}%
+Draw 10 guarantees one Epic or Legendary item!`;
+        }
     }
 
     checkLoggedInUser() {
@@ -485,10 +495,23 @@ class ChineseLearningApp {
     }
 
     advanceLevel() {
+        const oldLevel = this.currentUser.level;
         this.currentUser.level++;
         this.currentUser.diamonds += this.LEVEL_UP_DIAMOND_BONUS;
         this.currentUser.sentenceWritingCompleted = false;
 
+        // ** THE FIX **
+        // Get ALL words from all levels that are now considered "lower"
+        const allNowLowerLevelWords = this.getAllWordsUpToLevel(oldLevel);
+
+        // Reset the Word Review progress for ALL of them.
+        allNowLowerLevelWords.forEach(word => {
+            if (this.currentUser.wordProgress[word]) {
+                this.currentUser.wordProgress[word].correct = 0;
+            }
+        });
+
+        // Now, generate the new random subsets for both activities.
         this.generatePracticeSubsets();
         this.saveUserData();
     }
@@ -743,7 +766,8 @@ class ChineseLearningApp {
         const tooltip = document.getElementById('calendar-tooltip');
 
         if (this.calendar) {
-            this.calendar.destroy();
+            // The library doesn't have a destroy method, so we remove and re-add the element
+            calendarEl.innerHTML = '';
         }
 
         this.calendar = new Calendar(calendarEl, {
