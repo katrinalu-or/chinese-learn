@@ -676,6 +676,14 @@ body {
     min-width: 100px;
 }
 
+.version-info {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #666;
+    white-space: nowrap;
+    order: 1; /* Ensure it appears after buttons in mobile */
+}
+
 .backup-section, .reset-section, .wordlist-section {
     background: #ffffff;
     padding: 1.5rem;
@@ -1123,6 +1131,13 @@ body {
     .dev-actions {
         flex-direction: column;
         gap: 0.5rem;
+        align-items: center; /* Center align items */
+        min-height: auto; /* Remove min-width constraint */
+    }
+
+    .version-info {
+        text-align: center;
+        font-size: 0.8rem;
     }
 
     .level-header {

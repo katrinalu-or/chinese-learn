@@ -5,7 +5,7 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.04';
+        this.APP_VERSION = '1.05';
 
         this.WORDS_PER_SESSION = 20;
         this.CURRENT_LEVEL_COMPLETIONS = 1;
@@ -650,7 +650,6 @@ Draw 10 guarantees one Epic or Legendary item!`;
         this.currentUser.reviewLowerLevelWords = [];
         this.currentUser.sentenceWritingCompleted = false;
         this.currentUser.testScores = [];
-        this.currentUser.activityLog = [];
         this.generatePracticeSubsets();
         this.saveUserData(); // Save the cleared data to localStorage
 
@@ -761,6 +760,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
     logActivity(name, score = '') {
         this.currentUser.activityLog = this.currentUser.activityLog || [];
         this.currentUser.activityLog.push({
+            // Store the date as ISO string but the grouping logic above will handle timezone properly
             date: new Date().toISOString(),
             name: name,
             score: score
@@ -802,9 +802,11 @@ Draw 10 guarantees one Epic or Legendary item!`;
 
     getCalendarEvents() {
         // js-year-calendar requires a single event per day to show the dot.
-        // We group all logs by day.
+        // We group all logs by day using local date to avoid timezone issues
         const eventsByDay = (this.currentUser.activityLog || []).reduce((acc, log) => {
-            const dateKey = new Date(log.date).toISOString().split('T')[0];
+            // Use local date instead of ISO date to avoid timezone shifts
+            const logDate = new Date(log.date);
+            const dateKey = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
             if (!acc[dateKey]) {
                 acc[dateKey] = [];
             }
@@ -813,7 +815,9 @@ Draw 10 guarantees one Epic or Legendary item!`;
         }, {});
 
         return Object.keys(eventsByDay).map(date => {
-            const dateObj = new Date(date);
+            // Create date object using local timezone
+            const [year, month, day] = date.split('-').map(num => parseInt(num, 10));
+            const dateObj = new Date(year, month - 1, day); // month is 0-indexed
             return {
                 // The library needs a name, but we hide it with CSS
                 name: "Activity",
