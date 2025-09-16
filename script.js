@@ -2,8 +2,11 @@ class ChineseLearningApp {
     constructor() {
         this.currentUser = null;
         this.currentActivity = null;
+        this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
+        this.APP_VERSION = '1.04';
+
         this.WORDS_PER_SESSION = 20;
         this.CURRENT_LEVEL_COMPLETIONS = 1;
         this.LOWER_LEVEL_COMPLETIONS_REVIEW = 1; // For Word Review
@@ -47,7 +50,7 @@ class ChineseLearningApp {
             { id: 'zeus', name: 'Zeus', rarity: 'Legendary', image: 'greek/zeus.png' },
             { id: 'poseidon', name: 'Poseidon', rarity: 'Epic', image: 'greek/poseidon.png' },
             { id: 'hades', name: 'Hades', rarity: 'Epic', image: 'greek/hades.png' },
-            { id: 'hercules', name: 'Hercules', rarity: 'Epic', image: 'greek/hercules.png' },
+            { id: 'hercules', name: 'Hercules', rarity: 'Rare', image: 'greek/hercules.png' },
             { id: 'hera', name: 'Hera', rarity: 'Rare', image: 'greek/hera.png' },
             { id: 'athena', name: 'Athena', rarity: 'Rare', image: 'greek/athena.png' },
             { id: 'apollo', name: 'Apollo', rarity: 'Rare', image: 'greek/apollo.png' },
@@ -60,6 +63,7 @@ class ChineseLearningApp {
     }
 
     initializeDefaultWords() {
+        const LATEST_WORDS_VERSION = '7.0';
         const storedVersion = localStorage.getItem('defaultWordsVersion');
         if (storedVersion !== this.DEFAULT_WORDS_VERSION) {
             console.log(`Default word list is outdated. Updating to v${this.DEFAULT_WORDS_VERSION}`);
@@ -69,10 +73,13 @@ class ChineseLearningApp {
                 3: ['哥哥', '弟弟', '姐姐', '妹妹', '爸爸', '爺爺', '奶奶', '阿姨', '舅舅', '阿公', '阿嬤', '可以', '想法', '所以', '玩遊戲', '我也不知道', '沒有', '看電視', '馬上', '門口', '愛心', '上面', '竹子', '一塊田', '在哪裡', '多少', '尖尖的', '平平的', '石頭', '刀子', '出去', '未來', '日本', '目 （眼睛）', '罵人', '又來了', '左邊', '右邊', '為什麼', '以為'],
                 4: ['花', '草', '拍手', '這個', '分類', '向外走', '頭髮', '找手機', '課本', '地上', '真的', '假的', '朋友', '裡面', '外面', '叫外賣', '哭笑不得', '如果', '牛肉', '羊肉', '豬肉', '雞肉', '鴨肉', '每天', '都要', '給', '很會', '力氣', '米', '公車', '公主'],
                 5: ['第一次', '起來', '自己', '再一次', '做事情', '因為', '就是', '最喜歡', '結果', '長大', '海邊', '冬天', '春天', '夏天', '秋天', '長高', '更多', '時間', '美國', '中國', '住在', '重要', '重來', '誰', '生氣', '故事', '最近', '馬路', '跑步', '國王', '王子'],
-                6: ['一直', '一句話', '吃光光', '脫光', '過來', '拿東西', '有用', '用力', '一點點', '合在一起', '衣服', '還有', '還給我', '現在', '出現', '等一下', '看見', '見面', '能力', '可能', '能不能', '天才', '我剛剛才', '才能', '放在', '下午', '可愛', '愛吃', '站著', '已經'],
-                7: ['先來', '趕快', '怎麼', '多久', '正常', '非常', '平常', '房間', '紅包', '包起來', '快樂', '可樂', '毛巾', '走得慢', '跑得快', '正方形', '圓形', '三角形', '長方形', '地方', '陪家人', '喝牛奶', '一定', '新年'],
-                8: ['忘記', '經過', '記得', '糖果', '彩虹', '好乖', '同時', '同樣的', '一樣', '手拉手', '收東西', '永遠', '永久', '草莓', '切開', '全部', '而且', '需要', '寫字', '中文', '工作', '請假', '請問', '害怕', '打雷', '閃電', '帶東西', '入口', '青菜', '晴天', '籃球', '足球', '加油', '隊長', '結束'],
-                9: ['比賽', '老師', '開始', '對不對', '對面', '對不起', '顏色', '充電', '充滿', '出發', '發生', '發現', '一件衣服', '奇怪', '好奇', '小鳥', '唱歌', '穿衣服', '覺得', '睡覺', '學校', '學生', '電影', '影子', '休息']
+                6: ['一直', '一句話', '吃光光', '脫光', '過來', '拿東西', '有用', '用力', '一點點', '合在一起', '衣服', '還有', '還給我', '現在', '出現', '等一下', '看見', '見面', '能力', '可能', '能不能', '天才', '我剛剛才', '才能', '放在', '下午', '可愛', '愛吃', '站著', '已經', '先來', '趕快', '怎麼', '多久', '正常', '非常', '平常', '房間', '紅包', '包起來'],
+                7: ['快樂', '可樂', '毛巾', '走得慢', '跑得快', '正方形', '圓形', '三角形', '長方形', '地方', '陪家人', '喝牛奶', '一定', '新年', '忘記', '經過', '記得', '糖果', '彩虹', '好乖', '同時', '同樣的', '一樣', '手拉手', '收東西', '永遠', '永久', '草莓', '切開', '全部', '而且', '需要', '寫字', '中文', '工作', '請假', '請問', '害怕', '打雷', '閃電'],
+                8: ['帶東西', '入口', '青菜', '晴天', '籃球', '足球', '加油', '隊長', '結束', '比賽', '老師', '開始', '對不對', '對面', '對不起', '顏色', '充電', '充滿', '出發', '發生', '發現', '一件衣服', '奇怪', '好奇', '小鳥', '唱歌', '穿衣服', '覺得', '睡覺', '學校', '學生', '電影', '影子', '休息', '喝酒', '喜歡', '河流', '大樹', '希望', '漂亮'],
+                9: ['相信', '一張紙', '浪費', '海浪', '花錢', '謝謝', '問題', '題目', '一朵花', '花朵', '金色', '世界', '停下來', '小狗', '可惡', '身上', '但是', '鴨子', '跳下去', '掉下來', '花園', '公園', '校園', '動物園', '進去', '進步', '前進', '回答', '起床', '食物', '生物', '怪物', '吃飯', '吃麵', '動作', '運動', '從這裡', '自從', '卡片', '很忙'],
+                10: ['芒果', '皮球', '動物的皮', '破掉', '打破', '超人', '超過', '超級', '好吵', '吵架', '送禮物', '送機', '幫忙', '長短', '香味', '味道', '口味', '方便', '行動不便', '便宜', '東西很貴', '貴重', '耳朵', '脫衣服', '好像', '大象', '一條線', '一條魚', '然後', '當然', '爬上去', '討厭', '好累', '別人', '特別', '高矮', '小矮人', '樹葉', '楓葉', '勇氣'],
+                11: ['完成', '成為', '成功', '成長', '高低', '毛豆', '紅豆', '相同', '相反', '相信', '桌子', '椅子', '應該', '活該', '答應', '畫畫', '一隻狗', '一隻鳥', '張開', '一張紙', '想念', '唸書', '好酷', '讓我來', '躲起來', '躲貓貓', '飛起來', '飛機', '山洞', '吹泡泡', '泡牛奶', '泡澡', '聞到', '新聞', '重輕', '小被被', '被罵', '蘋果', '變成', '變身'],
+                12: ['考試', '告訴', '美麗', '簡單', '參加', '活動', '生活', '活著', '羽毛球', '到底', '底部', '零分', '零食', '有名', '名字', '明星', '名人', '乾淨', '水果乾', '蝦子', '蝦米']
             };
             localStorage.setItem('defaultWords', JSON.stringify(defaultWords));
             localStorage.setItem('defaultWordsVersion', this.DEFAULT_WORDS_VERSION);
@@ -400,7 +407,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
     getWordLevel(word) {
         const defaultWords = JSON.parse(localStorage.getItem('defaultWords'));
         const userWords = JSON.parse(localStorage.getItem(`words_${this.currentUser.username}`) || '{}');
-        for (let level = 1; level <= 10; level++) {
+        for (let level = 1; level <= 12; level++) {
             const levelWords = userWords[level] || defaultWords[level] || [];
             if (levelWords.includes(word)) return level;
         }
@@ -604,9 +611,10 @@ Draw 10 guarantees one Epic or Legendary item!`;
     showDeveloperMode() {
         this.showScreen('developer-screen');
         document.getElementById('current-level-display').textContent = this.currentUser.level;
+        document.getElementById('app-version-display').textContent = `Version: ${this.APP_VERSION}`;
         const currentLevel = this.currentUser.level;
         const resetSelect = document.getElementById('reset-level-select');
-        for (let i = 1; i <= 10; i++) {
+        for (let i = 1; i <= 12; i++) {
             let option = resetSelect.querySelector(`option[value="${i}"]`);
             if (!option) {
                 option = document.createElement('option');
@@ -703,7 +711,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
             currentUser: this.currentUser,
             userWords: JSON.parse(localStorage.getItem(`words_${this.currentUser.username}`) || '{}'),
             exportDate: new Date().toISOString(),
-            appVersion: '1.0'
+            appVersion: this.APP_VERSION
         };
         const dataStr = JSON.stringify(userData, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
