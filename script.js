@@ -5,7 +5,7 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.05';
+        this.APP_VERSION = '1.06';
 
         this.WORDS_PER_SESSION = 20;
         this.CURRENT_LEVEL_COMPLETIONS = 1;
@@ -759,9 +759,13 @@ Draw 10 guarantees one Epic or Legendary item!`;
 
     logActivity(name, score = '') {
         this.currentUser.activityLog = this.currentUser.activityLog || [];
+
+        // Store date in local timezone instead of UTC
+        const now = new Date();
+        const localDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000));
+
         this.currentUser.activityLog.push({
-            // Store the date as ISO string but the grouping logic above will handle timezone properly
-            date: new Date().toISOString(),
+            date: localDate.toISOString(), // This will be local time in ISO format
             name: name,
             score: score
         });
@@ -785,27 +789,35 @@ Draw 10 guarantees one Epic or Legendary item!`;
             startDate: new Date(),
             weekStart: 1,
             mouseOnDay: (e) => {
-                if (e.events.length > 0) {
+                console.log('Mouse on day:', e); // Debug log
+                if (e.events && e.events.length > 0) {
                     this.showCalendarTooltip(e.element, e.events, tooltip);
+                } else {
+                    tooltip.classList.remove('visible');
                 }
             },
-            mouseOutDay: () => {
+            mouseOutDay: (e) => {
+                console.log('Mouse out day'); // Debug log
                 tooltip.classList.remove('visible');
             },
             clickDay: (e) => {
-                 if (e.events.length > 0) {
+                console.log('Click day:', e); // Debug log
+                if (e.events && e.events.length > 0) {
                     this.showCalendarTooltip(e.element, e.events, tooltip);
-                 }
+                }
             }
         });
     }
 
     getCalendarEvents() {
+        console.log('Activity log:', this.currentUser.activityLog); // Debug log
+
         // js-year-calendar requires a single event per day to show the dot.
         // We group all logs by day using local date to avoid timezone issues
         const eventsByDay = (this.currentUser.activityLog || []).reduce((acc, log) => {
-            // Use local date instead of ISO date to avoid timezone shifts
+            // Use the actual date when the activity was logged (in user's timezone)
             const logDate = new Date(log.date);
+            // Use local date components to avoid timezone conversion issues
             const dateKey = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
             if (!acc[dateKey]) {
                 acc[dateKey] = [];
@@ -814,28 +826,39 @@ Draw 10 guarantees one Epic or Legendary item!`;
             return acc;
         }, {});
 
-        return Object.keys(eventsByDay).map(date => {
+        console.log('Events by day:', eventsByDay); // Debug log
+
+        const calendarEvents = Object.keys(eventsByDay).map(date => {
             // Create date object using local timezone
             const [year, month, day] = date.split('-').map(num => parseInt(num, 10));
             const dateObj = new Date(year, month - 1, day); // month is 0-indexed
-            return {
-                // The library needs a name, but we hide it with CSS
+            const event = {
                 name: "Activity",
                 startDate: dateObj,
                 endDate: dateObj,
-                // We'll store the actual logs in a custom property
                 customData: eventsByDay[date]
             };
+            console.log('Created event for date:', date, 'dateObj:', dateObj); // Debug log
+            return event;
         });
+
+        console.log('Final calendar events:', calendarEvents); // Debug log
+        return calendarEvents;
     }
 
     showCalendarTooltip(dayElement, events, tooltip) {
+        console.log('Showing tooltip for events:', events); // Debug log
+
         // All events for a day are in the 'customData' of the *first* event object
         const logs = events[0]?.customData;
+
         if (!logs || logs.length === 0) {
+            console.log('No logs found'); // Debug log
             tooltip.classList.remove('visible');
             return;
         }
+
+        console.log('Found logs:', logs); // Debug log
 
         let content = '<ul>';
         logs.forEach(log => {
@@ -845,22 +868,40 @@ Draw 10 guarantees one Epic or Legendary item!`;
         content += '</ul>';
         tooltip.innerHTML = content;
 
+        console.log('Tooltip content:', content); // Debug log
+
+        // Position the tooltip with better positioning
         const dayRect = dayElement.getBoundingClientRect();
-        tooltip.style.left = `${dayRect.left + window.scrollX + dayRect.width / 2}px`;
-        tooltip.style.top = `${dayRect.top + window.scrollY}px`;
+        const calendarContainer = document.getElementById('activity-calendar');
+        const containerRect = calendarContainer.getBoundingClientRect();
+
+        // Position relative to viewport (not container) for better visibility
+        tooltip.style.position = 'fixed';
+        tooltip.style.left = `${dayRect.left + dayRect.width / 2}px`;
+        tooltip.style.top = `${dayRect.top - 10}px`;
+        tooltip.style.zIndex = '9999'; // Ensure it's on top
         tooltip.classList.add('visible');
 
-        const tooltipRect = tooltip.getBoundingClientRect();
-        let finalTop = dayRect.top + window.scrollY - tooltipRect.height - 10;
-        if (finalTop < window.scrollY) {
-            finalTop = dayRect.bottom + window.scrollY + 10;
-        }
-        tooltip.style.top = `${finalTop}px`;
+        console.log('Tooltip positioned at:', tooltip.style.left, tooltip.style.top); // Debug log
 
-        let finalLeft = dayRect.left + window.scrollX - (tooltipRect.width / 2) + (dayRect.width / 2);
-        if (finalLeft < 0) finalLeft = 10;
-        if (finalLeft + tooltipRect.width > window.innerWidth) finalLeft = window.innerWidth - tooltipRect.width - 10;
-        tooltip.style.left = `${finalLeft}px`;
+        // Adjust positioning after tooltip is rendered
+        setTimeout(() => {
+            const tooltipRect = tooltip.getBoundingClientRect();
+            let finalTop = dayRect.top - tooltipRect.height - 10;
+            if (finalTop < 0) {
+                finalTop = dayRect.bottom + 10;
+            }
+            tooltip.style.top = `${finalTop}px`;
+
+            let finalLeft = dayRect.left + dayRect.width / 2 - tooltipRect.width / 2;
+            if (finalLeft < 0) finalLeft = 10;
+            if (finalLeft + tooltipRect.width > window.innerWidth) {
+                finalLeft = window.innerWidth - tooltipRect.width - 10;
+            }
+            tooltip.style.left = `${finalLeft}px`;
+
+            console.log('Tooltip final position:', tooltip.style.left, tooltip.style.top);
+        }, 10);
     }
 
     // --- Word Writing (Listening) Activity ---
