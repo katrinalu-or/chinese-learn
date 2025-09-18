@@ -548,8 +548,7 @@ body {
     font-size: 0.9rem !important;
     max-width: 300px !important;
     white-space: nowrap !important;
-    border: 2px solid white !important; /* Add visible border for debugging */
-    min-width: 200px !important; /* Ensure it has size */
+    min-width: 200px !important;
     min-height: 50px !important;
 }
 

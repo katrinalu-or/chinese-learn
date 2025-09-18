@@ -5,7 +5,7 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.06';
+        this.APP_VERSION = '1.07';
 
         this.WORDS_PER_SESSION = 20;
         this.CURRENT_LEVEL_COMPLETIONS = 1;
@@ -454,6 +454,11 @@ Draw 10 guarantees one Epic or Legendary item!`;
     }
 
     handleWordResponse(isCorrect) {
+        // Prevent multiple executions if activity is already finishing
+        if (this.currentActivity.isFinishing) {
+            return;
+        }
+
         const activity = this.currentActivity;
         const word = activity.words[activity.currentIndex];
         if (isCorrect) {
@@ -463,6 +468,8 @@ Draw 10 guarantees one Epic or Legendary item!`;
 
         activity.currentIndex++;
         if (activity.currentIndex >= activity.words.length) {
+            // Set flag to prevent multiple executions
+            activity.isFinishing = true;
             this.finishWordReview();
         } else {
             this.displayCurrentWord();
@@ -485,7 +492,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
         const total = this.currentActivity.words.length;
         this.logActivity('Word Review', `${score}/${total}`);
         this.currentUser.diamonds++;
-        this.currentUser.testScores.push({ type: 'word-review', score, total, date: new Date().toISOString() });
+        this.currentUser.testScores.push({ type: 'word-review', score, total, date: this.getCurrentLocalTime() });
         this.saveUserData();
 
         const canAdvance = this.canAdvanceLevel();
@@ -507,19 +514,25 @@ Draw 10 guarantees one Epic or Legendary item!`;
         this.currentUser.diamonds += this.LEVEL_UP_DIAMOND_BONUS;
         this.currentUser.sentenceWritingCompleted = false;
 
-        // ** THE FIX **
-        // Get ALL words from all levels that are now considered "lower"
-        const allNowLowerLevelWords = this.getAllWordsUpToLevel(oldLevel);
+        // First, generate the new random subsets for the new level
+        this.generatePracticeSubsets();
 
-        // Reset the Word Review progress for ALL of them.
-        allNowLowerLevelWords.forEach(word => {
+        // Then, reset progress ONLY for the words in the new subsets
+        const wordsToReset = [
+            ...(this.currentUser.reviewLowerLevelWords || []),
+            ...(this.currentUser.listeningLowerLevelWords || [])
+        ];
+
+        // Reset progress for words in the new practice subsets
+        wordsToReset.forEach(word => {
             if (this.currentUser.wordProgress[word]) {
                 this.currentUser.wordProgress[word].correct = 0;
             }
+            if (this.currentUser.listeningProgress[word]) {
+                this.currentUser.listeningProgress[word].correct = 0;
+            }
         });
 
-        // Now, generate the new random subsets for both activities.
-        this.generatePracticeSubsets();
         this.saveUserData();
     }
 
@@ -709,7 +722,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
         const userData = {
             currentUser: this.currentUser,
             userWords: JSON.parse(localStorage.getItem(`words_${this.currentUser.username}`) || '{}'),
-            exportDate: new Date().toISOString(),
+            exportDate: this.getCurrentLocalTime(),
             appVersion: this.APP_VERSION
         };
         const dataStr = JSON.stringify(userData, null, 2);
@@ -757,15 +770,23 @@ Draw 10 guarantees one Epic or Legendary item!`;
         localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
     }
 
+    getCurrentLocalTime() {
+        // Store in a format that's clearly local time
+        const now = new Date();
+        return now.getFullYear() + '-' +
+               String(now.getMonth() + 1).padStart(2, '0') + '-' +
+               String(now.getDate()).padStart(2, '0') + 'T' +
+               String(now.getHours()).padStart(2, '0') + ':' +
+               String(now.getMinutes()).padStart(2, '0') + ':' +
+               String(now.getSeconds()).padStart(2, '0') + '.' +
+               String(now.getMilliseconds()).padStart(3, '0');
+    }
+
     logActivity(name, score = '') {
         this.currentUser.activityLog = this.currentUser.activityLog || [];
 
-        // Store date in local timezone instead of UTC
-        const now = new Date();
-        const localDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000));
-
         this.currentUser.activityLog.push({
-            date: localDate.toISOString(), // This will be local time in ISO format
+            date: this.getCurrentLocalTime(), // Use helper function
             name: name,
             score: score
         });
@@ -789,7 +810,6 @@ Draw 10 guarantees one Epic or Legendary item!`;
             startDate: new Date(),
             weekStart: 1,
             mouseOnDay: (e) => {
-                console.log('Mouse on day:', e); // Debug log
                 if (e.events && e.events.length > 0) {
                     this.showCalendarTooltip(e.element, e.events, tooltip);
                 } else {
@@ -797,11 +817,9 @@ Draw 10 guarantees one Epic or Legendary item!`;
                 }
             },
             mouseOutDay: (e) => {
-                console.log('Mouse out day'); // Debug log
                 tooltip.classList.remove('visible');
             },
             clickDay: (e) => {
-                console.log('Click day:', e); // Debug log
                 if (e.events && e.events.length > 0) {
                     this.showCalendarTooltip(e.element, e.events, tooltip);
                 }
@@ -810,79 +828,77 @@ Draw 10 guarantees one Epic or Legendary item!`;
     }
 
     getCalendarEvents() {
-        console.log('Activity log:', this.currentUser.activityLog); // Debug log
-
         // js-year-calendar requires a single event per day to show the dot.
         // We group all logs by day using local date to avoid timezone issues
         const eventsByDay = (this.currentUser.activityLog || []).reduce((acc, log) => {
-            // Use the actual date when the activity was logged (in user's timezone)
-            const logDate = new Date(log.date);
-            // Use local date components to avoid timezone conversion issues
-            const dateKey = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
-            if (!acc[dateKey]) {
-                acc[dateKey] = [];
+            // Parse the stored local ISO time directly without timezone conversion
+            const dateStr = log.date.split('T')[0]; // Get just the date part (YYYY-MM-DD)
+            if (!acc[dateStr]) {
+                acc[dateStr] = [];
             }
-            acc[dateKey].push(log);
+            acc[dateStr].push(log);
             return acc;
         }, {});
 
-        console.log('Events by day:', eventsByDay); // Debug log
-
-        const calendarEvents = Object.keys(eventsByDay).map(date => {
+        return Object.keys(eventsByDay).map(date => {
             // Create date object using local timezone
             const [year, month, day] = date.split('-').map(num => parseInt(num, 10));
             const dateObj = new Date(year, month - 1, day); // month is 0-indexed
-            const event = {
+            return {
+                // The library needs a name, but we hide it with CSS
                 name: "Activity",
                 startDate: dateObj,
                 endDate: dateObj,
+                // We'll store the actual logs in a custom property
                 customData: eventsByDay[date]
             };
-            console.log('Created event for date:', date, 'dateObj:', dateObj); // Debug log
-            return event;
         });
-
-        console.log('Final calendar events:', calendarEvents); // Debug log
-        return calendarEvents;
     }
 
     showCalendarTooltip(dayElement, events, tooltip) {
-        console.log('Showing tooltip for events:', events); // Debug log
-
         // All events for a day are in the 'customData' of the *first* event object
         const logs = events[0]?.customData;
 
         if (!logs || logs.length === 0) {
-            console.log('No logs found'); // Debug log
             tooltip.classList.remove('visible');
             return;
         }
 
-        console.log('Found logs:', logs); // Debug log
-
         let content = '<ul>';
         logs.forEach(log => {
-            const time = new Date(log.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            content += `<li>${time} - ${log.name} ${log.score ? `(${log.score})` : ''}</li>`;
+            let displayTime;
+
+            // Handle both old format (with Z) and new format (without Z)
+            if (log.date.endsWith('Z')) {
+                // Old format - this is actually local time stored with Z, so parse directly
+                const timeOnly = log.date.split('T')[1].slice(0, 8); // Get HH:MM:SS part
+                const [hours, minutes] = timeOnly.split(':');
+                displayTime = new Date(2000, 0, 1, parseInt(hours), parseInt(minutes)).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } else {
+                // New format - parse normally
+                const parsedDate = new Date(log.date);
+                displayTime = parsedDate.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            content += `<li>${displayTime} - ${log.name} ${log.score ? `(${log.score})` : ''}</li>`;
         });
         content += '</ul>';
         tooltip.innerHTML = content;
 
-        console.log('Tooltip content:', content); // Debug log
-
-        // Position the tooltip with better positioning
+        // Position the tooltip
         const dayRect = dayElement.getBoundingClientRect();
-        const calendarContainer = document.getElementById('activity-calendar');
-        const containerRect = calendarContainer.getBoundingClientRect();
 
-        // Position relative to viewport (not container) for better visibility
         tooltip.style.position = 'fixed';
         tooltip.style.left = `${dayRect.left + dayRect.width / 2}px`;
         tooltip.style.top = `${dayRect.top - 10}px`;
         tooltip.style.zIndex = '9999'; // Ensure it's on top
         tooltip.classList.add('visible');
-
-        console.log('Tooltip positioned at:', tooltip.style.left, tooltip.style.top); // Debug log
 
         // Adjust positioning after tooltip is rendered
         setTimeout(() => {
@@ -899,8 +915,6 @@ Draw 10 guarantees one Epic or Legendary item!`;
                 finalLeft = window.innerWidth - tooltipRect.width - 10;
             }
             tooltip.style.left = `${finalLeft}px`;
-
-            console.log('Tooltip final position:', tooltip.style.left, tooltip.style.top);
         }, 10);
     }
 
@@ -963,6 +977,11 @@ Draw 10 guarantees one Epic or Legendary item!`;
     }
 
     handleWritingResponse(isCorrect) {
+        // Prevent multiple executions if activity is already finishing
+        if (this.currentActivity.isFinishing) {
+            return;
+        }
+
         const word = this.currentActivity.currentAnswer;
         if (!this.currentUser.listeningProgress[word]) {
             this.currentUser.listeningProgress[word] = { correct: 0 };
@@ -974,6 +993,8 @@ Draw 10 guarantees one Epic or Legendary item!`;
 
         this.currentActivity.currentIndex++;
         if (this.currentActivity.currentIndex >= this.currentActivity.words.length) {
+            // Set flag to prevent multiple executions
+            this.currentActivity.isFinishing = true;
             this.logActivity('Word Writing', 'Completed');
             this.currentUser.diamonds++;
             this.saveUserData();
@@ -1070,7 +1091,17 @@ Draw 10 guarantees one Epic or Legendary item!`;
     }
 
     handleSentenceCompletion(isComplete) {
+        // Prevent multiple executions if activity is already finishing
+        if (this.currentActivity && this.currentActivity.isFinishing) {
+            return;
+        }
+
         if (isComplete) {
+            // Set flag to prevent multiple executions
+            if (this.currentActivity) {
+                this.currentActivity.isFinishing = true;
+            }
+
             this.currentUser.sentenceWritingCompleted = true;
             this.logActivity('Sentence Writing', 'Completed');
             this.currentUser.diamonds++;
@@ -1090,7 +1121,6 @@ Draw 10 guarantees one Epic or Legendary item!`;
             this.showDashboard();
         }
     }
-
 
     // --- Collections & Gacha System ---
     showCollectionsPage() {
