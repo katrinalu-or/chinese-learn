@@ -462,22 +462,30 @@ body {
     justify-content: center;
 }
 
-/* Progress Screen */
+/* Progress Screen Layout Improvements - 3 Column Layout */
 .progress-details {
     padding: 2rem 1.5rem;
-    max-width: 900px;
+    max-width: 1600px; /* Increased for 3-column layout */
     margin: 0 auto;
     color: #333;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr; /* Three columns on larger screens */
+    gap: 2rem;
+    align-items: start;
 }
 
+/* Calendar gets full width at the bottom */
 #activity-log-container {
+/*  grid-column: 1 / 3;  /* Span columns 1-2 (first two columns) */
+/*  grid-column: 2 / 4;  /* Span columns 2-3 (last two columns) */
+/*  grid-column: 1 / -1; /* Span all three columns */
+    grid-column: 2 / 2; /* Span all three columns */
     position: relative;
     background: #ffffff;
     padding: 1.5rem;
     border-radius: 20px;
-    margin-bottom: 2rem;
+    margin-bottom: 0;
     box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    overflow: visible !important; /* Don't clip the tooltip */
 }
 
 #activity-calendar {
@@ -487,7 +495,7 @@ body {
 #activity-log-container h4 {
     text-align: center;
     margin-bottom: 1.5rem;
-    font-size: 1.6rem;
+    font-size: 1.3rem;
     color: #333;
 }
 /* Corrected styles for js-year-calendar */
@@ -580,11 +588,22 @@ body {
 
 .word-progress h4 {
     margin-bottom: 2rem;
-    font-size: 1.6rem;
+    font-size: 1.3rem;
     text-align: center;
     color: #333;
     border-bottom: 2px solid #eee;
     padding-bottom: 1rem;
+}
+
+.word-progress {
+    background: #ffffff;
+    backdrop-filter: blur(10px);
+    padding: 2rem; /* Slightly reduced padding for 3-column layout */
+    border-radius: 20px;
+    margin-bottom: 0;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    height: fit-content;
 }
 
 .listening-word-list {
@@ -597,18 +616,19 @@ body {
     margin-bottom: 1rem;
 }
 
+/* Optimize the listening word grid for smaller containers */
 .listening-word-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Smaller min-width for 3-column layout */
+    gap: 0.5rem; /* Reduced gap */
 }
 
 .listening-word-item {
-    padding: 0.5rem 0.75rem;
+    padding: 0.4rem 0.6rem; /* Slightly smaller padding */
     background-color: #f8f9fa;
     border: 1px solid #dee2e6;
     border-radius: 6px;
-    font-size: 1.1rem;
+    font-size: 1rem; /* Slightly smaller font */
     text-align: center;
     color: #495057;
     transition: all 0.3s ease;
@@ -1130,7 +1150,14 @@ body {
 .rarity-text.Epic { color: #8A4EDA; }
 .rarity-text.Legendary { color: #F5A623; }
 
-/* Responsive */
+/* Responsive breakpoints */
+@media (max-width: 1200px) {
+    .progress-details {
+        grid-template-columns: 1fr 1fr; /* Two columns on smaller desktops/tablets */
+        max-width: 1400px;
+    }
+}
+
 @media (max-width: 1024px) {
     .dashboard-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -1189,6 +1216,21 @@ body {
 
     .multi-result-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .progress-details {
+        grid-template-columns: 1fr; /* Single column on mobile */
+        max-width: 900px;
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .word-progress {
+        padding: 1.5rem;
+    }
+
+    #activity-log-container {
+        padding: 1rem;
     }
 }
 

@@ -5,7 +5,7 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.07';
+        this.APP_VERSION = '1.08';
 
         this.WORDS_PER_SESSION = 20;
         this.CURRENT_LEVEL_COMPLETIONS = 1;
@@ -568,6 +568,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
     updateProgressDetails() {
         const currentLevel = this.currentUser.level;
 
+        // Word Review Progress
         const reviewContainer = document.getElementById('word-review-progress');
         let reviewHTML = '<h4>Word Review Progress</h4>';
         let required = this.CURRENT_LEVEL_COMPLETIONS;
@@ -589,8 +590,19 @@ Draw 10 guarantees one Epic or Legendary item!`;
         if (levelWords.length > 0) {
             reviewHTML += `<div class="level-progress-item ${levelProgress >= 100 ? 'completed' : ''}"><div class="level-header"><h5>Lower Levels</h5></div><div class="level-progress-bar"><div class="level-progress-fill" style="width: ${levelProgress}%">${levelProgress}%</div></div></div>`;
         }
+
+        const reviewLowerLevelWords = this.currentUser.reviewLowerLevelWords || [];
+        if (reviewLowerLevelWords.length > 0) {
+            reviewHTML += '<div class="listening-word-list"><h5>Lower Level Practice Words</h5><div class="listening-word-grid">';
+            reviewLowerLevelWords.forEach(word => {
+                const isCompleted = (this.currentUser.wordProgress[word]?.correct || 0) >= this.LOWER_LEVEL_COMPLETIONS_REVIEW;
+                reviewHTML += `<div class="listening-word-item ${isCompleted ? 'completed' : ''}">${word}</div>`;
+            });
+            reviewHTML += '</div></div>';
+        }
         reviewContainer.innerHTML = reviewHTML;
 
+        // Word Writing Progress
         const writingContainer = document.getElementById('word-writing-progress');
         let writingHTML = '<h4>Word Writing Progress</h4>';
         required = this.LISTENING_CURRENT_LEVEL_COMPLETIONS;
@@ -601,6 +613,16 @@ Draw 10 guarantees one Epic or Legendary item!`;
         levelProgress = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
         if (levelWords.length > 0) {
             writingHTML += `<div class="level-progress-item ${levelProgress >= 100 ? 'completed' : ''}"><div class="level-header"><h5>Level ${currentLevel} (Current)</h5></div><div class="level-progress-bar"><div class="level-progress-fill" style="width: ${levelProgress}%">${levelProgress}%</div></div></div>`;
+        }
+
+        required = this.LISTENING_LOWER_LEVEL_COMPLETIONS;
+        levelWords = this.currentUser.listeningLowerLevelWords || [];
+        totalRequired = levelWords.length * required;
+        totalCompleted = 0;
+        levelWords.forEach(word => { totalCompleted += Math.min(this.currentUser.listeningProgress[word]?.correct || 0, required); });
+        levelProgress = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
+        if (levelWords.length > 0) {
+            writingHTML += `<div class="level-progress-item ${levelProgress >= 100 ? 'completed' : ''}"><div class="level-header"><h5>Lower Levels</h5></div><div class="level-progress-bar"><div class="level-progress-fill" style="width: ${levelProgress}%">${levelProgress}%</div></div></div>`;
         }
 
         const requiredLowerLevelWords = this.currentUser.listeningLowerLevelWords || [];
@@ -614,6 +636,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
         }
         writingContainer.innerHTML = writingHTML;
 
+        // Sentence Writing Progress (moves to left column in 2-column layout)
         const sentenceContainer = document.getElementById('sentence-writing-progress');
         let sentenceHTML = '<h4>Sentence Writing Progress</h4>';
         const sentenceProgress = this.currentUser.sentenceWritingCompleted ? 100 : 0;
