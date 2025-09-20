@@ -37,6 +37,22 @@ class ChineseLearningApp {
         this.DEFAULT_WORDS_VERSION = '8.0';
         this.gachaPool = this.defineGachaPool();
         this.init();
+
+        // Debug layout changes globally
+        if (typeof ResizeObserver !== 'undefined') {
+            const resizeObserver = new ResizeObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.target === document.body) {
+                        console.log('📏 Body resize detected:', {
+                            width: entry.contentRect.width,
+                            height: entry.contentRect.height
+                        });
+                    }
+                });
+            });
+            resizeObserver.observe(document.body);
+        }
+
     }
 
     async init() {
@@ -671,6 +687,101 @@ Draw 10 guarantees one Epic or Legendary item!`;
         const sentenceProgress = this.currentUser.sentenceWritingCompleted ? 100 : 0;
         sentenceHTML += `<div class="level-progress-item ${sentenceProgress >= 100 ? 'completed' : ''}"><div class="level-header"><h5>Practice Task</h5></div><div class="level-progress-bar"><div class="level-progress-fill" style="width: ${sentenceProgress}%">${sentenceProgress}%</div></div></div>`;
         sentenceContainer.innerHTML = sentenceHTML;
+
+        // Add debugging after setting innerHTML
+        console.log('=== iOS ZOOM DEBUGGING ===');
+
+        // 1. Log viewport changes
+        const logViewport = () => {
+            console.log('Viewport:', {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                visualViewport: window.visualViewport ? {
+                    width: window.visualViewport.width,
+                    height: window.visualViewport.height,
+                    scale: window.visualViewport.scale
+                } : 'not supported',
+                devicePixelRatio: window.devicePixelRatio,
+                zoom: document.documentElement.clientWidth / window.innerWidth
+            });
+        };
+
+        // 2. Monitor viewport changes
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                console.log('📱 Visual viewport resize detected');
+                logViewport();
+            });
+            window.visualViewport.addEventListener('scroll', () => {
+                console.log('📱 Visual viewport scroll detected');
+                logViewport();
+            });
+        }
+
+        // 3. Log initial state
+        logViewport();
+
+        // 4. Add debugging to the collapsible headers
+        const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+        collapsibleHeaders.forEach((header, index) => {
+            // Log element dimensions before interaction
+            console.log(`Header ${index} initial:`, {
+                offsetHeight: header.offsetHeight,
+                scrollHeight: header.scrollHeight,
+                parentHeight: header.parentElement.offsetHeight
+            });
+
+            header.addEventListener('click', (e) => {
+                console.log(`🖱️ Header ${index} clicked`);
+
+                // Log BEFORE toggle
+                const contentEl = header.parentElement.querySelector('.collapsible-content');
+                console.log('Before toggle:', {
+                    isExpanded: header.parentElement.classList.contains('expanded'),
+                    contentHeight: contentEl.offsetHeight,
+                    contentScrollHeight: contentEl.scrollHeight,
+                    bodyHeight: document.body.offsetHeight,
+                    documentHeight: document.documentElement.offsetHeight
+                });
+
+                logViewport();
+
+                // Perform the toggle
+                header.parentElement.classList.toggle('expanded');
+
+                // Log AFTER toggle (with a slight delay to catch transition)
+                setTimeout(() => {
+                    console.log('After toggle:', {
+                        isExpanded: header.parentElement.classList.contains('expanded'),
+                        contentHeight: contentEl.offsetHeight,
+                        contentScrollHeight: contentEl.scrollHeight,
+                        bodyHeight: document.body.offsetHeight,
+                        documentHeight: document.documentElement.offsetHeight
+                    });
+                    logViewport();
+                }, 50);
+
+                // Log after transition completes
+                setTimeout(() => {
+                    console.log('After transition complete:');
+                    logViewport();
+                }, 350);
+            });
+
+            // Also monitor touch events specifically
+            header.addEventListener('touchstart', (e) => {
+                console.log(`👆 Header ${index} touchstart`);
+                logViewport();
+            });
+
+            header.addEventListener('touchend', (e) => {
+                console.log(`👆 Header ${index} touchend`);
+                logViewport();
+            });
+        });
+
+        console.log('=== END DEBUGGING SETUP ===');
+
     }
 
     showDeveloperMode() {
