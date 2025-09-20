@@ -5,7 +5,7 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.0.11';
+        this.APP_VERSION = '1.0.12';
         this.MAX_LEVEL = 15;
 
         this.WORDS_PER_SESSION = 20;
@@ -667,7 +667,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
         const requiredLowerLevelWords = this.currentUser.listeningLowerLevelWords || [];
         if (requiredLowerLevelWords.length > 0) {
             writingHTML += `<div class="listening-word-list">
-                <h5 class="collapsible-header" onclick="this.parentElement.classList.toggle('expanded')">
+                <h5 class="collapsible-header">
                     <span>Lower Level Practice Words</span>
                     <span class="expand-icon">▼</span>
                 </h5>
@@ -731,6 +731,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
                 parentHeight: header.parentElement.offsetHeight
             });
 
+            // REMOVE THE INLINE ONCLICK AND ADD PROPER EVENT LISTENER
             header.addEventListener('click', (e) => {
                 console.log(`🖱️ Header ${index} clicked`);
 
