@@ -694,7 +694,7 @@ body {
 .listening-word-list.expanded .expand-icon {
     transform: rotate(180deg);
 }
-
+/*
 .collapsible-content {
     max-height: 0;
     overflow: hidden;
@@ -702,10 +702,21 @@ body {
 }
 
 .listening-word-list.expanded .collapsible-content {
-    max-height: 500px; /* Adjust based on your needs */
+    max-height: 500px;
     margin-top: 1rem;
 }
+*/
+.collapsible-content {
+    overflow: hidden;
+    /* Remove the max-height transition that causes layout jumps */
+    /* transition: max-height 0.3s ease; */
+}
 
+.listening-word-list.expanded .collapsible-content {
+    /* Remove max-height rules - we'll handle this with JavaScript */
+    /* max-height: 500px; */
+    margin-top: 1rem;
+}
 .advancement-status ul {
     display: none;
 }

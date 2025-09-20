@@ -5,7 +5,7 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.0.13';
+        this.APP_VERSION = '1.0.14';
         this.MAX_LEVEL = 15;
 
         this.WORDS_PER_SESSION = 20;
@@ -731,43 +731,63 @@ Draw 10 guarantees one Epic or Legendary item!`;
                 parentHeight: header.parentElement.offsetHeight
             });
 
-            // REMOVE THE INLINE ONCLICK AND ADD PROPER EVENT LISTENER
-            header.addEventListener('click', (e) => {
-                console.log(`🖱️ Header ${index} clicked`);
 
-                // Log BEFORE toggle
-                const contentEl = header.parentElement.querySelector('.collapsible-content');
-                console.log('Before toggle:', {
-                    isExpanded: header.parentElement.classList.contains('expanded'),
-                    contentHeight: contentEl.offsetHeight,
-                    contentScrollHeight: contentEl.scrollHeight,
-                    bodyHeight: document.body.offsetHeight,
-                    documentHeight: document.documentElement.offsetHeight
-                });
+        header.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
 
-                logViewport();
+            console.log(`🖱️ Header ${index} clicked`);
 
-                // Perform the toggle
-                header.parentElement.classList.toggle('expanded');
+            const contentEl = header.parentElement.querySelector('.collapsible-content');
+            const parentEl = header.parentElement;
+            const isCurrentlyExpanded = parentEl.classList.contains('expanded');
 
-                // Log AFTER toggle (with a slight delay to catch transition)
-                setTimeout(() => {
-                    console.log('After toggle:', {
-                        isExpanded: header.parentElement.classList.contains('expanded'),
-                        contentHeight: contentEl.offsetHeight,
-                        contentScrollHeight: contentEl.scrollHeight,
-                        bodyHeight: document.body.offsetHeight,
-                        documentHeight: document.documentElement.offsetHeight
-                    });
-                    logViewport();
-                }, 50);
+            // Get current scroll position
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
 
-                // Log after transition completes
-                setTimeout(() => {
-                    console.log('After transition complete:');
-                    logViewport();
-                }, 350);
-            });
+            // Calculate target height to prevent layout jumps
+            let targetHeight;
+            if (isCurrentlyExpanded) {
+                // Collapsing - set to 0
+                targetHeight = 0;
+            } else {
+                // Expanding - measure the content height
+                parentEl.classList.add('expanded');
+                targetHeight = contentEl.scrollHeight;
+                parentEl.classList.remove('expanded');
+            }
+
+            // Apply the height directly instead of using max-height
+            contentEl.style.height = contentEl.offsetHeight + 'px';
+            contentEl.style.maxHeight = 'none';
+
+            // Force a reflow
+            contentEl.offsetHeight;
+
+            // Now toggle the class
+            parentEl.classList.toggle('expanded');
+
+            // Animate to target height
+            contentEl.style.transition = 'height 0.3s ease';
+            contentEl.style.height = targetHeight + 'px';
+
+            // Clean up after transition
+            setTimeout(() => {
+                if (parentEl.classList.contains('expanded')) {
+                    contentEl.style.height = 'auto';
+                    contentEl.style.maxHeight = '500px';
+                } else {
+                    contentEl.style.height = '0';
+                    contentEl.style.maxHeight = '0';
+                }
+                contentEl.style.transition = '';
+
+                // Restore scroll position if it changed
+                const newScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                if (Math.abs(newScrollTop - scrollTop) > 5) {
+                    window.scrollTo(0, scrollTop);
+                }
+            }, 320);
 
             // Also monitor touch events specifically
             header.addEventListener('touchstart', (e) => {
