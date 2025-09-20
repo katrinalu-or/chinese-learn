@@ -478,17 +478,22 @@ body {
 /* Progress Screen Layout Improvements - 3 Column Layout */
 .progress-details {
     padding: 2rem 1.5rem;
-    max-width: 1600px; /* Increased for 3-column layout */
+    max-width: 1600px;
     margin: 0 auto;
     color: #333;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr; /* Three columns on larger screens */
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 2rem;
     align-items: start;
+
     /* Prevent iOS viewport scaling */
     -webkit-text-size-adjust: 100%;
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
+
+    /* Add these new properties */
+    touch-action: manipulation;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Calendar gets full width at the bottom */
@@ -669,6 +674,12 @@ body {
     border-bottom: 1px solid #eee;
     transition: all 0.3s ease;
     user-select: none;
+
+    /* Prevent iOS zoom */
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .collapsible-header:hover {

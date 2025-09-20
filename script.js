@@ -5,7 +5,7 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.0.12';
+        this.APP_VERSION = '1.0.13';
         this.MAX_LEVEL = 15;
 
         this.WORDS_PER_SESSION = 20;
@@ -627,7 +627,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
         const reviewLowerLevelWords = this.currentUser.reviewLowerLevelWords || [];
         if (reviewLowerLevelWords.length > 0) {
             reviewHTML += `<div class="listening-word-list">
-                <h5 class="collapsible-header" onclick="this.parentElement.classList.toggle('expanded')">
+                <h5 class="collapsible-header">
                     <span>Lower Level Practice Words</span>
                     <span class="expand-icon">▼</span>
                 </h5>
