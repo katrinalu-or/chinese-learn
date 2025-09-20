@@ -1383,3 +1383,20 @@ body {
         justify-content: center;
     }
 }
+
+/* Detect iOS and disable problematic transitions */
+@supports (-webkit-touch-callout: none) {
+    .collapsible-content {
+        transition: none !important;
+    }
+
+    .listening-word-list.expanded .collapsible-content {
+        max-height: none !important;
+        height: auto !important;
+    }
+
+    .listening-word-list:not(.expanded) .collapsible-content {
+        height: 0 !important;
+        max-height: 0 !important;
+    }
+}
