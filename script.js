@@ -5,7 +5,7 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.08';
+        this.APP_VERSION = '1.0.9';
 
         this.WORDS_PER_SESSION = 20;
         this.CURRENT_LEVEL_COMPLETIONS = 1;
@@ -568,7 +568,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
     updateProgressDetails() {
         const currentLevel = this.currentUser.level;
 
-        // Word Review Progress
+        // Word Review Progress (Left Column) - WITH COLLAPSIBLE WORD LIST
         const reviewContainer = document.getElementById('word-review-progress');
         let reviewHTML = '<h4>Word Review Progress</h4>';
         let required = this.CURRENT_LEVEL_COMPLETIONS;
@@ -593,16 +593,22 @@ Draw 10 guarantees one Epic or Legendary item!`;
 
         const reviewLowerLevelWords = this.currentUser.reviewLowerLevelWords || [];
         if (reviewLowerLevelWords.length > 0) {
-            reviewHTML += '<div class="listening-word-list"><h5>Lower Level Practice Words</h5><div class="listening-word-grid">';
+            reviewHTML += `<div class="listening-word-list">
+                <h5 class="collapsible-header" onclick="this.parentElement.classList.toggle('expanded')">
+                    <span>Lower Level Practice Words</span>
+                    <span class="expand-icon">▼</span>
+                </h5>
+                <div class="collapsible-content">
+                    <div class="listening-word-grid">`;
             reviewLowerLevelWords.forEach(word => {
                 const isCompleted = (this.currentUser.wordProgress[word]?.correct || 0) >= this.LOWER_LEVEL_COMPLETIONS_REVIEW;
                 reviewHTML += `<div class="listening-word-item ${isCompleted ? 'completed' : ''}">${word}</div>`;
             });
-            reviewHTML += '</div></div>';
+            reviewHTML += `</div></div></div>`;
         }
         reviewContainer.innerHTML = reviewHTML;
 
-        // Word Writing Progress
+        // Word Writing Progress (Right Column) - WITH COLLAPSIBLE WORD LIST
         const writingContainer = document.getElementById('word-writing-progress');
         let writingHTML = '<h4>Word Writing Progress</h4>';
         required = this.LISTENING_CURRENT_LEVEL_COMPLETIONS;
@@ -627,12 +633,18 @@ Draw 10 guarantees one Epic or Legendary item!`;
 
         const requiredLowerLevelWords = this.currentUser.listeningLowerLevelWords || [];
         if (requiredLowerLevelWords.length > 0) {
-            writingHTML += '<div class="listening-word-list"><h5>Lower Level Practice Words</h5><div class="listening-word-grid">';
+            writingHTML += `<div class="listening-word-list">
+                <h5 class="collapsible-header" onclick="this.parentElement.classList.toggle('expanded')">
+                    <span>Lower Level Practice Words</span>
+                    <span class="expand-icon">▼</span>
+                </h5>
+                <div class="collapsible-content">
+                    <div class="listening-word-grid">`;
             requiredLowerLevelWords.forEach(word => {
                 const isCompleted = (this.currentUser.listeningProgress[word]?.correct || 0) >= this.LISTENING_LOWER_LEVEL_COMPLETIONS;
                 writingHTML += `<div class="listening-word-item ${isCompleted ? 'completed' : ''}">${word}</div>`;
             });
-            writingHTML += '</div></div>';
+            writingHTML += `</div></div></div>`;
         }
         writingContainer.innerHTML = writingHTML;
 

@@ -16,9 +16,10 @@ body {
 }
 
 .screen {
-    min-height: 100vh;
+    height: 100vh; /* Use height instead of min-height */
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Prevent scrolling beyond viewport */
 }
 
 .hidden {
@@ -173,10 +174,11 @@ body {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 2.5rem;
-    padding: 3rem 2rem;
+    padding: 2rem; /* Reduced padding */
     max-width: 1400px;
     margin: 0 auto;
     flex: 1;
+    overflow-y: auto; /* Allow scrolling if needed */
 }
 
 .activity-card {
@@ -272,7 +274,9 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 3rem;
+    padding: 2rem;
+    overflow: hidden; /* Prevent overflow */
+    touch-action: manipulation; /* Prevent zoom on double-tap */
 }
 
 .word-card {
@@ -357,6 +361,9 @@ body {
     display: flex;
     gap: 3rem;
     margin-bottom: 2rem;
+
+    /* Prevent zoom on double-tap */
+    touch-action: manipulation;
 }
 
 .action-btn {
@@ -372,6 +379,15 @@ body {
     box-shadow: 0 8px 25px rgba(0,0,0,0.2);
     position: relative;
     overflow: hidden;
+
+    /* Prevent zoom on double-tap */
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .action-btn::before {
@@ -640,6 +656,42 @@ body {
     color: #2dce89;
     font-weight: bold;
     text-decoration: line-through;
+}
+
+/* Collapsible word lists */
+.collapsible-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+.collapsible-header:hover {
+    color: #667eea;
+}
+
+.expand-icon {
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+}
+
+.listening-word-list.expanded .expand-icon {
+    transform: rotate(180deg);
+}
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.listening-word-list.expanded .collapsible-content {
+    max-height: 500px; /* Adjust based on your needs */
+    margin-top: 1rem;
 }
 
 .advancement-status ul {
@@ -1231,6 +1283,47 @@ body {
 
     #activity-log-container {
         padding: 1rem;
+    }
+}
+
+/* iPad-specific adjustments */
+@media (max-width: 1024px) and (min-width: 768px) {
+    .word-display {
+        padding: 1.5rem; /* Even smaller padding on iPad */
+    }
+
+    .dashboard-grid {
+        padding: 1.5rem;
+        gap: 1.5rem;
+    }
+
+    .chinese-word {
+        font-size: 4rem; /* Smaller font on iPad */
+    }
+
+    .action-btn {
+        width: 90px; /* Smaller buttons on iPad */
+        height: 90px;
+        font-size: 2.5rem;
+    }
+
+    .header {
+        padding: 1rem 1.5rem; /* Reduce header padding */
+    }
+}
+
+/* Specific iPad portrait adjustments */
+@media (max-width: 768px) and (orientation: portrait) {
+    .word-display {
+        padding: 1rem;
+    }
+
+    .chinese-word {
+        font-size: 3.5rem;
+    }
+
+    .action-buttons {
+        gap: 2rem;
     }
 }
 
