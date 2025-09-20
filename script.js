@@ -5,7 +5,7 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.0.14';
+        this.APP_VERSION = '1.0.15';
         this.MAX_LEVEL = 15;
 
         this.WORDS_PER_SESSION = 20;
@@ -688,121 +688,74 @@ Draw 10 guarantees one Epic or Legendary item!`;
         sentenceHTML += `<div class="level-progress-item ${sentenceProgress >= 100 ? 'completed' : ''}"><div class="level-header"><h5>Practice Task</h5></div><div class="level-progress-bar"><div class="level-progress-fill" style="width: ${sentenceProgress}%">${sentenceProgress}%</div></div></div>`;
         sentenceContainer.innerHTML = sentenceHTML;
 
-        // Add debugging after setting innerHTML
-        console.log('=== iOS ZOOM DEBUGGING ===');
+        // Set up collapsible functionality AFTER the HTML is added
+        this.setupCollapsibleHeaders();
+    }
 
-        // 1. Log viewport changes
-        const logViewport = () => {
-            console.log('Viewport:', {
-                width: window.innerWidth,
-                height: window.innerHeight,
-                visualViewport: window.visualViewport ? {
-                    width: window.visualViewport.width,
-                    height: window.visualViewport.height,
-                    scale: window.visualViewport.scale
-                } : 'not supported',
-                devicePixelRatio: window.devicePixelRatio,
-                zoom: document.documentElement.clientWidth / window.innerWidth
-            });
-        };
-
-        // 2. Monitor viewport changes
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', () => {
-                console.log('📱 Visual viewport resize detected');
-                logViewport();
-            });
-            window.visualViewport.addEventListener('scroll', () => {
-                console.log('📱 Visual viewport scroll detected');
-                logViewport();
-            });
-        }
-
-        // 3. Log initial state
-        logViewport();
-
-        // 4. Add debugging to the collapsible headers
+    setupCollapsibleHeaders() {
         const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+
         collapsibleHeaders.forEach((header, index) => {
-            // Log element dimensions before interaction
-            console.log(`Header ${index} initial:`, {
-                offsetHeight: header.offsetHeight,
-                scrollHeight: header.scrollHeight,
-                parentHeight: header.parentElement.offsetHeight
-            });
+            // Remove any existing event listeners by cloning the element
+            const newHeader = header.cloneNode(true);
+            header.parentNode.replaceChild(newHeader, header);
 
+            newHeader.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
 
-        header.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+                const contentEl = newHeader.parentElement.querySelector('.collapsible-content');
+                const parentEl = newHeader.parentElement;
+                const isCurrentlyExpanded = parentEl.classList.contains('expanded');
 
-            console.log(`🖱️ Header ${index} clicked`);
+                // Get current scroll position
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
 
-            const contentEl = header.parentElement.querySelector('.collapsible-content');
-            const parentEl = header.parentElement;
-            const isCurrentlyExpanded = parentEl.classList.contains('expanded');
-
-            // Get current scroll position
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
-            // Calculate target height to prevent layout jumps
-            let targetHeight;
-            if (isCurrentlyExpanded) {
-                // Collapsing - set to 0
-                targetHeight = 0;
-            } else {
-                // Expanding - measure the content height
-                parentEl.classList.add('expanded');
-                targetHeight = contentEl.scrollHeight;
-                parentEl.classList.remove('expanded');
-            }
-
-            // Apply the height directly instead of using max-height
-            contentEl.style.height = contentEl.offsetHeight + 'px';
-            contentEl.style.maxHeight = 'none';
-
-            // Force a reflow
-            contentEl.offsetHeight;
-
-            // Now toggle the class
-            parentEl.classList.toggle('expanded');
-
-            // Animate to target height
-            contentEl.style.transition = 'height 0.3s ease';
-            contentEl.style.height = targetHeight + 'px';
-
-            // Clean up after transition
-            setTimeout(() => {
-                if (parentEl.classList.contains('expanded')) {
-                    contentEl.style.height = 'auto';
-                    contentEl.style.maxHeight = '500px';
+                // Calculate target height to prevent layout jumps
+                let targetHeight;
+                if (isCurrentlyExpanded) {
+                    // Collapsing - set to 0
+                    targetHeight = 0;
                 } else {
-                    contentEl.style.height = '0';
-                    contentEl.style.maxHeight = '0';
+                    // Expanding - measure the content height
+                    parentEl.classList.add('expanded');
+                    targetHeight = contentEl.scrollHeight;
+                    parentEl.classList.remove('expanded');
                 }
-                contentEl.style.transition = '';
 
-                // Restore scroll position if it changed
-                const newScrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                if (Math.abs(newScrollTop - scrollTop) > 5) {
-                    window.scrollTo(0, scrollTop);
-                }
-            }, 320);
+                // Apply the height directly instead of using max-height
+                contentEl.style.height = contentEl.offsetHeight + 'px';
+                contentEl.style.maxHeight = 'none';
 
-            // Also monitor touch events specifically
-            header.addEventListener('touchstart', (e) => {
-                console.log(`👆 Header ${index} touchstart`);
-                logViewport();
-            });
+                // Force a reflow
+                contentEl.offsetHeight;
 
-            header.addEventListener('touchend', (e) => {
-                console.log(`👆 Header ${index} touchend`);
-                logViewport();
+                // Now toggle the class
+                parentEl.classList.toggle('expanded');
+
+                // Animate to target height
+                contentEl.style.transition = 'height 0.3s ease';
+                contentEl.style.height = targetHeight + 'px';
+
+                // Clean up after transition
+                setTimeout(() => {
+                    if (parentEl.classList.contains('expanded')) {
+                        contentEl.style.height = 'auto';
+                        contentEl.style.maxHeight = '500px';
+                    } else {
+                        contentEl.style.height = '0';
+                        contentEl.style.maxHeight = '0';
+                    }
+                    contentEl.style.transition = '';
+
+                    // Restore scroll position if it changed
+                    const newScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    if (Math.abs(newScrollTop - scrollTop) > 5) {
+                        window.scrollTo(0, scrollTop);
+                    }
+                }, 320);
             });
         });
-
-        console.log('=== END DEBUGGING SETUP ===');
-
     }
 
     showDeveloperMode() {
