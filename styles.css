@@ -16,10 +16,9 @@ body {
 }
 
 .screen {
-    height: 100vh; /* Use height instead of min-height */
+    min-height: 100vh; /* Use height instead of min-height */
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Prevent scrolling beyond viewport */
 }
 
 .hidden {
@@ -178,7 +177,6 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     flex: 1;
-    overflow-y: auto; /* Allow scrolling if needed */
 }
 
 .activity-card {
@@ -275,7 +273,6 @@ body {
     justify-content: center;
     align-items: center;
     padding: 2rem;
-    overflow: hidden; /* Prevent overflow */
     touch-action: manipulation; /* Prevent zoom on double-tap */
 }
 
@@ -488,6 +485,7 @@ body {
     grid-template-columns: 1fr 1fr 1fr; /* Three columns on larger screens */
     gap: 2rem;
     align-items: start;
+    min-height: auto; /* Allow natural height */
 }
 
 /* Calendar gets full width at the bottom */
@@ -1281,6 +1279,17 @@ body {
         padding: 1.5rem;
     }
 
+    .word-display {
+        padding: 1rem;
+    }
+
+    .chinese-word {
+        font-size: 3.5rem;
+    }
+
+    .action-buttons {
+        gap: 2rem;
+    }
     #activity-log-container {
         padding: 1rem;
     }
@@ -1309,6 +1318,11 @@ body {
 
     .header {
         padding: 1rem 1.5rem; /* Reduce header padding */
+    }
+
+    .progress-details {
+        padding: 1.5rem;
+        gap: 1.5rem;
     }
 }
 
