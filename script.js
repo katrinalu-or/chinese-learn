@@ -5,7 +5,7 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.0.10';
+        this.APP_VERSION = '1.0.11';
         this.MAX_LEVEL = 15;
 
         this.WORDS_PER_SESSION = 20;

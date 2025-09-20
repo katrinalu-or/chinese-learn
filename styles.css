@@ -485,7 +485,10 @@ body {
     grid-template-columns: 1fr 1fr 1fr; /* Three columns on larger screens */
     gap: 2rem;
     align-items: start;
-    min-height: auto; /* Allow natural height */
+    /* Prevent iOS viewport scaling */
+    -webkit-text-size-adjust: 100%;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 /* Calendar gets full width at the bottom */
@@ -618,6 +621,9 @@ body {
     border: 1px solid #e9ecef;
     box-shadow: 0 10px 30px rgba(0,0,0,0.05);
     height: fit-content;
+    /* Prevent iOS zoom */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 .listening-word-list {
@@ -666,6 +672,10 @@ body {
     border-bottom: 1px solid #eee;
     transition: all 0.3s ease;
     user-select: none;
+     /* Add these properties to prevent iOS zoom */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
 }
 
 .collapsible-header:hover {
@@ -685,6 +695,9 @@ body {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease;
+    /* Prevent iOS zoom during transitions */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
 }
 
 .listening-word-list.expanded .collapsible-content {
