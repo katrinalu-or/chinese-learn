@@ -5,7 +5,7 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.0.17';
+        this.APP_VERSION = '1.0.19';
         this.MAX_LEVEL = 15;
 
         this.WORDS_PER_SESSION = 20;
@@ -296,6 +296,14 @@ Draw 10 guarantees one Epic or Legendary item!`;
             screen.classList.add('hidden');
         });
         document.getElementById(screenId).classList.remove('hidden');
+
+        // Add/remove a class to the body to control scrolling
+        const noScrollScreens = ['word-review-screen', 'word-writing-screen', 'sentence-writing-screen'];
+        if (noScrollScreens.includes(screenId)) {
+            document.body.classList.add('no-scroll');
+        } else {
+            document.body.classList.remove('no-scroll');
+        }
     }
 
     showDashboard() {
