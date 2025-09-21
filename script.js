@@ -5,7 +5,7 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.0.16';
+        this.APP_VERSION = '1.0.17';
         this.MAX_LEVEL = 15;
 
         this.WORDS_PER_SESSION = 20;
@@ -37,22 +37,6 @@ class ChineseLearningApp {
         this.DEFAULT_WORDS_VERSION = '8.0';
         this.gachaPool = this.defineGachaPool();
         this.init();
-
-        // Debug layout changes globally
-        if (typeof ResizeObserver !== 'undefined') {
-            const resizeObserver = new ResizeObserver(entries => {
-                entries.forEach(entry => {
-                    if (entry.target === document.body) {
-                        console.log('📏 Body resize detected:', {
-                            width: entry.contentRect.width,
-                            height: entry.contentRect.height
-                        });
-                    }
-                });
-            });
-            resizeObserver.observe(document.body);
-        }
-
     }
 
     async init() {
