@@ -5,7 +5,7 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.0.18';
+        this.APP_VERSION = '1.0.19';
         this.MAX_LEVEL = 15;
 
         this.WORDS_PER_SESSION = 20;
@@ -298,7 +298,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
         document.getElementById(screenId).classList.remove('hidden');
 
         // Add/remove a class to the body to control scrolling
-        const noScrollScreens = ['word-review-screen', 'word-writing-screen', 'sentence-writing-screen'];
+        const noScrollScreens = ['dashboard-screen', 'word-review-screen', 'word-writing-screen', 'sentence-writing-screen'];
         if (noScrollScreens.includes(screenId)) {
             document.body.classList.add('no-scroll');
         } else {
@@ -756,7 +756,11 @@ Draw 10 guarantees one Epic or Legendary item!`;
         document.getElementById('app-version-display').textContent = `Version: ${this.APP_VERSION}`;
         const currentLevel = this.currentUser.level;
         const resetSelect = document.getElementById('reset-level-select');
-        for (let i = 1; i <= this.MAX_LEVEL; i++) {
+
+        // Clear previous options. Uncomment this if you don't want the user to see previous max levels
+        // resetSelect.innerHTML = '';
+
+        for (let i = 1; i <= currentLevel; i++) {
             let option = resetSelect.querySelector(`option[value="${i}"]`);
             if (!option) {
                 option = document.createElement('option');
@@ -1293,10 +1297,35 @@ Draw 10 guarantees one Epic or Legendary item!`;
         }
         this.currentUser.diamonds--;
         const drawnItem = this._performSingleDraw();
-        this.currentUser.collection[drawnItem.id] = (this.currentUser.collection[drawnItem.id] || 0) + 1;
-        this.saveUserData();
-        this.showGachaResult(drawnItem);
-        this.renderCollectionGrid();
+
+        // --- Animation Start ---
+        const modal = document.getElementById('gacha-result-modal');
+        const modalContent = modal.querySelector('.modal-content');
+        const resultContent = document.getElementById('gacha-result-content');
+
+        // 1. Reset classes and hide the result content
+        modalContent.className = 'modal-content';
+        resultContent.classList.remove('is-visible');
+
+        // 2. Show the modal overlay
+        modal.classList.remove('hidden');
+
+        // 3. Delay to allow CSS to render, then start animations
+        setTimeout(() => {
+            modalContent.classList.add('animate-in'); // Pop-in and flash starts
+            this.showGachaResult(drawnItem); // Populate data (it's invisible for now)
+
+            // 4. After the flash animation, reveal the content
+            setTimeout(() => {
+                resultContent.classList.add('is-visible'); // Fade in the result
+                modalContent.classList.add(`${drawnItem.rarity}-reveal`); // Add final glow
+            }, 1300); // Timed for after the flash
+
+            // Save data and update UI in the background
+            this.currentUser.collection[drawnItem.id] = (this.currentUser.collection[drawnItem.id] || 0) + 1;
+            this.saveUserData();
+            this.renderCollectionGrid();
+        }, 100);
     }
 
     drawTenGachaItems() {
@@ -1324,6 +1353,8 @@ Draw 10 guarantees one Epic or Legendary item!`;
             results.push(guaranteedItem);
         }
 
+        // The sorting logic has been removed from here.
+
         results.forEach(item => {
             this.currentUser.collection[item.id] = (this.currentUser.collection[item.id] || 0) + 1;
         });
@@ -1334,19 +1365,42 @@ Draw 10 guarantees one Epic or Legendary item!`;
     }
 
     showMultiGachaResult(items) {
-        document.getElementById('gacha-multi-result-modal').classList.remove('hidden');
+        const modal = document.getElementById('gacha-multi-result-modal');
+        const modalContent = modal.querySelector('.modal-content');
+
+        // 1. Reset class and make overlay visible
+        modalContent.className = 'modal-content multi-result-modal';
+        modal.classList.remove('hidden');
+
+        // 2. Animate the modal container so it's visible
+        setTimeout(() => {
+            modalContent.classList.add('pop-in-only');
+        }, 10);
+
         const grid = document.getElementById('multi-result-grid');
-        grid.innerHTML = '';
+        grid.innerHTML = ''; // Clear previous results
+
+        // Create the items but keep them hidden initially
         items.forEach(item => {
             const itemDiv = document.createElement('div');
-            itemDiv.className = 'multi-result-item';
+            itemDiv.className = 'multi-result-item'; // Base class for initial hidden state
             itemDiv.innerHTML = `<img src="${item.image}" alt="${item.name}"><div class="rarity-text ${item.rarity}">${item.rarity}</div>`;
             grid.appendChild(itemDiv);
+        });
+
+        // Reveal items one by one
+        const itemElements = grid.querySelectorAll('.multi-result-item');
+        itemElements.forEach((itemEl, index) => {
+            setTimeout(() => {
+                const itemData = items[index];
+                // Add classes to trigger the reveal and rarity flash animation
+                itemEl.classList.add('is-revealed', `${itemData.rarity}-reveal`);
+            }, index * 800 + 400); // Slower reveal: 350ms delay between each item
         });
     }
 
     showGachaResult(item) {
-        document.getElementById('gacha-result-modal').classList.remove('hidden');
+        // This function now just populates the modal content
         const rarityEl = document.getElementById('gacha-result-rarity');
         rarityEl.textContent = item.rarity;
         rarityEl.className = item.rarity;
@@ -1356,9 +1410,16 @@ Draw 10 guarantees one Epic or Legendary item!`;
 
     closeGachaModal(isMulti = false) {
         if (isMulti) {
-            document.getElementById('gacha-multi-result-modal').classList.add('hidden');
+            const modal = document.getElementById('gacha-multi-result-modal');
+            modal.classList.add('hidden');
+            // Clean up animation classes for the next draw
+            modal.querySelector('.modal-content').className = 'modal-content multi-result-modal';
         } else {
-            document.getElementById('gacha-result-modal').classList.add('hidden');
+            const modal = document.getElementById('gacha-result-modal');
+            modal.classList.add('hidden');
+            // Clean up animation classes for next draw
+            modal.querySelector('.modal-content').className = 'modal-content';
+            document.getElementById('gacha-result-content').classList.remove('is-visible'); // Reset visibility
         }
     }
 }

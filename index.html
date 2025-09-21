@@ -200,11 +200,7 @@
                     <div class="reset-input">
                         <label for="reset-level-select">Reset to Level:</label>
                         <select id="reset-level-select">
-                            <option value="1">Level 1</option>
-                            <option value="2">Level 2</option>
-                            <option value="3">Level 3</option>
-                            <option value="4">Level 4</option>
-                            <option value="5">Level 5</option>
+                            <!-- Options are now generated dynamically by script.js -->
                         </select>
                         <button id="reset-level-btn" class="reset-btn">Reset Level</button>
                     </div>
@@ -247,9 +243,11 @@
     <!-- Gacha Modals -->
     <div id="gacha-result-modal" class="modal-overlay hidden">
         <div class="modal-content">
-            <h2 id="gacha-result-rarity"></h2>
-            <img id="gacha-result-image" src="" alt="Gacha Result">
-            <h3 id="gacha-result-name"></h3>
+            <div id="gacha-result-content"> <!-- This is the new wrapper -->
+                <h2 id="gacha-result-rarity"></h2>
+                <img id="gacha-result-image" src="" alt="Gacha Result">
+                <h3 id="gacha-result-name"></h3>
+            </div>
             <button id="close-gacha-modal-btn">Awesome!</button>
         </div>
     </div>
@@ -267,8 +265,6 @@
     <!-- File Inputs -->
     <input type="file" id="import-file" accept=".json" style="display: none;">
     <input type="file" id="import-wordlist-file" accept=".json" style="display: none;">
-
-    <!-- CORRECT, WORKING Calendar JS and App Script -->
     <script src="https://unpkg.com/js-year-calendar@latest/dist/js-year-calendar.min.js"></script>
     <script src="script.js"></script>
 </body>
