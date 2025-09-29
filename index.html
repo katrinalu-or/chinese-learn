@@ -37,7 +37,7 @@
         <div class="header">
             <h1>Mommy Academy: 中文大爆炸</h1>
             <div class="user-info">
-                <span id="username-display"></span> - Level <span id="level-display">1</span>
+                <span id="username-display"></span> 🌟 <span id="level-display">1</span>
                 <button id="collections-btn">Collections</button>
                 <button id="developer-mode-btn">Developer Mode</button>
                 <button id="logout-btn">Logout</button>
@@ -56,9 +56,9 @@
                 <h3>造句練習</h3>
                 <p>Practice forming sentences with key words</p>
             </div>
-            <div class="activity-card disabled">
-                <h3>Coming Soon</h3>
-                <p>Activity 4</p>
+            <div class="activity-card active" id="mini-game-card">
+                <h3>小遊戲天地</h3>
+                <p>Interactive games with words</p>
             </div>
             <div class="activity-card disabled">
                 <h3>Coming Soon</h3>
@@ -103,7 +103,9 @@
         <div class="header page-header">
             <button id="back-from-writing">← Back</button>
             <h2>Word Writing</h2>
-            <div class="header-right"></div>
+            <div class="header-right score-display">
+                Score: <span id="writing-current-score">0</span>/<span id="writing-total-score">0</span>
+            </div>
         </div>
         <div class="word-display">
             <div class="word-card">
@@ -141,6 +143,42 @@
                 <button id="sentence-check-btn" class="action-btn check">✓</button>
             </div>
             <p class="completion-status-text">Click ✓ to mark this task as complete for this level.</p>
+        </div>
+    </div>
+
+    <!-- Mini Game Center Screen -->
+    <div id="mini-game-screen" class="screen hidden">
+        <div class="header page-header">
+            <button id="back-from-mini-games">← Back</button>
+            <h2>Mini Game Center</h2>
+            <div class="header-right">
+                 <!-- Exchange ticket display removed from here -->
+            </div>
+        </div>
+        <div class="mini-games-container">
+            <div class="mini-games-grid" id="mini-games-grid">
+                <!-- Games will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Individual Game Screen -->
+    <div id="game-play-screen" class="screen hidden">
+        <div class="header page-header">
+            <button id="back-from-game">← Back</button>
+            <h2 id="game-title">Game</h2>
+            <div class="header-right">
+                <!-- Game score display removed from here -->
+            </div>
+        </div>
+        <div class="game-container">
+            <div id="game-content">
+                <!-- Dynamic game content will be inserted here -->
+            </div>
+            <div class="game-controls">
+                <button id="check-game-btn" class="game-action-btn">Check Answer</button>
+                <button id="reset-game-btn" class="game-action-btn secondary">Reset</button>
+            </div>
         </div>
     </div>
 
@@ -206,6 +244,16 @@
                     </div>
                 </div>
             </div>
+            <div class="minigame-reset-section">
+                <h3>Mini-Game Reset</h3>
+                <div class="minigame-reset-info">
+                    <p>💡 Use this to completely reset all mini-game data and force reload from minigame.json file.</p>
+                    <p>⚠️ This will clear all mini-game progress, cached content, and regenerate games. This action cannot be undone!</p>
+                </div>
+                <div class="minigame-reset-actions">
+                    <button id="reset-minigames-btn" class="reset-btn">Reset Mini Games</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -215,9 +263,15 @@
             <button id="back-from-collections">← Back</button>
             <h2>Collections</h2>
             <div class="header-right">
-                <div class="diamond-display">
-                    <span class="diamond-icon">💎</span>
-                    <span id="diamond-count">0</span>
+                <div class="currency-display">
+                    <div class="diamond-display">
+                        <span class="diamond-icon">💎</span>
+                        <span id="diamond-count">0</span>
+                    </div>
+                    <div id="exchange-ticket-wrapper" class="exchange-ticket-display">
+                        <span class="ticket-icon">🎟️</span>
+                        <span id="exchange-ticket-count-collections">0</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -230,6 +284,19 @@
                     <div class="tooltip-icon">?
                         <span class="tooltip-text" id="gacha-tooltip-text"></span>
                     </div>
+                </div>
+            </div>
+            <!-- Exchange UI -->
+            <div id="exchange-ui" class="exchange-ui-container hidden">
+                <div class="exchange-status">
+                    <h2>Exchange Mode</h2>
+                    <p>Select items below to trade for points. Then, use the points to get a new item from a chosen rarity.<br>You can trade multiple times. Click on the Exchange Ticket icon on the top right again to exit.</p>
+                    <div class="exchange-points-display">
+                        Your Points: <strong id="exchange-total-points">0</strong>
+                    </div>
+                </div>
+                <div id="exchange-buy-options" class="exchange-buy-options">
+                    <!-- JS will populate buttons here -->
                 </div>
             </div>
             <div class="collection-grid-container">

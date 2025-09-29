@@ -5,13 +5,16 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.0.19';
-        this.MAX_LEVEL = 15;
+        this.APP_VERSION = '1.1.0';
+        this.MAX_LEVEL = 20;
+        this.DEFAULT_WORDS_VERSION = '1.1.0';
+        this.LATEST_MINIGAME_VERSION = '1.1.0';
 
-        this.WORDS_PER_SESSION = 20;
-        this.CURRENT_LEVEL_COMPLETIONS = 1;
-        this.LOWER_LEVEL_COMPLETIONS_REVIEW = 1; // For Word Review
+        this.REVIEW_WORDS_PER_SESSION = 20;
+        this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
+        this.REVIEW_LOWER_LEVEL_COMPLETIONS = 1; // For Word Review
         this.REVIEW_LOWER_LEVEL_PERCENTAGE = 30; // 30% for Word Review
+        this.REVIEW_LOWER_LEVEL_MAX_WORDS = 25;
 
         this.LEVEL_UP_DIAMOND_BONUS = 2;
 
@@ -20,9 +23,20 @@ class ChineseLearningApp {
         this.LISTENING_CURRENT_LEVEL_COMPLETIONS = 1;
         this.LISTENING_LOWER_LEVEL_COMPLETIONS = 1;
         this.LISTENING_LOWER_LEVEL_PERCENTAGE = 30;
+        this.LISTENING_LOWER_LEVEL_MAX_WORDS = 25;
 
         // Sentence Writing Config
-        this.SENTENCE_WORDS_PER_SESSION = 10;
+        this.SENTENCE_WORDS_PER_SESSION = 12;
+
+        // Mini Game Configuration
+        this.MINI_GAME_ENABLED_LEVELS = [5, 7, 8, 10, 12, 14, 15];
+        this.MINI_GAMES_PER_LEVEL = 8;
+        this.MINI_GAMES_MAX_PAIRING_PAIRS = 10;
+        this.MINI_GAMES_GROUPING_MIN_WORDS = 18;
+        this.MINI_GAMES_GROUPING_MAX_WORDS = 25;
+        this.MINI_GAMES_GROUPING_MAX_GROUPS = 4;
+        this.MINI_GAMES_GROUPING_MIN_GROUPS = 2;
+        this.MINI_GAMES_FORMING_SENTENCE_NUM_SENTENCES = 5;
 
         // Gacha probabilities (must add up to 100)
         this.GACHA_PROBABILITIES = {
@@ -32,15 +46,32 @@ class ChineseLearningApp {
             Common: 58
         };
 
+        this.GACHA_EXCHANGE_RATES_DRAW = {
+            Legendary: 40,
+            Epic: 10,
+            Rare: 3,
+            Common: 1
+        };
+
+        this.GACHA_EXCHANGE_RATES_SPECIFIED = {
+            Legendary: 40,
+            Epic: 25,
+            Rare: 10,
+            Common: 3,
+        };
+
         this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE = 15; // 15% chance for Legendary on a guaranteed pull
 
-        this.DEFAULT_WORDS_VERSION = '8.0';
+        this.isExchangeMode = false;
+        this.exchangeSelection = {}; // { id: count }
+
         this.gachaPool = this.defineGachaPool();
         this.init();
     }
 
     async init() {
         await this.initializeDefaultWords(); // Wait for words to load before continuing
+        await this.initializeMiniGameContent();
         this.setupEventListeners();
         this.checkLoggedInUser();
         this.setupDynamicContent();
@@ -63,8 +94,27 @@ class ChineseLearningApp {
         ];
     }
 
+    async initializeMiniGameContent() {
+        const storedVersion = localStorage.getItem('miniGameContentVersion');
+
+        if (storedVersion !== this.LATEST_MINIGAME_VERSION) {
+            try {
+                const response = await fetch('minigame.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const miniGameContent = await response.json();
+                localStorage.setItem('miniGameContent', JSON.stringify(miniGameContent));
+                localStorage.setItem('miniGameContentVersion', this.LATEST_MINIGAME_VERSION);
+            } catch (error) {
+                console.error('Failed to load mini game content:', error);
+                this.showErrorMessage('Failed to load minigame.json. Please check that the file exists and is accessible.');
+                return;
+            }
+        }
+    }
+
     async initializeDefaultWords() {
-        const LATEST_WORDS_VERSION = '8.0';
         const storedVersion = localStorage.getItem('defaultWordsVersion');
         if (storedVersion !== this.DEFAULT_WORDS_VERSION) {
             console.log(`Default word list is outdated. Updating to v${this.DEFAULT_WORDS_VERSION}`);
@@ -78,28 +128,37 @@ class ChineseLearningApp {
                 localStorage.setItem('defaultWordsVersion', this.DEFAULT_WORDS_VERSION);
             } catch (error) {
                 console.error('Failed to load word list:', error);
-                // Fallback to embedded word list if file loading fails
-                this.initializeDefaultWordsEmbedded();
+                this.showErrorMessage('Failed to load words.json. Please check that the file exists and is accessible.');
+                return;
             }
         }
     }
 
-    initializeDefaultWordsEmbedded() {
-        console.log('Using embedded word list as fallback');
-        const defaultWords = {
-            "1": ["大", "中間", "小時候", "木頭", "山", "水果", "火", "早安", "手", "車子", "走路", "出來", "土地", "女生", "男生", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "一百", "一千", "一萬", "昨天", "今天", "明天", "後天"],
-            "2": ["白色", "黑色", "粉紅色", "紅色", "藍色", "綠色", "黃色", "橘色", "紫色", "咖啡色", "灰色", "太陽", "月亮", "下雨", "天氣", "太棒了", "回來", "家人", "正在", "正好", "他們", "雲", "做完", "你好嗎", "說話", "古老", "要不要", "吃東西", "他和她", "兩個人", "只有", "貝", "買菜", "冷水", "冰塊", "日記", "天空", "風"],
-            "3": ["哥哥", "弟弟", "姐姐", "妹妹", "爸爸", "爺爺", "奶奶", "阿姨", "舅舅", "阿公", "阿嬤", "可以", "想法", "所以", "玩遊戲", "我也不知道", "沒有", "看電視", "馬上", "門口", "愛心", "上面", "竹子", "一塊田", "在哪裡", "多少", "尖尖的", "平平的", "石頭", "刀子", "出去", "未來", "日本", "目 （眼睛）", "罵人", "又來了", "左邊", "右邊", "為什麼", "以為"],
-            "4": ["花", "草", "拍手", "這個", "分類", "向外走", "頭髮", "找手機", "課本", "地上", "真的", "假的", "朋友", "裡面", "外面", "叫外賣", "哭笑不得", "如果", "牛肉", "羊肉", "豬肉", "雞肉", "鴨肉", "每天", "都要", "給", "很會", "力氣", "米", "公車", "公主"],
-            "5": ["第一次", "起來", "自己", "再一次", "做事情", "因為", "就是", "最喜歡", "結果", "長大", "海邊", "冬天", "春天", "夏天", "秋天", "長高", "更多", "時間", "美國", "中國", "住在", "重要", "重來", "誰", "生氣", "故事", "最近", "馬路", "跑步", "國王", "王子"],
-            "6": ["一直", "一句話", "吃光光", "脫光", "過來", "拿東西", "有用", "用力", "一點點", "合在一起", "衣服", "還有", "還給我", "現在", "出現", "等一下", "看見", "見面", "能力", "可能", "能不能", "天才", "我剛剛才", "才能", "放在", "下午", "可愛", "愛吃", "站著", "已經", "先來", "趕快", "怎麼", "多久", "正常", "非常", "平常", "房間", "紅包", "包起來"],
-            "7": ["快樂", "可樂", "毛巾", "走得慢", "跑得快", "正方形", "圓形", "三角形", "長方形", "地方", "陪家人", "喝牛奶", "一定", "新年", "忘記", "經過", "記得", "糖果", "彩虹", "好乖", "同時", "同樣的", "一樣", "手拉手", "收東西", "永遠", "永久", "草莓", "切開", "全部", "而且", "需要", "寫字", "中文", "工作", "請假", "請問", "害怕", "打雷", "閃電"],
-            "8": ["帶東西", "入口", "青菜", "晴天", "籃球", "足球", "加油", "隊長", "結束", "比賽", "老師", "開始", "對不對", "對面", "對不起", "顏色", "充電", "充滿", "出發", "發生", "發現", "一件衣服", "奇怪", "好奇", "小鳥", "唱歌", "穿衣服", "覺得", "睡覺", "學校", "學生", "電影", "影子", "休息", "喝酒", "喜歡", "河流", "大樹", "希望", "漂亮"],
-            "9": ["相信", "一張紙", "浪費", "海浪", "花錢", "謝謝", "問題", "題目", "一朵花", "花朵", "金色", "世界", "停下來", "小狗", "可惡", "身上", "但是", "鴨子", "跳下去", "掉下來", "花園", "公園", "校園", "動物園", "進去", "進步", "前進", "回答", "起床", "食物", "生物", "怪物", "吃飯", "吃麵", "動作", "運動", "從這裡", "自從", "卡片", "很忙"],
-            "10": ["芒果", "皮球", "動物的皮", "破掉", "打破", "超人", "超過", "超級", "好吵", "吵架", "送禮物", "送機", "幫忙", "長短", "香味", "味道", "口味", "方便", "行動不便", "便宜", "東西很貴", "貴重", "耳朵", "脫衣服", "好像", "大象", "一條線", "一條魚", "然後", "當然", "爬上去", "討厭", "好累", "別人", "特別", "高矮", "小矮人", "樹葉", "楓葉", "勇氣"]
-        };
-        localStorage.setItem('defaultWords', JSON.stringify(defaultWords));
-        localStorage.setItem('defaultWordsVersion', this.DEFAULT_WORDS_VERSION);
+    initializeUserProperties() {
+        this.currentUser.diamonds = this.currentUser.diamonds || 0;
+        this.currentUser.exchangeTickets = this.currentUser.exchangeTickets || 0;
+        this.currentUser.listeningProgress = this.currentUser.listeningProgress || {};
+        this.currentUser.listeningLowerLevelWords = this.currentUser.listeningLowerLevelWords || [];
+        this.currentUser.reviewLowerLevelWords = this.currentUser.reviewLowerLevelWords || [];
+        this.currentUser.sentenceWritingCompleted = this.currentUser.sentenceWritingCompleted || false;
+        this.currentUser.miniGameProgress = this.currentUser.miniGameProgress || {};
+        this.currentUser.generatedMiniGames = this.currentUser.generatedMiniGames || {};
+        this.currentUser.activityLog = this.currentUser.activityLog || [];
+
+        if (Array.isArray(this.currentUser.collection)) {
+            const newCollection = {};
+            this.currentUser.collection.forEach(id => {
+                newCollection[id] = (newCollection[id] || 0) + 1;
+            });
+            this.currentUser.collection = newCollection;
+        } else {
+            this.currentUser.collection = this.currentUser.collection || {};
+        }
+
+        if ((!this.currentUser.listeningLowerLevelWords || this.currentUser.listeningLowerLevelWords.length === 0 || !this.currentUser.reviewLowerLevelWords || this.currentUser.reviewLowerLevelWords.length === 0) && this.currentUser.level > 1) {
+            this.generatePracticeSubsets();
+            this.saveUserData();
+        }
     }
 
     setupEventListeners() {
@@ -132,6 +191,25 @@ class ChineseLearningApp {
         document.getElementById('sentence-check-btn').addEventListener('click', () => this.handleSentenceCompletion(true));
         document.getElementById('sentence-cross-btn').addEventListener('click', () => this.handleSentenceCompletion(false));
 
+        // Mini Game event listeners
+        document.getElementById('mini-game-card').addEventListener('click', () => this.showMiniGameCenter());
+        document.getElementById('back-from-mini-games').addEventListener('click', () => this.showDashboard());
+        document.getElementById('back-from-game').addEventListener('click', () => this.showMiniGameCenter());
+        document.getElementById('check-game-btn').addEventListener('click', () => this.checkGameAnswer());
+        document.getElementById('reset-game-btn').addEventListener('click', () => this.resetCurrentGame());
+
+        document.getElementById('mini-game-card').addEventListener('click', () => {
+            if (this.MINI_GAME_ENABLED_LEVELS.includes(this.currentUser.level)) {
+                this.showMiniGameCenter();
+            } else {
+                const nextAvailableLevel = this.MINI_GAME_ENABLED_LEVELS.find(level => level > this.currentUser.level);
+                const message = nextAvailableLevel
+                    ? `Mini games unlock at Level ${nextAvailableLevel}. Keep learning!`
+                    : 'Complete more levels to unlock mini games!';
+                alert(message);
+            }
+        });
+
         // Other Screens
         document.getElementById('back-from-progress').addEventListener('click', () => this.showDashboard());
         document.getElementById('back-from-collections').addEventListener('click', () => this.showDashboard());
@@ -140,6 +218,7 @@ class ChineseLearningApp {
         document.getElementById('close-gacha-modal-btn').addEventListener('click', () => this.closeGachaModal());
         document.getElementById('close-multi-gacha-modal-btn').addEventListener('click', () => this.closeGachaModal(true));
         document.getElementById('back-from-dev').addEventListener('click', () => this.showDashboard());
+        document.getElementById('exchange-ticket-wrapper').addEventListener('click', () => this.toggleExchangeMode());
 
         const tooltipIcon = document.querySelector('.tooltip-icon');
         if (tooltipIcon) {
@@ -168,6 +247,7 @@ class ChineseLearningApp {
         document.getElementById('upload-wordlist-btn').addEventListener('click', () => document.getElementById('import-wordlist-file').click());
         document.getElementById('import-wordlist-file').addEventListener('change', (e) => this.uploadWordList(e));
         document.getElementById('reset-wordlist-btn').addEventListener('click', () => this.resetWordListToDefault());
+        document.getElementById('reset-minigames-btn').addEventListener('click', () => this.resetAllMiniGames());
     }
 
     setupDynamicContent() {
@@ -195,30 +275,6 @@ Draw 10 guarantees one Epic or Legendary item!`;
         document.getElementById('register-tab').classList.toggle('active', type === 'register');
         document.getElementById('login-form').classList.toggle('hidden', type !== 'login');
         document.getElementById('register-form').classList.toggle('hidden', type !== 'register');
-    }
-
-    initializeUserProperties() {
-        this.currentUser.diamonds = this.currentUser.diamonds || 0;
-        this.currentUser.listeningProgress = this.currentUser.listeningProgress || {};
-        this.currentUser.listeningLowerLevelWords = this.currentUser.listeningLowerLevelWords || [];
-        this.currentUser.reviewLowerLevelWords = this.currentUser.reviewLowerLevelWords || [];
-        this.currentUser.sentenceWritingCompleted = this.currentUser.sentenceWritingCompleted || false;
-        this.currentUser.activityLog = this.currentUser.activityLog || [];
-
-        if (Array.isArray(this.currentUser.collection)) {
-            const newCollection = {};
-            this.currentUser.collection.forEach(id => {
-                newCollection[id] = (newCollection[id] || 0) + 1;
-            });
-            this.currentUser.collection = newCollection;
-        } else {
-            this.currentUser.collection = this.currentUser.collection || {};
-        }
-
-        if ((!this.currentUser.listeningLowerLevelWords || this.currentUser.listeningLowerLevelWords.length === 0 || !this.currentUser.reviewLowerLevelWords || this.currentUser.reviewLowerLevelWords.length === 0) && this.currentUser.level > 1) {
-            this.generatePracticeSubsets();
-            this.saveUserData();
-        }
     }
 
     handleLogin() {
@@ -311,6 +367,40 @@ Draw 10 guarantees one Epic or Legendary item!`;
         document.getElementById('username-display').textContent = this.currentUser.username;
         document.getElementById('level-display').textContent = this.currentUser.level;
         this.updateProgressDisplay();
+        this.updateMiniGameCardVisibility();
+
+        // Clear current game state when returning to dashboard
+        this.currentPairingGame = null;
+        this.currentGroupingGame = null;
+        this.currentSentenceGame = null;
+    }
+
+    showErrorMessage(message) {
+        // Hide all screens
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.classList.add('hidden');
+        });
+
+        // Create and show error screen
+        let errorScreen = document.getElementById('error-screen');
+        if (!errorScreen) {
+            errorScreen = document.createElement('div');
+            errorScreen.id = 'error-screen';
+            errorScreen.className = 'screen';
+            document.body.appendChild(errorScreen);
+        }
+
+        errorScreen.innerHTML = `
+            <div class="error-container">
+                <div class="error-content">
+                    <h1>⚠️ Loading Error</h1>
+                    <p>${message}</p>
+                    <button onclick="window.location.reload()" class="error-reload-btn">Reload Page</button>
+                </div>
+            </div>
+        `;
+
+        errorScreen.classList.remove('hidden');
     }
 
     updateProgressDisplay() {
@@ -327,12 +417,12 @@ Draw 10 guarantees one Epic or Legendary item!`;
         const reviewCurrentWords = this.getWordsForLevel(currentLevel);
         const reviewLowerWords = this.currentUser.reviewLowerLevelWords || [];
         reviewCurrentWords.forEach(word => {
-            totalRequired += this.CURRENT_LEVEL_COMPLETIONS;
-            totalCompleted += Math.min(this.currentUser.wordProgress[word]?.correct || 0, this.CURRENT_LEVEL_COMPLETIONS);
+            totalRequired += this.REVIEW_CURRENT_LEVEL_COMPLETIONS;
+            totalCompleted += Math.min(this.currentUser.wordProgress[word]?.correct || 0, this.REVIEW_CURRENT_LEVEL_COMPLETIONS);
         });
         reviewLowerWords.forEach(word => {
-            totalRequired += this.LOWER_LEVEL_COMPLETIONS_REVIEW;
-            totalCompleted += Math.min(this.currentUser.wordProgress[word]?.correct || 0, this.LOWER_LEVEL_COMPLETIONS_REVIEW);
+            totalRequired += this.REVIEW_LOWER_LEVEL_COMPLETIONS;
+            totalCompleted += Math.min(this.currentUser.wordProgress[word]?.correct || 0, this.REVIEW_LOWER_LEVEL_COMPLETIONS);
         });
 
         const writingCurrentWords = this.getWordsForLevel(currentLevel);
@@ -367,7 +457,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
             this.showDashboard();
             return;
         }
-        const sessionList = this.generateSessionWords(availableWords, this.WORDS_PER_SESSION);
+        const sessionList = this.generateSessionWords(availableWords, this.REVIEW_WORDS_PER_SESSION);
         this.currentActivity = { type: 'word-review', words: sessionList, currentIndex: 0, score: 0 };
         this.showScreen('word-review-screen');
         this.displayCurrentWord();
@@ -378,10 +468,10 @@ Draw 10 guarantees one Epic or Legendary item!`;
 
         const reviewCurrentWords = this.getWordsForLevel(currentLevel);
         for (let word of reviewCurrentWords) {
-            if ((this.currentUser.wordProgress[word]?.correct || 0) < this.CURRENT_LEVEL_COMPLETIONS) return false;
+            if ((this.currentUser.wordProgress[word]?.correct || 0) < this.REVIEW_CURRENT_LEVEL_COMPLETIONS) return false;
         }
         for (let word of (this.currentUser.reviewLowerLevelWords || [])) {
-            if ((this.currentUser.wordProgress[word]?.correct || 0) < this.LOWER_LEVEL_COMPLETIONS_REVIEW) return false;
+            if ((this.currentUser.wordProgress[word]?.correct || 0) < this.REVIEW_LOWER_LEVEL_COMPLETIONS) return false;
         }
 
         const writingCurrentWords = this.getWordsForLevel(currentLevel);
@@ -405,13 +495,13 @@ Draw 10 guarantees one Epic or Legendary item!`;
         let availableWords = [];
 
         currentLevelWords.forEach(word => {
-            if ((wordProgress[word]?.correct || 0) < this.CURRENT_LEVEL_COMPLETIONS) {
+            if ((wordProgress[word]?.correct || 0) < this.REVIEW_CURRENT_LEVEL_COMPLETIONS) {
                 availableWords.push(word);
             }
         });
 
         requiredLowerLevelWords.forEach(word => {
-            if ((wordProgress[word]?.correct || 0) < this.LOWER_LEVEL_COMPLETIONS_REVIEW) {
+            if ((wordProgress[word]?.correct || 0) < this.REVIEW_LOWER_LEVEL_COMPLETIONS) {
                 availableWords.push(word);
             }
         });
@@ -571,11 +661,16 @@ Draw 10 guarantees one Epic or Legendary item!`;
 
         const shuffled = [...lowerLevelWords].sort(() => 0.5 - Math.random());
 
-        const listenCount = Math.ceil(shuffled.length * (this.LISTENING_LOWER_LEVEL_PERCENTAGE / 100));
-        const reviewCount = Math.ceil(shuffled.length * (this.REVIEW_LOWER_LEVEL_PERCENTAGE / 100));
+        // --- Calculate the count based on percentage ---
+        let listenCount = Math.ceil(shuffled.length * (this.LISTENING_LOWER_LEVEL_PERCENTAGE / 100));
+        let reviewCount = Math.ceil(shuffled.length * (this.REVIEW_LOWER_LEVEL_PERCENTAGE / 100));
+
+        // --- Apply the new MAX_WORDS upper bound ---
+        listenCount = Math.min(listenCount, this.LISTENING_LOWER_LEVEL_MAX_WORDS);
+        reviewCount = Math.min(reviewCount, this.REVIEW_LOWER_LEVEL_MAX_WORDS);
 
         if (listenCount + reviewCount > shuffled.length) {
-            console.warn("Percentages for subsets add up to more than 100%. Overlap may occur.");
+            console.warn("Percentages for subsets add up to more than 100% or were capped. Overlap may occur.");
             this.currentUser.listeningLowerLevelWords = shuffled.slice(0, listenCount);
             this.currentUser.reviewLowerLevelWords = shuffled.slice(0, reviewCount);
         } else {
@@ -596,7 +691,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
         // Word Review Progress (Left Column) - WITH COLLAPSIBLE WORD LIST
         const reviewContainer = document.getElementById('word-review-progress');
         let reviewHTML = '<h4>Word Review Progress</h4>';
-        let required = this.CURRENT_LEVEL_COMPLETIONS;
+        let required = this.REVIEW_CURRENT_LEVEL_COMPLETIONS;
         let levelWords = this.getWordsForLevel(currentLevel);
         let totalRequired = levelWords.length * required;
         let totalCompleted = 0;
@@ -606,7 +701,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
             reviewHTML += `<div class="level-progress-item ${levelProgress >= 100 ? 'completed' : ''}"><div class="level-header"><h5>Level ${currentLevel} (Current)</h5></div><div class="level-progress-bar"><div class="level-progress-fill" style="width: ${levelProgress}%">${levelProgress}%</div></div></div>`;
         }
 
-        required = this.LOWER_LEVEL_COMPLETIONS_REVIEW;
+        required = this.REVIEW_LOWER_LEVEL_COMPLETIONS;
         levelWords = this.currentUser.reviewLowerLevelWords || [];
         totalRequired = levelWords.length * required;
         totalCompleted = 0;
@@ -626,7 +721,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
                 <div class="collapsible-content">
                     <div class="listening-word-grid">`;
             reviewLowerLevelWords.forEach(word => {
-                const isCompleted = (this.currentUser.wordProgress[word]?.correct || 0) >= this.LOWER_LEVEL_COMPLETIONS_REVIEW;
+                const isCompleted = (this.currentUser.wordProgress[word]?.correct || 0) >= this.REVIEW_LOWER_LEVEL_COMPLETIONS;
                 reviewHTML += `<div class="listening-word-item ${isCompleted ? 'completed' : ''}">${word}</div>`;
             });
             reviewHTML += `</div></div></div>`;
@@ -789,6 +884,9 @@ Draw 10 guarantees one Epic or Legendary item!`;
         }
 
         // Perform the reset
+        const currentLevel = this.currentUser.level;
+
+        // 1. Reset basic user data
         this.currentUser.level = targetLevel;
         this.currentUser.wordProgress = {};
         this.currentUser.listeningProgress = {};
@@ -796,14 +894,76 @@ Draw 10 guarantees one Epic or Legendary item!`;
         this.currentUser.reviewLowerLevelWords = [];
         this.currentUser.sentenceWritingCompleted = false;
         this.currentUser.testScores = [];
-        this.generatePracticeSubsets();
-        this.saveUserData(); // Save the cleared data to localStorage
 
-        alert(`✅ Successfully reset to Level ${targetLevel}!\n\nReturning to the dashboard with a fresh state.`);
+        // 2. Smart mini-game reset: only clear levels >= targetLevel
+        if (this.currentUser.miniGameProgress) {
+            Object.keys(this.currentUser.miniGameProgress).forEach(level => {
+                if (parseInt(level) >= targetLevel) {
+                    delete this.currentUser.miniGameProgress[level];
+                }
+            });
+        }
+
+        if (this.currentUser.generatedMiniGames) {
+            Object.keys(this.currentUser.generatedMiniGames).forEach(level => {
+                if (parseInt(level) >= targetLevel) {
+                    delete this.currentUser.generatedMiniGames[level];
+                }
+            });
+        }
+
+        // 3. Generate new practice subsets for the target level
+        this.generatePracticeSubsets();
+
+        // 4. Save the data
+        this.saveUserData();
+
+        alert(`✅ Successfully reset to Level ${targetLevel}!\n\nMini-game progress preserved for levels below ${targetLevel}.\nReturning to the dashboard with a fresh state.`);
 
         // Force a full re-initialization of the user state, then show the dashboard.
         // This is like a "soft refresh" and guarantees all UI elements update.
         this.checkLoggedInUser();
+    }
+
+    resetAllMiniGames() {
+        const confirmMessage = `Are you sure you want to reset ALL mini-game data?\n\nThis will:\n• Clear all mini-game progress for all levels\n• Clear all generated mini-game sets\n• Clear cached mini-game content\n• Force reload from minigame.json\n• This action cannot be undone!`;
+
+        if (!confirm(confirmMessage)) return;
+
+        const doubleConfirm = prompt(`Type "RESET" to confirm you want to reset all mini-game data:`);
+        if (doubleConfirm !== "RESET") {
+            alert('Reset cancelled. You must type "RESET" exactly to confirm.');
+            return;
+        }
+
+        try {
+            // 1. Clear all user mini-game progress
+            this.currentUser.miniGameProgress = {};
+
+            // 2. Clear all generated mini-game sets
+            this.currentUser.generatedMiniGames = {};
+
+            // 3. Clear cached mini-game content from localStorage
+            localStorage.removeItem('miniGameContent');
+            localStorage.removeItem('miniGameContentVersion');
+
+            // 4. Save the cleared user data
+            this.saveUserData();
+
+            // 5. Force reload of mini-game content
+            this.initializeMiniGameContent().then(() => {
+                alert('✅ Mini-game reset completed successfully!\n\n• All mini-game progress cleared\n• All generated games cleared\n• Content reloaded from minigame.json\n\nReturning to dashboard.');
+                this.showDashboard();
+            }).catch((error) => {
+                console.error('Error reloading mini-game content:', error);
+                alert('⚠️ Mini-game data was cleared, but there was an error reloading content. Please refresh the page.');
+                this.showDashboard();
+            });
+
+        } catch (error) {
+            console.error('Error during mini-game reset:', error);
+            alert('❌ An error occurred during the reset. Please try again or refresh the page.');
+        }
     }
 
     downloadWordList() {
@@ -860,8 +1020,14 @@ Draw 10 guarantees one Epic or Legendary item!`;
         };
         const dataStr = JSON.stringify(userData, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const currentDate = new Date().toISOString().split('T')[0];
-        const filename = `chinese-learning-backup-${this.currentUser.username}-level${this.currentUser.level}-${currentDate}.json`;
+
+        // --- Create a detailed timestamp in the format YYYY_MM_DD-HH:mm:ss ---
+        const now = new Date();
+        const date = now.getFullYear() + '_' + String(now.getMonth() + 1).padStart(2, '0') + '_' + String(now.getDate()).padStart(2, '0');
+        const time = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
+
+        const filename = `chinese-learning-${this.currentUser.username}-level${this.currentUser.level}-${date}-${time}.json`;
+
         const link = document.createElement('a');
         link.href = URL.createObjectURL(dataBlob);
         link.download = filename;
@@ -1082,7 +1248,8 @@ Draw 10 guarantees one Epic or Legendary item!`;
             type: 'word-writing',
             words: sessionList,
             currentIndex: 0,
-            currentAnswer: null
+            currentAnswer: null,
+            score: 0 // Add score tracking
         };
         this.showScreen('word-writing-screen');
         this.displayCurrentWritingWord();
@@ -1098,6 +1265,11 @@ Draw 10 guarantees one Epic or Legendary item!`;
         wordEl.classList.add('answer-hidden');
 
         document.getElementById('writing-word-counter').textContent = `${activity.currentIndex + 1}/${activity.words.length}`;
+
+        // --- Update Score Display ---
+        document.getElementById('writing-current-score').textContent = activity.score;
+        document.getElementById('writing-total-score').textContent = activity.words.length;
+
         setTimeout(() => this.speak(word), 300);
     }
 
@@ -1121,6 +1293,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
         }
         if (isCorrect) {
             this.currentUser.listeningProgress[word].correct++;
+            this.currentActivity.score++;
         }
         this.saveUserData();
 
@@ -1128,7 +1301,13 @@ Draw 10 guarantees one Epic or Legendary item!`;
         if (this.currentActivity.currentIndex >= this.currentActivity.words.length) {
             // Set flag to prevent multiple executions
             this.currentActivity.isFinishing = true;
-            this.logActivity('Word Writing', 'Completed');
+
+            // --- Log the score instead of "Completed" ---
+            const score = this.currentActivity.score;
+            const total = this.currentActivity.words.length;
+            this.logActivity('Word Writing', `${score}/${total}`);
+            this.currentUser.testScores.push({ type: 'word-writing', score, total, date: this.getCurrentLocalTime() });
+
             this.currentUser.diamonds++;
             this.saveUserData();
 
@@ -1265,15 +1444,65 @@ Draw 10 guarantees one Epic or Legendary item!`;
         document.getElementById('diamond-count').textContent = this.currentUser.diamonds || 0;
         const grid = document.getElementById('collection-grid');
         grid.innerHTML = '';
+
+        // Handle Exchange Mode UI
+        const exchangeUI = document.getElementById('exchange-ui');
+        const exchangeTicketWrapper = document.getElementById('exchange-ticket-wrapper');
+        const gachaControls = document.querySelector('.gacha-controls');
+        grid.classList.toggle('in-exchange-mode', this.isExchangeMode);
+
+        if (this.isExchangeMode) {
+            exchangeUI.classList.remove('hidden');
+            gachaControls.classList.add('hidden'); // Hide gacha buttons
+            exchangeTicketWrapper.classList.add('exchange-active');
+            exchangeTicketWrapper.title = 'Exit Exchange Mode';
+        } else {
+            exchangeUI.classList.add('hidden');
+            gachaControls.classList.remove('hidden'); // Show gacha buttons
+            exchangeTicketWrapper.classList.remove('exchange-active');
+            exchangeTicketWrapper.title = 'Enter Exchange Mode';
+        }
+
         this.gachaPool.forEach(item => {
             const count = this.currentUser.collection[item.id] || 0;
             const isOwned = count > 0;
             const itemDiv = document.createElement('div');
             itemDiv.className = `collection-item ${item.rarity} ${isOwned ? 'owned' : ''}`;
+
             let countBadge = isOwned ? `<div class="item-count-badge">x${count}</div>` : '';
-            itemDiv.innerHTML = `${countBadge}<img src="${item.image}" alt="${item.name}" class="collection-item-image"><span class="collection-item-name">${item.name}</span>`;
+            let exchangeControlsHTML = '';
+
+            // Add exchange controls if in exchange mode and item is owned
+            if (this.isExchangeMode && isOwned) {
+                const selectedCount = this.exchangeSelection[item.id] || 0;
+                exchangeControlsHTML = `
+                    <div class="exchange-item-controls">
+                        <button class="exchange-btn minus" data-item-id="${item.id}">-</button>
+                        <span class="exchange-count">${selectedCount}</span>
+                        <button class="exchange-btn plus" data-item-id="${item.id}">+</button>
+                    </div>
+                `;
+                if (selectedCount > 0) {
+                    itemDiv.classList.add('selected-for-exchange');
+                }
+            }
+
+            itemDiv.innerHTML = `
+                ${countBadge}
+                <img src="${item.image}" alt="${item.name}" class="collection-item-image">
+                <span class="collection-item-name">${item.name}</span>
+                ${exchangeControlsHTML}
+            `;
             grid.appendChild(itemDiv);
         });
+
+        // Update exchange ticket display when rendering collections
+        this.updateExchangeTicketDisplay();
+
+        // Add event listeners ONLY to the card buttons that were just re-created
+        if (this.isExchangeMode) {
+            this.setupCardExchangeListeners();
+        }
     }
 
     _performSingleDraw() {
@@ -1298,34 +1527,14 @@ Draw 10 guarantees one Epic or Legendary item!`;
         this.currentUser.diamonds--;
         const drawnItem = this._performSingleDraw();
 
-        // --- Animation Start ---
-        const modal = document.getElementById('gacha-result-modal');
-        const modalContent = modal.querySelector('.modal-content');
-        const resultContent = document.getElementById('gacha-result-content');
+        // Save data before showing animation
+        this.currentUser.collection[drawnItem.id] = (this.currentUser.collection[drawnItem.id] || 0) + 1;
+        this.saveUserData();
 
-        // 1. Reset classes and hide the result content
-        modalContent.className = 'modal-content';
-        resultContent.classList.remove('is-visible');
+        // Trigger animation
+        this._showItemRevealAnimation(drawnItem);
 
-        // 2. Show the modal overlay
-        modal.classList.remove('hidden');
-
-        // 3. Delay to allow CSS to render, then start animations
-        setTimeout(() => {
-            modalContent.classList.add('animate-in'); // Pop-in and flash starts
-            this.showGachaResult(drawnItem); // Populate data (it's invisible for now)
-
-            // 4. After the flash animation, reveal the content
-            setTimeout(() => {
-                resultContent.classList.add('is-visible'); // Fade in the result
-                modalContent.classList.add(`${drawnItem.rarity}-reveal`); // Add final glow
-            }, 1300); // Timed for after the flash
-
-            // Save data and update UI in the background
-            this.currentUser.collection[drawnItem.id] = (this.currentUser.collection[drawnItem.id] || 0) + 1;
-            this.saveUserData();
-            this.renderCollectionGrid();
-        }, 100);
+        // The UI will be updated when the modal is closed via closeGachaModal()
     }
 
     drawTenGachaItems() {
@@ -1352,8 +1561,6 @@ Draw 10 guarantees one Epic or Legendary item!`;
             const guaranteedItem = possibleItems[Math.floor(Math.random() * possibleItems.length)];
             results.push(guaranteedItem);
         }
-
-        // The sorting logic has been removed from here.
 
         results.forEach(item => {
             this.currentUser.collection[item.id] = (this.currentUser.collection[item.id] || 0) + 1;
@@ -1420,6 +1627,1667 @@ Draw 10 guarantees one Epic or Legendary item!`;
             // Clean up animation classes for next draw
             modal.querySelector('.modal-content').className = 'modal-content';
             document.getElementById('gacha-result-content').classList.remove('is-visible'); // Reset visibility
+        }
+
+        // --- New UI Refresh Logic ---
+        // Always re-render the grid to show new item counts
+        this.renderCollectionGrid();
+
+        // If we were in exchange mode, also update the button states
+        if (this.isExchangeMode) {
+            this.updateExchangeButtonStates();
+        }
+    }
+
+    // --- Exchange Mode Functions ---
+    toggleExchangeMode() {
+        if (!this.isExchangeMode) {
+            // Entering exchange mode
+            if ((this.currentUser.exchangeTickets || 0) < 1) {
+                alert("You need at least 1 Exchange Ticket to enter exchange mode.");
+                return;
+            }
+            if (!confirm("Enter exchange mode?\nThis will consume 1 Exchange Ticket and cannot be undone.")) {
+                return;
+            }
+            this.currentUser.exchangeTickets--;
+            this.isExchangeMode = true;
+            this.exchangeSelection = {}; // Reset selection
+
+            // --- Build the main controls and attach their listeners ONCE ---
+            this.renderExchangeUI();
+            this.setupMainExchangePanelListeners();
+
+        } else {
+            // Exiting exchange mode
+            this.isExchangeMode = false;
+            this.exchangeSelection = {}; // Clear selection
+        }
+        this.saveUserData();
+        this.renderCollectionGrid(); // Re-render to show/hide cards and controls
+    }
+
+    renderExchangeUI() {
+        const totalPoints = this.calculateExchangePoints();
+        document.getElementById('exchange-total-points').textContent = totalPoints;
+
+        const buyOptionsContainer = document.getElementById('exchange-buy-options');
+        buyOptionsContainer.innerHTML = ''; // Clear previous controls
+
+        const drawButtonsWrapper = document.createElement('div');
+        drawButtonsWrapper.className = 'exchange-draw-buttons';
+        buyOptionsContainer.appendChild(drawButtonsWrapper);
+
+        const rarities = ['Common', 'Rare', 'Epic', 'Legendary'];
+        rarities.forEach(rarity => {
+            const cost = this.GACHA_EXCHANGE_RATES_DRAW[rarity];
+            const btn = document.createElement('button');
+            btn.className = 'exchange-buy-btn';
+            btn.dataset.rarity = rarity;
+            btn.innerHTML = `Draw 1 ${rarity} <span class="exchange-cost">(${cost} pts)</span>`;
+            drawButtonsWrapper.appendChild(btn);
+        });
+
+        // --- New Specific Exchange UI ---
+        const specificExchangeWrapper = document.createElement('div');
+        specificExchangeWrapper.className = 'specific-exchange-wrapper';
+
+        const select = document.createElement('select');
+        select.id = 'specific-item-select';
+
+        this.gachaPool
+            .sort((a, b) => this.GACHA_EXCHANGE_RATES_SPECIFIED[b.rarity] - this.GACHA_EXCHANGE_RATES_SPECIFIED[a.rarity] || a.name.localeCompare(b.name))
+            .forEach(item => {
+                const cost = this.GACHA_EXCHANGE_RATES_SPECIFIED[item.rarity];
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.dataset.cost = cost;
+                option.textContent = `${item.name} (${item.rarity}) - ${cost} pts`;
+                select.appendChild(option);
+            });
+
+        const buyBtn = document.createElement('button');
+        buyBtn.id = 'confirm-specific-exchange-btn';
+        buyBtn.className = 'exchange-buy-btn specific';
+        buyBtn.textContent = 'Buy Selected';
+
+        specificExchangeWrapper.appendChild(select);
+        specificExchangeWrapper.appendChild(buyBtn);
+        buyOptionsContainer.appendChild(specificExchangeWrapper);
+
+        this.updateExchangeButtonStates(); // Set initial state
+    }
+
+    calculateExchangePoints() {
+        let totalPoints = 0;
+        for (const itemId in this.exchangeSelection) {
+            const count = this.exchangeSelection[itemId];
+            const itemInfo = this.gachaPool.find(p => p.id === itemId);
+            if (itemInfo) {
+                totalPoints += count * this.GACHA_EXCHANGE_RATES_DRAW[itemInfo.rarity];
+            }
+        }
+        return totalPoints;
+    }
+
+    updateExchangeSelection(itemId, change) {
+        const currentSelection = this.exchangeSelection[itemId] || 0;
+        const ownedCount = this.currentUser.collection[itemId] || 0;
+        let newSelection = currentSelection + change;
+
+        if (newSelection < 0) newSelection = 0;
+        if (newSelection > ownedCount) newSelection = ownedCount;
+
+        if (newSelection > 0) {
+            this.exchangeSelection[itemId] = newSelection;
+        } else {
+            delete this.exchangeSelection[itemId];
+        }
+        // 1. Re-render the grid to update the card UI (+/- count)
+        this.renderCollectionGrid();
+        // 2. Update the main panel button states based on new point total
+        this.updateExchangeButtonStates();
+    }
+
+    performExchange(rarityToBuy) {
+        const cost = this.GACHA_EXCHANGE_RATES_DRAW[rarityToBuy];
+        const currentPoints = this.calculateExchangePoints();
+
+        if (currentPoints < cost) {
+            alert(`You need ${cost} points to get a ${rarityToBuy} item, but you only have ${currentPoints}.`);
+            return;
+        }
+
+        const tradedItemsSummary = Object.keys(this.exchangeSelection).map(id => {
+            const item = this.gachaPool.find(p => p.id === id);
+            return `${this.exchangeSelection[id]}x ${item.name}`;
+        }).join(', ');
+
+        // Only ask for confirmation if points will be wasted.
+        if (currentPoints > cost) {
+            if (!confirm(`This will trade [${tradedItemsSummary}] for a random ${rarityToBuy} item. Any leftover points will be lost. Continue?`)) {
+                return;
+            }
+        }
+
+        // 1. Deduct traded items
+        for (const itemId in this.exchangeSelection) {
+            this.currentUser.collection[itemId] -= this.exchangeSelection[itemId];
+            if (this.currentUser.collection[itemId] <= 0) {
+                delete this.currentUser.collection[itemId];
+            }
+        }
+
+        // 2. Get a new random item
+        const possibleItems = this.gachaPool.filter(item => item.rarity === rarityToBuy);
+        const newItem = possibleItems[Math.floor(Math.random() * possibleItems.length)];
+
+        // 3. Add new item
+        this.currentUser.collection[newItem.id] = (this.currentUser.collection[newItem.id] || 0) + 1;
+
+        // 4. Reset exchange state
+        this.exchangeSelection = {};
+        this.saveUserData();
+
+        // 5. Show animation
+        this._showItemRevealAnimation(newItem);
+    }
+
+    updateExchangeButtonStates() {
+        const totalPoints = this.calculateExchangePoints();
+        document.getElementById('exchange-total-points').textContent = totalPoints;
+
+        // Update "Draw 1" buttons
+        document.querySelectorAll('.exchange-buy-btn[data-rarity]').forEach(btn => {
+            const cost = this.GACHA_EXCHANGE_RATES_DRAW[btn.dataset.rarity];
+            btn.disabled = totalPoints < cost;
+        });
+
+        // Update "Buy Selected" button
+        const select = document.getElementById('specific-item-select');
+        const buyBtn = document.getElementById('confirm-specific-exchange-btn');
+
+        if (!select || !buyBtn) return;
+
+        const selectedOption = select.options[select.selectedIndex];
+        if (!selectedOption) {
+            buyBtn.disabled = true;
+            return;
+        }
+        const cost = parseInt(selectedOption.dataset.cost, 10);
+        buyBtn.disabled = totalPoints < cost;
+    }
+
+    performSpecificExchange() {
+        const select = document.getElementById('specific-item-select');
+        const itemIdToBuy = select.value;
+        const itemInfo = this.gachaPool.find(p => p.id === itemIdToBuy);
+        if (!itemInfo) return;
+
+        const cost = this.GACHA_EXCHANGE_RATES_SPECIFIED[itemInfo.rarity];
+        const currentPoints = this.calculateExchangePoints();
+
+        if (currentPoints < cost) {
+            alert(`You need ${cost} points to buy a ${itemInfo.name}, but you only have ${currentPoints}.`);
+            return;
+        }
+
+        const tradedItemsSummary = Object.keys(this.exchangeSelection).map(id => {
+            const item = this.gachaPool.find(p => p.id === id);
+            return `${this.exchangeSelection[id]}x ${item.name}`;
+        }).join(', ');
+
+        // Only ask for confirmation if points will be wasted.
+        if (currentPoints > cost) {
+            if (!confirm(`This will trade [${tradedItemsSummary}] for a specific item: [${itemInfo.name}]. Any leftover points will be lost. Continue?`)) {
+                return;
+            }
+        }
+
+        // 1. Deduct traded items
+        for (const itemId in this.exchangeSelection) {
+            this.currentUser.collection[itemId] -= this.exchangeSelection[itemId];
+            if (this.currentUser.collection[itemId] <= 0) {
+                delete this.currentUser.collection[itemId];
+            }
+        }
+
+        // 2. Add the SPECIFIC new item
+        this.currentUser.collection[itemInfo.id] = (this.currentUser.collection[itemInfo.id] || 0) + 1;
+
+        // 3. Reset exchange state
+        this.exchangeSelection = {};
+        this.saveUserData();
+
+        // 4. Show animation
+        this._showItemRevealAnimation(itemInfo);
+    }
+
+    _showItemRevealAnimation(item) {
+        const modal = document.getElementById('gacha-result-modal');
+        const modalContent = modal.querySelector('.modal-content');
+        const resultContent = document.getElementById('gacha-result-content');
+
+        // 1. Reset classes and hide the result content
+        modalContent.className = 'modal-content';
+        resultContent.classList.remove('is-visible');
+
+        // 2. Show the modal overlay
+        modal.classList.remove('hidden');
+
+        // 3. Delay to allow CSS to render, then start animations
+        setTimeout(() => {
+            modalContent.classList.add('animate-in'); // Pop-in and flash starts
+            this.showGachaResult(item); // Populate data (it's invisible for now)
+
+            // 4. After the flash animation, reveal the content
+            setTimeout(() => {
+                resultContent.classList.add('is-visible'); // Fade in the result
+                modalContent.classList.add(`${item.rarity}-reveal`); // Add final glow
+            }, 1300); // Timed for after the flash
+        }, 100);
+    }
+
+    setupMainExchangePanelListeners() {
+        document.querySelectorAll('.exchange-buy-btn').forEach(btn => {
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', (e) => {
+                if (e.currentTarget.dataset.rarity) {
+                    const rarity = e.currentTarget.dataset.rarity;
+                    this.performExchange(rarity);
+                }
+            });
+        });
+
+        const specificSelect = document.getElementById('specific-item-select');
+        if (specificSelect) {
+            const newSelect = specificSelect.cloneNode(true);
+            specificSelect.parentNode.replaceChild(newSelect, specificSelect);
+            newSelect.addEventListener('change', () => this.updateExchangeButtonStates());
+        }
+
+        const confirmSpecificBtn = document.getElementById('confirm-specific-exchange-btn');
+        if (confirmSpecificBtn) {
+            const newBtn = confirmSpecificBtn.cloneNode(true);
+            confirmSpecificBtn.parentNode.replaceChild(newBtn, confirmSpecificBtn);
+            newBtn.addEventListener('click', () => this.performSpecificExchange());
+        }
+    }
+
+    setupCardExchangeListeners() {
+        document.querySelectorAll('.exchange-btn').forEach(btn => {
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', (e) => {
+                const itemId = e.currentTarget.dataset.itemId;
+                const change = e.currentTarget.classList.contains('plus') ? 1 : -1;
+                this.updateExchangeSelection(itemId, change);
+            });
+        });
+    }
+
+    /* Mini Game Center */
+    showMiniGameCenter() {
+        const currentLevel = this.currentUser.level;
+
+        if (!this.MINI_GAME_ENABLED_LEVELS.includes(currentLevel)) {
+            alert('Mini games are not available at this level.');
+            return;
+        }
+
+        // Clear game states when returning to mini game center
+        this.currentPairingGame = null;
+        this.currentPairingGame = null;
+        this.currentSentenceGame = null;
+
+        this.showScreen('mini-game-screen');
+        this.renderMiniGames();
+        this.updateExchangeTicketDisplay();
+    }
+
+    renderMiniGames() {
+        const grid = document.getElementById('mini-games-grid');
+        const currentLevel = this.currentUser.level;
+
+        const games = this.generateLevelGames(currentLevel);
+
+        grid.innerHTML = '';
+        games.forEach((game, index) => {
+            const gameDiv = document.createElement('div');
+            const isCompleted = this.currentUser.miniGameProgress[currentLevel]?.[index] || false;
+
+            gameDiv.className = `mini-game-card ${isCompleted ? 'completed' : ''}`;
+
+            const imageName = this.getMiniGameImage(game.type);
+            const bgImage = `minigame/${imageName}`;
+            gameDiv.style.backgroundImage = `url('${bgImage}')`;
+
+            // --- Add theme display for pairing games ---
+            let themeDisplay = '';
+            if (game.type === 'pairing' || game.type === 'matching') {
+                themeDisplay = `<p class="game-theme-display">${this.getThemeDisplayName(game.theme)}</p>`;
+            }
+
+            gameDiv.innerHTML = `
+                <div class="mini-game-content-wrapper">
+                    <h4>${game.title}</h4>
+                    ${themeDisplay}
+                </div>
+            `;
+
+            gameDiv.addEventListener('click', () => this.startMiniGame(game, index));
+            grid.appendChild(gameDiv);
+        });
+    }
+
+    updateMiniGameCardVisibility() {
+        const miniGameCard = document.getElementById('mini-game-card');
+        const currentLevel = this.currentUser.level;
+
+        const isEnabledForCurrentLevel = this.MINI_GAME_ENABLED_LEVELS.includes(currentLevel);
+        const lastEnabledLevel = this.findLastEnabledMiniGameLevel(currentLevel);
+
+        if (isEnabledForCurrentLevel || lastEnabledLevel !== null) {
+            // Game is currently active
+            miniGameCard.classList.remove('disabled');
+            miniGameCard.classList.add('active');
+
+            const nextResetLevel = this.findNextEnabledMiniGameLevel(currentLevel);
+            // Handle case where there are no more upcoming game levels
+            const message = nextResetLevel
+                ? `Games will be reset at Level ${nextResetLevel}`
+                : 'These are the final games!';
+
+            miniGameCard.innerHTML = `
+                <h3>遊戲小天地</h3>
+                <p>Come play to get your exchange ticket!</p>
+                <p>${message}</p>
+            `;
+        } else {
+            // Game is currently locked
+            miniGameCard.classList.remove('active');
+            miniGameCard.classList.add('disabled');
+
+            const nextUnlockLevel = this.findNextEnabledMiniGameLevel(currentLevel);
+            // Handle case where all game levels are passed
+            const message = nextUnlockLevel
+                ? `Unlocks at Level ${nextUnlockLevel}`
+                : 'No more mini-games available.';
+
+            miniGameCard.innerHTML = `
+                <h3>遊戲小天地</h3>
+                <p>${message}</p>
+            `;
+        }
+    }
+
+    findNextEnabledMiniGameLevel(currentLevel) {
+        return this.MINI_GAME_ENABLED_LEVELS.find(level => level > currentLevel);
+    }
+
+    findLastEnabledMiniGameLevel(currentLevel) {
+        const enabledLevels = this.MINI_GAME_ENABLED_LEVELS.filter(level => level <= currentLevel);
+        return enabledLevels.length > 0 ? Math.max(...enabledLevels) : null;
+    }
+
+    generateLevelGames(level) {
+        // --- This logic ensures games are regenerated only on the specific enabled levels ---
+        const lastEnabledLevel = this.findLastEnabledMiniGameLevel(level);
+        const generationLevel = lastEnabledLevel !== null ? lastEnabledLevel : level;
+
+        if (this.currentUser.generatedMiniGames[generationLevel]) {
+            return this.currentUser.generatedMiniGames[generationLevel];
+        }
+
+        const allPossibleGameTypes = ['sentenceCompletion', 'matching', 'pairing', 'formingSentences'];
+        const groupData = this.getGroupDataForLevel(level);
+        if (groupData && groupData.groupNames && groupData.groupNames.length >= 2) {
+            allPossibleGameTypes.push('grouping');
+        }
+
+        const games = [];
+        const distributedGameTypes = this.distributeGameTypes(allPossibleGameTypes, this.MINI_GAMES_PER_LEVEL);
+
+        let usedPairingThemes = [];
+        let usedSentences = [];
+        let usedMatchThemes = [];
+        let usedGroupNames = [];
+        let usedFormingSentences = [];
+
+        for (let i = 0; i < this.MINI_GAMES_PER_LEVEL; i++) {
+            const gameType = distributedGameTypes[i];
+            let theme = 'basic';
+            let gameData = null;
+
+            if (gameType === 'pairing') {
+                const pairThemes = this.getAvailablePairThemesForLevel(level);
+                const availablePairThemes = pairThemes.filter(t => !usedPairingThemes.includes(t));
+
+                if (availablePairThemes.length > 0) {
+                    theme = availablePairThemes[Math.floor(Math.random() * availablePairThemes.length)];
+                    usedPairingThemes.push(theme);
+                } else {
+                    // No unique theme available, create an empty game
+                    gameData = null;
+                    theme = 'unavailable';
+                }
+
+            } else if (gameType === 'matching') {
+                const matchThemes = this.getAvailableMatchThemesForLevel(level);
+                const availableThemes = matchThemes.filter(t => !usedMatchThemes.includes(t));
+
+                if (availableThemes.length > 0) {
+                    theme = availableThemes[Math.floor(Math.random() * availableThemes.length)];
+                    usedMatchThemes.push(theme);
+                    // We only need to store the theme. The rendering function will handle data selection.
+                    gameData = {}; // Just an empty object to signify a valid game
+                } else {
+                    // No unique theme available, create an empty game
+                    gameData = null;
+                    theme = 'unavailable';
+                }
+
+            } else if (gameType === 'grouping') {
+                const groupData = this.getGroupDataForLevel(level, usedGroupNames);
+                if (groupData) {
+                    gameData = { groups: groupData };
+                    usedGroupNames.push(...groupData.groupNames);
+                    theme = 'categories'; // A generic theme name for display purposes
+                }
+
+            } else if (gameType === 'sentenceCompletion') {
+                const allSentences = this.getAllSentenceCompletionData(level);
+                const availableSentences = allSentences.filter(s => !usedSentences.includes(s.sentence));
+
+                if (availableSentences.length > 0) {
+                    const selectedSentence = availableSentences[Math.floor(Math.random() * availableSentences.length)];
+                    usedSentences.push(selectedSentence.sentence);
+                    gameData = { sentenceData: selectedSentence };
+                }
+            } else if (gameType === 'formingSentences') {
+                const allFormingSentences = this.getAllSentenceFormingData(level);
+                const availableFormingSentences = allFormingSentences.filter(s => !usedFormingSentences.includes(s.sentence));
+
+                if (availableFormingSentences.length >= this.MINI_GAMES_FORMING_SENTENCE_NUM_SENTENCES) {
+                    // We have enough unique sentences for a full game
+                    const selectedSentences = availableFormingSentences
+                        .sort(() => 0.5 - Math.random())
+                        .slice(0, this.MINI_GAMES_FORMING_SENTENCE_NUM_SENTENCES);
+
+                    selectedSentences.forEach(sentence => {
+                        usedFormingSentences.push(sentence.sentence);
+                    });
+
+                    gameData = { formingSentences: selectedSentences };
+                    theme = 'sentences';
+                } else {
+                    // Not enough unique sentences available
+                    gameData = null;
+                    theme = 'unavailable';
+                }
+            }
+
+            games.push({
+                id: i,
+                type: gameType,
+                theme: theme,
+                level: level,
+                gameData: gameData,
+                title: this.getGameTitle(gameType, theme),
+            });
+        }
+
+        // Save the generated games for this level
+        this.currentUser.generatedMiniGames[generationLevel] = games;
+        this.saveUserData();
+
+        return games;
+    }
+
+    getAvailablePairThemesForLevel(level) {
+        const allThemes = new Set();
+        for (let i = 1; i <= level; i++) {
+            const levelContent = this.getMiniGameContentForLevel(i);
+            if (levelContent && levelContent.pairs) {
+                Object.keys(levelContent.pairs).forEach(theme => allThemes.add(theme));
+            }
+        }
+        return Array.from(allThemes);
+    }
+
+     getAvailableGroupThemesForLevel(level) {
+        const allThemes = new Set();
+        // In the future, if you structure groups by theme like pairs, this will work.
+        // For now, it will likely return a single theme if available.
+        for (let i = 1; i <= level; i++) {
+            const levelContent = this.getMiniGameContentForLevel(i);
+            if (levelContent && levelContent.groups) {
+                // Assuming minigame.json might have multiple themed groups in the future
+                // e.g., groups: { colors: {...}, animals: {...} }
+                Object.keys(levelContent.groups).forEach(theme => {
+                    // Check if the theme itself contains groupNames, which indicates it's a theme object
+                    if(levelContent.groups[theme].groupNames) {
+                        allThemes.add(theme);
+                    }
+                });
+            }
+        }
+        return Array.from(allThemes);
+    }
+
+
+    distributeGameTypes(gameTypes, totalGames) {
+        const distributedTypes = [];
+
+        if (gameTypes.length >= totalGames) {
+            // More game types than needed - use each type only once
+            const shuffled = [...gameTypes].sort(() => Math.random() - 0.5);
+            return shuffled.slice(0, totalGames);
+        } else {
+            // Fewer game types than needed - distribute evenly
+            const timesEach = Math.floor(totalGames / gameTypes.length);
+            const remainder = totalGames % gameTypes.length;
+
+            // Add each game type the calculated number of times
+            for (let i = 0; i < gameTypes.length; i++) {
+                for (let j = 0; j < timesEach; j++) {
+                    distributedTypes.push(gameTypes[i]);
+                }
+            }
+
+            // Add remainder games randomly from available types
+            const shuffledTypes = [...gameTypes].sort(() => Math.random() - 0.5);
+            for (let i = 0; i < remainder; i++) {
+                distributedTypes.push(shuffledTypes[i]);
+            }
+
+            // Shuffle the final distribution to randomize order
+            return distributedTypes.sort(() => Math.random() - 0.5);
+        }
+    }
+
+    getGameTitle(type, theme) {
+        const titles = {
+            'sentenceCompletion': '句子空格殺手',
+            'matching': '配對工廠',
+            'grouping': '分組大王',
+            'pairing': '卡片配一配',
+            'formingSentences': '句子拼圖'
+        };
+        return titles[type] || '小遊戲';
+    }
+
+    getMiniGameImage(gameType) {
+        const imageMap = {
+            'pairing': 'pairing.png',
+            'grouping': 'grouping.png',
+            'matching': 'matching.png',
+            'sentenceCompletion': 'sentence.png',
+            'formingSentences': 'forming.png'
+        };
+        // Return the specific image or a default one if not found
+        return imageMap[gameType] || 'default.png';
+    }
+
+    startMiniGame(game, gameIndex) {
+        this.currentGame = { ...game, gameIndex };
+        this.showScreen('game-play-screen');
+        document.getElementById('game-title').textContent = game.title;
+        this.renderGameContent(game);
+    }
+
+    getMiniGameContentForLevel(level) {
+        const storedContent = localStorage.getItem('miniGameContent');
+        if (storedContent) {
+            const content = JSON.parse(storedContent);
+            return content[level.toString()] || null;
+        }
+        return null;
+    }
+
+    renderGameContent(game) {
+        const contentDiv = document.getElementById('game-content');
+
+        if (game.theme === 'unavailable') {
+            contentDiv.innerHTML = '<p style="text-align: center; padding: 2rem;">No unique theme available for this game.</p>';
+            this.showGameControls(false, false); // Hide buttons
+            return;
+        }
+
+        switch(game.type) {
+            case 'sentenceCompletion':
+                this.renderSentenceCompletion(contentDiv, game);
+                this.showGameControls(true, true);
+                break;
+            case 'pairing':
+                this.renderPairingGame(contentDiv, game);
+                this.showGameControls(false, true);
+                break;
+            case 'grouping': // Add this case
+                this.renderGroupingGame(contentDiv, game);
+                this.showGameControls(true, true);
+                break;
+            case 'matching':
+                this.renderMatchingGame(contentDiv, game);
+                this.showGameControls(true, true);
+                break;
+            case 'formingSentences':
+                this.renderFormingSentencesGame(contentDiv, game);
+                this.showGameControls(true, true);
+                break;
+            default:
+                contentDiv.innerHTML = '<p style="text-align: center; padding: 2rem;">Game coming soon!</p>';
+                this.showGameControls(true, true);
+        }
+    }
+
+    // --- Pairing game ---
+    renderPairingGame(container, game) {
+        const allPairsForTheme = this.getAllPairsForTheme(game.theme, game.level);
+
+        if (!allPairsForTheme || allPairsForTheme.length === 0) {
+            container.innerHTML = '<p style="text-align: center; padding: 2rem;">No pairing data available for this theme.</p>';
+            return;
+        }
+
+        // Only generate new pairs AND layout if we don't have a current game or it's a different game
+        if (!this.currentPairingGame ||
+            this.currentPairingGame.gameId !== game.id ||
+            this.currentPairingGame.level !== game.level) {
+
+            // Generate fresh pairs for new game entry
+            const selectedPairs = this.selectRandomPairs(allPairsForTheme, this.MINI_GAMES_MAX_PAIRING_PAIRS);
+
+            // Generate shuffled word layout (only on new game entry)
+            const allWords = [];
+            selectedPairs.forEach(pair => {
+                allWords.push(...pair);
+            });
+            const shuffledWords = [...allWords].sort(() => Math.random() - 0.5);
+
+            // Store the selected pairs and layout for this game session
+            this.currentPairingGame = {
+                gameId: game.id,
+                level: game.level,
+                theme: game.theme,
+                pairs: selectedPairs,
+                words: shuffledWords, // Fixed layout for this game session
+                selectedWords: [],
+                foundPairs: [],
+                total: selectedPairs.length
+            };
+        }
+
+        // Reset game state for fresh start/reset (but keep same pairs and layout)
+        this.currentPairingGame.selectedWords = [];
+        this.currentPairingGame.foundPairs = [];
+        this.currentPairingGame.score = 0;
+
+        // Calculate grid size
+        const totalWords = this.currentPairingGame.words.length;
+        const gridSize = Math.ceil(Math.sqrt(totalWords));
+
+        container.innerHTML = `
+            <div class="pairing-game">
+                <div class="game-info">
+                    <h3>Find all ${this.currentPairingGame.total} pairs!</h3>
+                    <p>Theme: ${this.getThemeDisplayName(game.theme)}</p>
+                </div>
+                <div class="pairing-grid" style="grid-template-columns: repeat(${gridSize}, 1fr);">
+                    ${this.currentPairingGame.words.map((word, index) =>
+                        `<div class="pairing-word" data-word="${word}" data-index="${index}">${word}</div>`
+                    ).join('')}
+                </div>
+            </div>
+        `;
+
+        this.setupPairingGameEvents();
+    }
+
+    getAllPairsForTheme(theme, maxLevel) {
+        const allPairs = [];
+
+        // Collect all pairs from level 1 up to maxLevel for the specified theme
+        for (let level = 1; level <= maxLevel; level++) {
+            const levelContent = this.getMiniGameContentForLevel(level);
+            if (levelContent && levelContent.pairs && levelContent.pairs[theme]) {
+                const levelPairs = levelContent.pairs[theme];
+                if (Array.isArray(levelPairs)) {
+                    allPairs.push(...levelPairs);
+                }
+            }
+        }
+
+        return allPairs;
+    }
+
+    selectRandomPairs(allPairs, maxPairs) {
+        // If we have fewer pairs than maxPairs, return all pairs
+        if (allPairs.length <= maxPairs) {
+            return [...allPairs];
+        }
+
+        // Randomly select maxPairs from all available pairs
+        const shuffled = [...allPairs].sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, maxPairs);
+    }
+
+    showGameControls(showCheckButton, showResetButton) {
+        const checkBtn = document.getElementById('check-game-btn');
+        const resetBtn = document.getElementById('reset-game-btn');
+
+        if (checkBtn) {
+            checkBtn.style.display = showCheckButton ? 'inline-block' : 'none';
+        }
+        if (resetBtn) {
+            resetBtn.style.display = showResetButton ? 'inline-block' : 'none';
+        }
+    }
+
+    getThemeDisplayName(theme) {
+        if (!theme) {
+            return ''; // Return an empty string if the theme is invalid
+        }
+        // Capitalize the first letter and return the rest of the string
+        return theme.charAt(0).toUpperCase() + theme.slice(1);
+    }
+
+    setupPairingGameEvents() {
+        const wordElements = document.querySelectorAll('.pairing-word');
+
+        wordElements.forEach(element => {
+            element.addEventListener('click', (e) => {
+                const word = e.target.dataset.word;
+                const index = parseInt(e.target.dataset.index);
+
+                // Skip if word is already found
+                if (element.classList.contains('found')) {
+                    return;
+                }
+
+                // Toggle selection
+                if (element.classList.contains('selected')) {
+                    element.classList.remove('selected');
+                    this.currentPairingGame.selectedWords = this.currentPairingGame.selectedWords.filter(
+                        item => item.index !== index
+                    );
+                } else {
+                    element.classList.add('selected');
+                    this.currentPairingGame.selectedWords.push({ word, index, element });
+                }
+
+                // Check if we have 2 selected words
+                if (this.currentPairingGame.selectedWords.length === 2) {
+                    setTimeout(() => this.checkPairingMatch(), 500);
+                }
+            });
+        });
+    }
+
+    checkPairingMatch() {
+        const selected = this.currentPairingGame.selectedWords;
+        const word1 = selected[0].word;
+        const word2 = selected[1].word;
+
+        // Check if these words form a valid pair
+        const isValidPair = this.currentPairingGame.pairs.some(pair =>
+            (pair[0] === word1 && pair[1] === word2) ||
+            (pair[0] === word2 && pair[1] === word1)
+        );
+
+        if (isValidPair) {
+            // Mark as found
+            selected.forEach(item => {
+                item.element.classList.remove('selected');
+                item.element.classList.add('found');
+            });
+
+            this.currentPairingGame.foundPairs.push([word1, word2]);
+
+            // Check if game is complete and call the completion logic
+            if (this.currentPairingGame.foundPairs.length === this.currentPairingGame.total) {
+                setTimeout(() => this.completePairingGame(), 500);
+            }
+        } else {
+            // Wrong pair - reset selection
+            selected.forEach(item => {
+                item.element.classList.remove('selected');
+                item.element.classList.add('wrong');
+            });
+
+            // Remove wrong class after animation
+            setTimeout(() => {
+                selected.forEach(item => {
+                    item.element.classList.remove('wrong');
+                });
+            }, 1000);
+        }
+
+        // Clear selection
+        this.currentPairingGame.selectedWords = [];
+    }
+
+    completePairingGame() {
+        const isCompleted = this.currentPairingGame.foundPairs.length === this.currentPairingGame.total;
+
+        if (isCompleted) {
+            // Mark this specific game as completed
+            const currentLevel = this.currentUser.level;
+            const gameIndex = this.currentGame.gameIndex;
+
+            if (!this.currentUser.miniGameProgress[currentLevel]) {
+                this.currentUser.miniGameProgress[currentLevel] = {};
+            }
+
+            this.currentUser.miniGameProgress[currentLevel][gameIndex] = true;
+
+            // Check if all games are completed for this level using the global variable
+            const completedGames = Object.keys(this.currentUser.miniGameProgress[currentLevel] || {}).length;
+            let message = `Pairing game completed! 🎉\n\nFound all ${this.currentPairingGame.total} pairs correctly!`;
+
+            if (completedGames === this.MINI_GAMES_PER_LEVEL) { // Use global variable here
+                // Award exchange ticket
+                this.currentUser.exchangeTickets = (this.currentUser.exchangeTickets || 0) + 1;
+                message += `\n\n🎫 Bonus: You've completed all ${this.MINI_GAMES_PER_LEVEL} games at Level ${currentLevel}!\nYou earned 1 Exchange Ticket!`;
+            }
+
+            this.saveUserData();
+            alert(message);
+        }
+    }
+
+    // --- Grouping game ---
+    renderGroupingGame(container, game) {
+        // --- Use the pre-selected group data ---
+        const groupData = game.gameData ? game.gameData.groups : this.getGroupDataForLevel(game.level);
+
+        if (!groupData || !groupData.groupNames || groupData.groupNames.length === 0) {
+            container.innerHTML = '<p style="text-align: center; padding: 2rem;">No grouping data available for this theme.</p>';
+            this.showGameControls(false, false);
+            return;
+        }
+
+        // --- Word Selection Logic (runs every time) ---
+        let allWords = [];
+        for (const groupName in groupData.items) {
+            allWords.push(...groupData.items[groupName]);
+        }
+        allWords = [...new Set(allWords)];
+
+        const min = this.MINI_GAMES_GROUPING_MIN_WORDS;
+        const max = this.MINI_GAMES_GROUPING_MAX_WORDS;
+        const totalWordsToSelect = Math.min(allWords.length, Math.floor(Math.random() * (max - min + 1)) + min);
+        const selectedWords = [...allWords].sort(() => 0.5 - Math.random()).slice(0, totalWordsToSelect);
+
+        // --- Store current session state ---
+        this.currentGroupingGame = {
+            gameId: game.id,
+            level: game.level,
+            groups: groupData,
+            words: selectedWords, // This is now fresh for each render
+        };
+
+        // --- Render UI ---
+        container.innerHTML = `
+            <div class="grouping-game-container">
+                <div class="word-bank-container">
+                    <h4>Words</h4>
+                    <div id="grouping-word-bank" class="word-bank">
+                        ${this.currentGroupingGame.words.map(word => `<span class="draggable" draggable="true" data-word="${word}">${word}</span>`).join('')}
+                    </div>
+                </div>
+                <div class="grouping-zones-container">
+                    <h4>Categories</h4>
+                    ${this.currentGroupingGame.groups.groupNames.map(name => `
+                        <div class="group-category">
+                            <h5>${name}</h5>
+                            <div class="group-drop-zone" data-group-name="${name}"></div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        this.setupGroupingDragAndDrop();
+    }
+
+    setupGroupingDragAndDrop() {
+        const draggables = document.querySelectorAll('.draggable');
+        const dropZones = document.querySelectorAll('.group-drop-zone');
+
+        draggables.forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', item.dataset.word);
+                setTimeout(() => item.classList.add('dragging'), 0);
+            });
+            item.addEventListener('dragend', () => item.classList.remove('dragging'));
+        });
+
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', e => {
+                e.preventDefault();
+                zone.classList.add('drag-over');
+            });
+            zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                const word = e.dataTransfer.getData('text/plain');
+                const draggableElement = document.querySelector(`.draggable[data-word="${word}"]`);
+                if (draggableElement) {
+                    zone.appendChild(draggableElement);
+                }
+            });
+        });
+    }
+
+    getGroupDataForLevel(maxLevel, excludedGroupNames = []) {
+        const masterData = {
+            groupNames: [],
+            items: {}
+        };
+
+        // 1. Collect and merge all possible group data up to the maxLevel
+        for (let level = 1; level <= maxLevel; level++) {
+            const levelContent = this.getMiniGameContentForLevel(level);
+            if (levelContent && levelContent.groups) {
+                const levelGroups = levelContent.groups;
+                if (levelGroups.groupNames) {
+                    masterData.groupNames.push(...levelGroups.groupNames);
+                }
+                if (levelGroups.items) {
+                    for (const groupName in levelGroups.items) {
+                        if (masterData.items[groupName]) {
+                            masterData.items[groupName].push(...levelGroups.items[groupName]);
+                        } else {
+                            masterData.items[groupName] = [...levelGroups.items[groupName]];
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Create a clean, unique list of all valid groups (with at least 2 items)
+        const uniqueGroupNames = [...new Set(masterData.groupNames)];
+        const candidateGroups = uniqueGroupNames
+            .map(name => ({
+                name: name,
+                words: [...new Set(masterData.items[name] || [])]
+            }))
+            .filter(group => group.words.length >= 2)
+            .filter(group => !excludedGroupNames.includes(group.name)); // <-- Exclude already used groups
+
+        if (candidateGroups.length < this.MINI_GAMES_GROUPING_MIN_GROUPS) return null;
+
+        const MAX_ATTEMPTS = 10;
+        for (let i = 0; i < MAX_ATTEMPTS; i++) {
+            // 3. In each attempt, shuffle the candidates and try to build a valid set
+            const shuffledCandidates = [...candidateGroups].sort(() => 0.5 - Math.random());
+
+            const selectedData = {
+                groupNames: [],
+                items: {}
+            };
+            const wordSet = new Set();
+
+            for (const group of shuffledCandidates) {
+                // Stop if we've already hit the max number of groups
+                if (selectedData.groupNames.length >= this.MINI_GAMES_GROUPING_MAX_GROUPS) {
+                    break;
+                }
+
+                // Check if adding the new words would exceed the MAX_WORDS limit
+                const tempSet = new Set(wordSet);
+                group.words.forEach(word => tempSet.add(word));
+
+                if (tempSet.size <= this.MINI_GAMES_GROUPING_MAX_WORDS) {
+                    // It fits! Add this group to our selection.
+                    selectedData.groupNames.push(group.name);
+                    selectedData.items[group.name] = group.words;
+                    group.words.forEach(word => wordSet.add(word));
+                }
+            }
+
+            // 4. Validate the result of this attempt
+            if (selectedData.groupNames.length >= this.MINI_GAMES_GROUPING_MIN_GROUPS && wordSet.size >= this.MINI_GAMES_GROUPING_MIN_WORDS) {
+                // Success! We found a valid combination.
+                return selectedData;
+            }
+        }
+
+        // 5. If we failed after all attempts, it's likely no good combination exists.
+        console.warn("Could not generate a valid grouping game after multiple attempts.");
+        return null;
+    }
+
+    checkGroupingAnswer() {
+        const dropZones = document.querySelectorAll('.group-drop-zone[data-group-name]');
+        const wordBank = document.getElementById('grouping-word-bank');
+        let allCorrect = true;
+
+        // Clear previous highlights
+        document.querySelectorAll('.draggable').forEach(el => {
+            el.classList.remove('wrong');
+            el.classList.remove('correct');
+        });
+
+        // --- Check if the word bank is empty ---
+        if (wordBank.children.length > 0) {
+            allCorrect = false;
+            // Mark all unplaced words as wrong
+            Array.from(wordBank.children).forEach(wordEl => {
+                wordEl.classList.add('wrong');
+            });
+        }
+
+        dropZones.forEach(zone => {
+            const currentGroupName = zone.dataset.groupName;
+            const wordsInZone = zone.querySelectorAll('.draggable');
+
+            wordsInZone.forEach(wordEl => {
+                const word = wordEl.dataset.word;
+                const correctGroupName = this.findCorrectGroupForWord(word);
+
+                if (currentGroupName === correctGroupName) {
+                    wordEl.classList.add('correct');
+                } else {
+                    wordEl.classList.add('wrong');
+                    allCorrect = false;
+                }
+            });
+        });
+
+        if (allCorrect) {
+            this.completeGroupingGame();
+        } else {
+            alert("Not quite! Check the highlighted words and make sure all words are sorted.");
+        }
+    }
+
+    completeGroupingGame() {
+        const currentLevel = this.currentUser.level;
+        const gameIndex = this.currentGame.gameIndex;
+
+        // Mark this specific game as completed
+        if (!this.currentUser.miniGameProgress[currentLevel]) {
+            this.currentUser.miniGameProgress[currentLevel] = {};
+        }
+        this.currentUser.miniGameProgress[currentLevel][gameIndex] = true;
+
+        // Check if all games are completed for this level
+        const completedGames = Object.keys(this.currentUser.miniGameProgress[currentLevel] || {}).length;
+        let message = "Congratulations! All words are in the correct groups! 🎉";
+
+        if (completedGames === this.MINI_GAMES_PER_LEVEL) {
+            // Award exchange ticket
+            this.currentUser.exchangeTickets = (this.currentUser.exchangeTickets || 0) + 1;
+            message += `\n\n🎫 Bonus: You've completed all ${this.MINI_GAMES_PER_LEVEL} games at Level ${currentLevel}!\nYou earned 1 Exchange Ticket!`;
+        }
+
+        this.saveUserData();
+        alert(message);
+
+        // To prevent re-completing, you might want to automatically go back
+        // this.showMiniGameCenter();
+    }
+
+    findCorrectGroupForWord(word) {
+        const groups = this.currentGroupingGame.groups.items;
+        for (const groupName in groups) {
+            if (groups[groupName].includes(word)) {
+                return groupName;
+            }
+        }
+        return null; // Should not happen if data is correct
+    }
+
+    // --- Setence completion game ---
+    renderSentenceCompletion(container, game) {
+        // --- Use the pre-selected sentence from gameData ---
+        const gameData = game.gameData ? game.gameData.sentenceData : null;
+
+        if (!gameData) {
+            container.innerHTML = '<p style="text-align: center; padding: 2rem;">No unique sentence available for this game.</p>';
+            this.showGameControls(false, false);
+            return;
+        }
+
+        // Store the game state for the current session
+        this.currentSentenceGame = {
+            gameId: game.id,
+            level: game.level,
+            data: gameData,
+        };
+
+        // --- Render UI ---
+        container.innerHTML = `
+            <div class="sentence-completion-layout">
+                <div class="grouping-zones-container">
+                    <h4>Sentence</h4>
+                    <div class="sentence-display">
+                        <h3>${this.createSentenceWithDropZones(gameData.sentence)}</h3>
+                    </div>
+                </div>
+                <div class="word-bank-container">
+                    <h4>Word Choices</h4>
+                    <div id="sentence-word-bank" class="word-bank">
+                        ${[...gameData.options].sort(() => 0.5 - Math.random()).map(word => `<span class="draggable" draggable="true" data-word="${word}">${word}</span>`).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.setupDragAndDrop();
+    }
+
+    getAllSentenceCompletionData(maxLevel) {
+        const allSentences = [];
+        for (let level = 1; level <= maxLevel; level++) {
+            const levelContent = this.getMiniGameContentForLevel(level);
+            if (levelContent && levelContent.sentenceCompletion) {
+                allSentences.push(...levelContent.sentenceCompletion);
+            }
+        }
+        return allSentences;
+    }
+
+    createSentenceWithDropZones(sentence) {
+        let dropZoneIndex = 0;
+        return sentence.replace(/___/g, () => {
+            return `<span class="drop-zone" data-blank="${dropZoneIndex++}"></span>`;
+        });
+    }
+
+    checkSentenceCompletionAnswer() {
+        const dropZones = document.querySelectorAll('.drop-zone');
+        const correctAnswers = this.currentSentenceGame.data.blanks;
+        let allCorrect = true;
+
+        // Clear previous highlights
+        dropZones.forEach(zone => {
+            zone.classList.remove('wrong', 'correct');
+        });
+
+        if (dropZones.length !== correctAnswers.length) {
+            alert("Please fill in all the blanks before checking.");
+            return;
+        }
+
+        dropZones.forEach((zone, index) => {
+            const userWord = zone.textContent;
+            if (userWord === correctAnswers[index]) {
+                zone.classList.add('correct');
+            } else {
+                zone.classList.add('wrong');
+                allCorrect = false;
+            }
+        });
+
+        if (allCorrect) {
+            alert("Correct! Well done! 🎉");
+            this.completeCurrentMiniGame(); // Use a generic completion function
+        } else {
+            alert("Not quite right. The red blanks are incorrect.");
+        }
+    }
+
+    setupDragAndDrop() {
+        const draggables = document.querySelectorAll('.draggable');
+        const dropZones = document.querySelectorAll('.drop-zone, .group-drop-zone'); // Include group drop zones
+
+        draggables.forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', e.target.dataset.word);
+                setTimeout(() => item.classList.add('dragging'), 0);
+            });
+            item.addEventListener('dragend', (e) => {
+                item.classList.remove('dragging');
+            });
+        });
+
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('drag-over');
+            });
+
+            zone.addEventListener('dragleave', (e) => {
+                zone.classList.remove('drag-over');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+
+                const word = e.dataTransfer.getData('text/plain');
+                const draggableElement = document.querySelector(`.draggable[data-word="${word}"]`);
+
+                if (draggableElement) {
+                    // --- Simple Swapping Logic for Matching Game ---
+                    if (zone.classList.contains('drop-zone') && zone.children.length > 0) {
+                        // There's already a word in this zone, swap them
+                        const existingWord = zone.firstElementChild;
+                        const sourceContainer = draggableElement.parentElement;
+
+                        // Put the existing word where the dragged word came from
+                        sourceContainer.appendChild(existingWord);
+                    }
+
+                    // Place the dragged word in the target zone
+                    zone.appendChild(draggableElement);
+                }
+            });
+        });
+    }
+
+
+    // --- Matching aame ---
+    getAvailableMatchThemesForLevel(level) {
+        const allThemes = new Set();
+        for (let i = 1; i <= level; i++) {
+            const levelContent = this.getMiniGameContentForLevel(i);
+            if (levelContent && levelContent.matches) {
+                Object.keys(levelContent.matches).forEach(theme => allThemes.add(theme));
+            }
+        }
+        return Array.from(allThemes);
+    }
+
+    getAllMatchesForTheme(theme, maxLevel) {
+        console.log("=== getAllMatchesForTheme DEBUG ===");
+        console.log("Theme:", theme, "Max Level:", maxLevel);
+
+        const allMatches = [];
+        for (let level = 1; level <= maxLevel; level++) {
+            const levelContent = this.getMiniGameContentForLevel(level);
+            console.log(`Level ${level} content:`, levelContent);
+
+            if (levelContent && levelContent.matches && levelContent.matches[theme]) {
+                console.log(`Level ${level} matches for theme '${theme}':`, levelContent.matches[theme]);
+                allMatches.push(...levelContent.matches[theme]);
+            } else {
+                console.log(`Level ${level} has no matches for theme '${theme}'`);
+            }
+        }
+
+        console.log("Final combined matches:", allMatches);
+        console.log("=== END getAllMatchesForTheme DEBUG ===");
+        return allMatches;
+    }
+
+    renderMatchingGame(container, game) {
+        // 1. Get the full, merged pool of all possible matches for the theme.
+        const allMatches = this.getAllMatchesForTheme(game.theme, game.level);
+
+        if (!allMatches || allMatches.length === 0) {
+            container.innerHTML = '<p style="text-align: center; padding: 2rem;">No matching data available for this theme.</p>';
+            this.showGameControls(false, false);
+            return;
+        }
+
+        // Only generate new matches if we don't have a current game or it's a different game
+        if (!this.currentMatchingGame ||
+            this.currentMatchingGame.gameId !== game.id ||
+            this.currentMatchingGame.level !== game.level) {
+
+            // 2. Select a random SUBSET of those matches for this game session.
+            const maxWords = Math.min(allMatches.length, 8); // Use a max of 8 pairs.
+            const selectedMatches = [...allMatches].sort(() => 0.5 - Math.random()).slice(0, maxWords);
+
+            // 3. Store the selected subset as the definitive set for this game instance.
+            this.currentMatchingGame = {
+                gameId: game.id,
+                level: game.level,
+                matches: selectedMatches,
+            };
+        }
+
+        // 4. Prepare the display elements by shuffling them.
+        const wordsForBank = this.currentMatchingGame.matches.map(m => m[0]);
+        const shuffledWordsForBank = [...wordsForBank].sort(() => 0.5 - Math.random());
+        const shuffledDescriptionsForGrid = [...this.currentMatchingGame.matches].sort(() => 0.5 - Math.random());
+
+        // 5. Render the game using the shuffled display elements.
+        container.innerHTML = `
+            <div class="matching-game-layout">
+                <div class="game-info">
+                    <h3>Match the words to their descriptions!</h3>
+                    <p>Theme: ${this.getThemeDisplayName(game.theme)}</p>
+                </div>
+                <div class="word-bank-container">
+                    <h4>Word Choices</h4>
+                    <div id="matching-word-bank" class="word-bank">
+                        ${shuffledWordsForBank.map(word => `<span class="draggable" draggable="true" data-word="${word}">${word}</span>`).join('')}
+                    </div>
+                </div>
+                <div class="descriptions-container">
+                    <h4>Descriptions</h4>
+                    <div class="descriptions-grid">
+                        ${shuffledDescriptionsForGrid.map(match => `
+                            <div class="drop-zone" data-correct-word="${match[0]}"></div>
+                            <p class="description-text">${match[1]}</p>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        this.setupDragAndDrop();
+    }
+
+    checkMatchingAnswer() {
+        const dropZones = document.querySelectorAll('.descriptions-grid .drop-zone');
+        const wordBank = document.getElementById('matching-word-bank');
+        let allCorrect = true;
+
+        dropZones.forEach(zone => {
+            zone.classList.remove('wrong', 'correct');
+        });
+
+        // Check if all words are placed
+        if (wordBank.children.length > 0) {
+            allCorrect = false;
+        }
+
+        dropZones.forEach(zone => {
+            const droppedWordEl = zone.querySelector('.draggable');
+            if (!droppedWordEl) {
+                allCorrect = false;
+                zone.classList.add('wrong'); // Mark empty zones as wrong
+                return;
+            }
+
+            const droppedWord = droppedWordEl.dataset.word;
+            const correctWord = zone.dataset.correctWord;
+
+            if (droppedWord === correctWord) {
+                zone.classList.add('correct');
+            } else {
+                zone.classList.add('wrong');
+                allCorrect = false;
+            }
+        });
+
+        if (allCorrect) {
+            alert("Correct! Well done! 🎉");
+            this.completeCurrentMiniGame();
+        } else {
+            alert("Not quite right. Make sure every description has the correct word.");
+        }
+    }
+
+    // --- Forming sentences game ---
+    getAllSentenceFormingData(maxLevel) {
+        const allSentences = [];
+        for (let level = 1; level <= maxLevel; level++) {
+            const levelContent = this.getMiniGameContentForLevel(level);
+            if (levelContent && levelContent.forming) {
+                allSentences.push(...levelContent.forming);
+            }
+        }
+        return allSentences;
+    }
+
+    renderFormingSentencesGame(container, game) {
+        // Check if we have pre-selected sentences or need to handle unavailable case
+        if (game.theme === 'unavailable' || !game.gameData || !game.gameData.formingSentences) {
+            container.innerHTML = '<p style="text-align: center; padding: 2rem;">No unique sentences available for this game.</p>';
+            this.showGameControls(false, false);
+            return;
+        }
+
+        // Use the pre-selected sentences from game generation
+        if (!this.currentFormingSentencesGame || this.currentFormingSentencesGame.gameId !== game.id) {
+            this.currentFormingSentencesGame = {
+                gameId: game.id,
+                sentences: game.gameData.formingSentences,
+                currentSentenceIndex: 0,
+                completedSentences: new Array(game.gameData.formingSentences.length).fill(false)
+            };
+        }
+
+        this.renderCurrentFormingSentence(container);
+    }
+
+    renderCurrentFormingSentence(container) {
+        const gameData = this.currentFormingSentencesGame;
+        const currentSentence = gameData.sentences[gameData.currentSentenceIndex];
+        const shuffledWords = [...currentSentence.words].sort(() => 0.5 - Math.random());
+        const isCompleted = gameData.completedSentences[gameData.currentSentenceIndex];
+
+        container.innerHTML = `
+            <div class="forming-sentences-layout">
+                <div class="sentence-navigation">
+                    <button id="prev-sentence-btn" class="nav-btn" ${gameData.currentSentenceIndex === 0 ? 'disabled' : ''}>← Previous</button>
+                    <span class="sentence-counter">
+                        Sentence ${gameData.currentSentenceIndex + 1}/${gameData.sentences.length}
+                        ${isCompleted ? '<span class="completion-check">✓</span>' : ''}
+                    </span>
+                    <button id="next-sentence-btn" class="nav-btn" ${gameData.currentSentenceIndex === gameData.sentences.length - 1 ? 'disabled' : ''}>Next →</button>
+                </div>
+
+                <div class="grouping-zones-container">
+                    <h4>Form the Sentence</h4>
+                    <div class="sentence-display">
+                        <div class="sentence-drop-area" id="sentence-drop-area">
+                            ${currentSentence.words.map((_, index) =>
+                                `<div class="sentence-drop-zone drop-zone" data-position="${index}"></div>`
+                            ).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="word-bank-container">
+                    <h4>Word Choices</h4>
+                    <div id="forming-sentences-word-bank" class="word-bank">
+                        ${shuffledWords.map(word => `<span class="draggable" draggable="true" data-word="${word}">${word}</span>`).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.setupFormingSentencesEventListeners();
+        this.setupDragAndDrop();
+    }
+
+    setupFormingSentencesEventListeners() {
+        const prevBtn = document.getElementById('prev-sentence-btn');
+        const nextBtn = document.getElementById('next-sentence-btn');
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => this.navigateFormingSentence(-1));
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.navigateFormingSentence(1));
+        }
+    }
+
+    navigateFormingSentence(direction) {
+        const gameData = this.currentFormingSentencesGame;
+        const newIndex = gameData.currentSentenceIndex + direction;
+
+        if (newIndex >= 0 && newIndex < gameData.sentences.length) {
+            gameData.currentSentenceIndex = newIndex;
+            this.renderCurrentFormingSentence(document.getElementById('game-content'));
+        }
+    }
+
+    checkFormingSentencesAnswer() {
+        const gameData = this.currentFormingSentencesGame;
+        const currentSentence = gameData.sentences[gameData.currentSentenceIndex];
+        const dropZones = document.querySelectorAll('.sentence-drop-zone');
+        const wordBank = document.getElementById('forming-sentences-word-bank');
+        let allCorrect = true;
+
+        // Clear previous highlights
+        dropZones.forEach(zone => {
+            zone.classList.remove('wrong', 'correct');
+        });
+
+        // Check if all words are placed
+        if (wordBank.children.length > 0) {
+            allCorrect = false;
+        }
+
+        // Check if words are in correct positions
+        dropZones.forEach((zone, index) => {
+            const droppedWordEl = zone.querySelector('.draggable');
+            if (!droppedWordEl) {
+                allCorrect = false;
+                zone.classList.add('wrong');
+                return;
+            }
+
+            const droppedWord = droppedWordEl.dataset.word;
+            const correctWord = currentSentence.words[index];
+
+            if (droppedWord === correctWord) {
+                zone.classList.add('correct');
+            } else {
+                zone.classList.add('wrong');
+                allCorrect = false;
+            }
+        });
+
+        if (allCorrect) {
+            gameData.completedSentences[gameData.currentSentenceIndex] = true;
+
+            // Update the checkmark immediately
+            const sentenceCounter = document.querySelector('.sentence-counter');
+            if (sentenceCounter && !sentenceCounter.querySelector('.completion-check')) {
+                const checkMark = document.createElement('span');
+                checkMark.className = 'completion-check';
+                checkMark.textContent = '✓';
+                sentenceCounter.appendChild(checkMark);
+            }
+
+            // Check if all sentences are completed
+            const allSentencesComplete = gameData.completedSentences.every(completed => completed);
+
+            if (allSentencesComplete) {
+                alert("Congratulations! You've completed all sentences! 🎉");
+                this.completeCurrentMiniGame();
+            } else {
+                const remaining = gameData.completedSentences.filter(c => !c).length;
+                alert(`Correct! This sentence is complete. ${remaining} sentences remaining.`);
+            }
+        } else {
+            alert("Not quite right. Make sure all words are in the correct order.");
+        }
+    }
+
+    // --- Generic completion function ---
+    completeCurrentMiniGame() {
+        const currentLevel = this.currentUser.level;
+        const gameIndex = this.currentGame.gameIndex;
+
+        if (!this.currentUser.miniGameProgress[currentLevel]) {
+            this.currentUser.miniGameProgress[currentLevel] = {};
+        }
+        this.currentUser.miniGameProgress[currentLevel][gameIndex] = true;
+
+        const completedGames = Object.keys(this.currentUser.miniGameProgress[currentLevel] || {}).length;
+        let message = "Game completed successfully!";
+
+        if (completedGames === this.MINI_GAMES_PER_LEVEL) {
+            this.currentUser.exchangeTickets = (this.currentUser.exchangeTickets || 0) + 1;
+            message += `\n\n🎫 Bonus: You've completed all ${this.MINI_GAMES_PER_LEVEL} games at Level ${currentLevel}!\nYou earned 1 Exchange Ticket!`;
+        }
+
+        this.saveUserData();
+        alert(message);
+    }
+
+
+    resetCurrentGame() {
+        if (this.currentGame && this.currentGame.type === 'grouping') {
+            const wordBank = document.getElementById('grouping-word-bank');
+            if (!wordBank) return; // Safety check
+
+            const allWords = document.querySelectorAll('.draggable');
+            allWords.forEach(wordEl => {
+                wordEl.classList.remove('wrong');
+                wordBank.appendChild(wordEl);
+            });
+        } else if (this.currentGame && this.currentGame.type === 'matching') {
+            // Manual reset like grouping game
+            const wordBank = document.getElementById('matching-word-bank');
+            const dropZones = document.querySelectorAll('.descriptions-grid .drop-zone');
+
+            if (!wordBank) return; // Safety check
+
+            // Move all words back to the word bank
+            dropZones.forEach(zone => {
+                const wordEl = zone.querySelector('.draggable');
+                if (wordEl) {
+                    wordBank.appendChild(wordEl);
+                }
+                // Clear visual status
+                zone.classList.remove('wrong', 'correct');
+            });
+
+            // Clear any wrong/correct classes from words
+            document.querySelectorAll('.draggable').forEach(wordEl => {
+                wordEl.classList.remove('wrong', 'correct');
+            });
+        } else if (this.currentGame && this.currentGame.type === 'pairing') {
+            this.renderPairingGame(document.getElementById('game-content'), this.currentGame);
+        } else if (this.currentGame && this.currentGame.type === 'sentenceCompletion') {
+            this.renderSentenceCompletion(document.getElementById('game-content'), this.currentGame);
+        } else if (this.currentGame && this.currentGame.type === 'formingSentences') {
+            this.renderFormingSentencesGame(document.getElementById('game-content'), this.currentGame);
+        } else if (this.currentGame) {
+            this.renderGameContent(this.currentGame);
+        }
+    }
+
+    checkGameAnswer() {
+        if (this.currentGame && this.currentGame.type === 'grouping') {
+            this.checkGroupingAnswer();
+            return;
+        }
+
+        if (this.currentGame.type === 'sentenceCompletion') {
+            this.checkSentenceCompletionAnswer();
+            return;
+        }
+
+        if (this.currentGame.type === 'matching') {
+            this.checkMatchingAnswer();
+            return;
+        }
+
+        if (this.currentGame.type === 'formingSentences') {
+            this.checkFormingSentencesAnswer();
+            return;
+        }
+
+        // For pairing games, the checking happens automatically
+        if (this.currentGame && this.currentGame.type === 'pairing') {
+            if (this.currentPairingGame && this.currentPairingGame.score === this.currentPairingGame.total) {
+                this.completePairingGame();
+            } else {
+                alert('Keep finding pairs! You need to match all words correctly.');
+            }
+            return;
+        }
+
+        // For other game types
+        alert('Checking answer...');
+    }
+
+    updateExchangeTicketDisplay() {
+        const ticketCount = this.currentUser.exchangeTickets || 0;
+
+        // --- Safely update the elements if they exist ---
+        const miniGameDisplay = document.getElementById('exchange-ticket-count');
+        if (miniGameDisplay) {
+            miniGameDisplay.textContent = ticketCount;
+        }
+
+        const collectionsDisplay = document.getElementById('exchange-ticket-count-collections');
+        if (collectionsDisplay) {
+            collectionsDisplay.textContent = ticketCount;
         }
     }
 }
