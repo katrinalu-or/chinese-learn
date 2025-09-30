@@ -820,21 +820,7 @@ body.no-scroll {
     75% { transform: translateX(5px); }
 }
 
-
-/* SortableJS Styles */
-.sortable-ghost {
-    opacity: 0.4;
-    background: #c8ebfb;
-}
-.sortable-drag {
-    opacity: 1 !important;
-    transform: rotate(5deg) scale(1.1) !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
-    z-index: 9999 !important;
-    background-color: white; /* Add a solid background to ensure it's not transparent */
-}
-
-/* Drag and Drop Styles */
+/* Native HTML5 Drag and Drop Styles - MODIFIED SECTION */
 .draggable {
     cursor: grab;
     padding: 0.2rem 0.5rem;
@@ -844,31 +830,32 @@ body.no-scroll {
     border: 1px solid #dee2e6;
     border-radius: 6px;
     display: inline-block;
-    transition: all 0.2s ease;
+    transition: all 0.1s ease;
+    min-width: 60px;
+    min-height: 32px;
+    text-align: center;
+    font-weight: 500;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .draggable:hover {
     background: #e9ecef;
     transform: scale(1.05);
+    border-color: #007bff;
 }
 
-.draggable.dragging {
-    opacity: 0.5;
+.draggable.is-dragging {
+    opacity: 0.4;
     cursor: grabbing;
 }
 
-.draggable.wrong {
-    background: #f8d7da;
-    border-color: #dc3545;
-    color: #721c24;
+.draggable[draggable="true"] {
+    cursor: grab;
 }
 
-.draggable.correct {
-    background: #d4edda;
-    border-color: #28a745;
-    color: #155724;
-}
-
+/* Drop zone states */
 .drop-zone {
     min-width: 80px;
     min-height: 40px;
@@ -881,31 +868,116 @@ body.no-scroll {
     vertical-align: middle;
     transition: all 0.2s ease;
     font-weight: bold;
-    line-height: 1; /* Helps with vertical centering */
+    line-height: 1;
     text-align: center;
 }
 
-.drop-zone.drag-over {
-    border-color: #667eea;
-    background: rgba(102, 126, 234, 0.1);
+.sentence-drop-zone {
+    min-width: 80px;
+    min-height: 40px;
+    border: 2px dashed #ced4da;
+    border-radius: 6px;
+    background: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0.2rem;
+    padding: 0.2rem 0.5rem;
+    transition: all 0.2s ease;
+    font-weight: bold;
 }
 
-.drop-zone.correct {
-    border-color: #28a745;
-    background-color: #d4edda;
+.group-drop-zone {
+    border: 2px dashed #ced4da;
+    border-radius: 8px;
+    padding: 0.75rem;
+    min-height: 80px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-content: flex-start;
+    transition: all 0.2s ease-in-out;
 }
 
-.drop-zone.wrong {
-    border-color: #dc3545;
-    background-color: #f8d7da;
+.drop-target {
+    border-color: #007bff !important;
+    background: rgba(0, 123, 255, 0.1) !important;
+    transform: scale(1.02);
 }
 
-.drop-zone .draggable {
+.drag-over {
+    border-color: #28a745 !important;
+    background: rgba(40, 167, 69, 0.1) !important;
+}
+
+/* IMPORTANT: Make dropped items invisible in drop zones like your original design */
+.drop-zone .draggable,
+.sentence-drop-zone .draggable {
     margin: 0;
     padding: 0;
     border: none;
     background: transparent;
+    /* Keep the text visible but remove all visual styling */
+    font-weight: bold;
 }
+
+/* For group drop zones, keep items visible since they can hold multiple items */
+.group-drop-zone .draggable {
+    /* Keep normal styling in group zones */
+    margin: 0.25rem;
+    padding: 0.2rem 0.5rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+}
+
+/* Correct/wrong feedback - keep your existing styles */
+.draggable.correct {
+    background: #d4edda !important;
+    border-color: #28a745 !important;
+    color: #155724;
+}
+
+.draggable.wrong {
+    background: #f8d7da !important;
+    border-color: #dc3545 !important;
+    color: #721c24;
+}
+
+.drop-zone.correct,
+.sentence-drop-zone.correct {
+    border-color: #28a745 !important;
+    background-color: #d4edda !important;
+}
+
+.drop-zone.wrong,
+.sentence-drop-zone.wrong {
+    border-color: #dc3545 !important;
+    background-color: #f8d7da !important;
+}
+
+/* iPad/mobile optimizations */
+@media (pointer: coarse) {
+    .draggable {
+        padding: 0.4rem 0.8rem;
+        margin: 0.4rem;
+        min-height: 44px;
+        font-size: 1rem;
+    }
+
+    .drop-zone,
+    .sentence-drop-zone {
+        min-width: 90px;
+        min-height: 44px;
+        padding: 0.4rem 0.6rem;
+    }
+
+    .group-drop-zone {
+        min-height: 100px;
+        padding: 1rem;
+    }
+}
+/* END MODIFIED SECTION */
 
 /* Grouping Game Styles */
 .grouping-game-container {
@@ -920,10 +992,10 @@ body.no-scroll {
     flex-wrap: wrap;
     gap: 0.5rem;
     align-content: flex-start;
-    min-height: 50px; /* Give it some default height */
-    padding: 0.5rem; /* Add some internal padding */
+    min-height: 50px;
+    padding: 0.5rem;
     border-radius: 8px;
-    background-color: rgba(0,0,0,0); /* Very subtle background */
+    background-color: rgba(0,0,0,0);
 }
 
 .word-bank-container, .grouping-zones-container {
@@ -957,18 +1029,6 @@ body.no-scroll {
     padding-left: 0.5rem;
     padding-bottom: 0.5rem;
     font-size: 1.05rem;
-}
-
-.group-drop-zone {
-    border: 2px dashed #ced4da;
-    border-radius: 8px;
-    padding: 0.75rem;
-    min-height: 80px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    align-content: flex-start;
-    transition: all 0.2s ease-in-out;
 }
 
 .group-drop-zone.drag-over {

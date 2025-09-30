@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.1.5';
+        this.APP_VERSION = '1.1.6';
         this.MAX_LEVEL = 20;
-        this.DEFAULT_WORDS_VERSION = '1.1.5';
-        this.LATEST_MINIGAME_VERSION = '1.1.5';
+        this.DEFAULT_WORDS_VERSION = '1.1.6';
+        this.LATEST_MINIGAME_VERSION = '1.1.6';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -343,7 +343,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
     }
 
     showScreen(screenId) {
-        // Force exit from exchange mode if navigating away ---
+        // Force exit from exchange mode if navigating away
         if (this.isExchangeMode && screenId !== 'collections-screen') {
             this.exitExchangeMode();
         }
@@ -352,6 +352,9 @@ Draw 10 guarantees one Epic or Legendary item!`;
             screen.classList.add('hidden');
         });
         document.getElementById(screenId).classList.remove('hidden');
+
+        // Store current screen
+        this.currentScreen = screenId;
 
         // Add/remove a class to the body to control scrolling
         const noScrollScreens = ['dashboard-screen', 'word-review-screen', 'word-writing-screen', 'sentence-writing-screen'];
@@ -2812,22 +2815,6 @@ Draw 10 guarantees one Epic or Legendary item!`;
         }
     }
 
-    /* global Sortable */
-    setupDragAndDrop() {
-        // Find all containers that hold draggable items (word banks and drop zones)
-        const containers = document.querySelectorAll('.word-bank, .drop-zone, .group-drop-zone, .sentence-drop-area');
-
-        containers.forEach(container => {
-            new Sortable(container, {
-                group: 'shared', // This allows dragging between all containers with this group name
-                animation: 150,    // Animation speed in ms
-                ghostClass: 'sortable-ghost', // The class for the placeholder
-                delay: 50, // Delay in ms to distinguish scroll from drag
-                delayOnTouchOnly: true // Only apply the delay on touch devices
-            });
-        });
-    }
-
     // --- Matching aame ---
     getAvailableMatchThemesForLevel(level) {
         const allThemes = new Set();
@@ -3236,6 +3223,258 @@ Draw 10 guarantees one Epic or Legendary item!`;
             collectionsDisplay.textContent = ticketCount;
         }
     }
+
+    // --- Drag and drop ---
+// Replace setupDragAndDrop entirely with this native approach
+setupDragAndDrop() {
+    // Clean up interact.js
+    if (typeof interact !== 'undefined') {
+        interact('.draggable').unset();
+        interact('.drop-zone, .group-drop-zone, .sentence-drop-zone').unset();
+    }
+
+    this.initNativeDragDrop();
+}
+
+initNativeDragDrop() {
+    const draggables = document.querySelectorAll('.draggable');
+    const dropZones = document.querySelectorAll('.drop-zone, .group-drop-zone, .sentence-drop-zone');
+
+    // Setup draggable items
+    draggables.forEach(item => {
+        item.draggable = true;
+
+        // Drag start
+        item.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', item.dataset.word);
+            e.dataTransfer.setData('text/element-id', item.id || '');
+            item.classList.add('is-dragging');
+
+            // Store reference for touch fallback
+            this.currentDragItem = item;
+
+            console.log('Drag started:', item.dataset.word);
+        });
+
+        // Drag end
+        item.addEventListener('dragend', (e) => {
+            item.classList.remove('is-dragging');
+            this.currentDragItem = null;
+
+            // Clean up all drop zone states
+            dropZones.forEach(zone => {
+                zone.classList.remove('drag-over', 'drop-target');
+            });
+        });
+
+        // Touch fallback for mobile
+        this.addTouchSupport(item);
+    });
+
+    // Setup drop zones
+    dropZones.forEach(zone => {
+        // Prevent default to allow drop
+        zone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            zone.classList.add('drag-over');
+        });
+
+        // Visual feedback
+        zone.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            zone.classList.add('drop-target');
+        });
+
+        zone.addEventListener('dragleave', (e) => {
+            zone.classList.remove('drag-over', 'drop-target');
+        });
+
+        // Handle drop
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            zone.classList.remove('drag-over', 'drop-target');
+
+            const word = e.dataTransfer.getData('text/plain');
+            const draggedItem = document.querySelector(`[data-word="${word}"].is-dragging`) || this.currentDragItem;
+
+            if (draggedItem) {
+                this.handleNativeDrop(zone, draggedItem);
+            }
+        });
+    });
+}
+
+// Lightweight touch support
+addTouchSupport(item) {
+    let startPos = null;
+    let isDragging = false;
+    let dragClone = null;
+
+    item.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        startPos = { x: touch.clientX, y: touch.clientY };
+
+        // Very short delay to distinguish from scroll
+        setTimeout(() => {
+            if (startPos) {
+                this.startTouchDrag(item, touch);
+            }
+        }, 50);
+    }, { passive: false });
+
+    item.addEventListener('touchmove', (e) => {
+        if (!startPos) return;
+
+        const touch = e.touches[0];
+        const deltaX = Math.abs(touch.clientX - startPos.x);
+        const deltaY = Math.abs(touch.clientY - startPos.y);
+
+        if (!isDragging && (deltaX > 10 || deltaY > 10)) {
+            isDragging = true;
+            this.createDragClone(item, touch);
+            e.preventDefault();
+        }
+
+        if (isDragging && dragClone) {
+            this.updateDragClone(dragClone, touch);
+            this.highlightDropZoneUnderTouch(touch);
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    item.addEventListener('touchend', (e) => {
+        if (isDragging) {
+            const touch = e.changedTouches[0];
+            this.handleTouchDrop(item, touch);
+        }
+
+        this.cleanupTouchDrag();
+        startPos = null;
+        isDragging = false;
+        dragClone = null;
+    });
+}
+
+createDragClone(item, touch) {
+    const clone = item.cloneNode(true);
+    clone.id = 'touch-drag-clone';
+    clone.style.position = 'fixed';
+    clone.style.zIndex = '9999';
+    clone.style.pointerEvents = 'none';
+    clone.style.transform = 'scale(1.1)';
+    clone.style.opacity = '0.9';
+    clone.style.left = (touch.clientX - 30) + 'px';
+    clone.style.top = (touch.clientY - 20) + 'px';
+
+    document.body.appendChild(clone);
+
+    item.style.opacity = '0.3';
+    this.currentDragItem = item;
+
+    return clone;
+}
+
+updateDragClone(clone, touch) {
+    clone.style.left = (touch.clientX - 30) + 'px';
+    clone.style.top = (touch.clientY - 20) + 'px';
+}
+
+highlightDropZoneUnderTouch(touch) {
+    // Clear previous highlights
+    document.querySelectorAll('.drop-zone, .group-drop-zone, .sentence-drop-zone').forEach(zone => {
+        zone.classList.remove('drop-target');
+    });
+
+    // Find element under touch point
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropZone = elementBelow?.closest('.drop-zone, .group-drop-zone, .sentence-drop-zone');
+
+    if (dropZone) {
+        dropZone.classList.add('drop-target');
+    }
+}
+
+handleTouchDrop(item, touch) {
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropZone = elementBelow?.closest('.drop-zone, .group-drop-zone, .sentence-drop-zone');
+
+    if (dropZone) {
+        this.handleNativeDrop(dropZone, item);
+    } else {
+        // Return to original position
+        item.style.opacity = '';
+    }
+}
+
+cleanupTouchDrag() {
+    const clone = document.getElementById('touch-drag-clone');
+    if (clone) {
+        clone.remove();
+    }
+
+    if (this.currentDragItem) {
+        this.currentDragItem.style.opacity = '';
+    }
+
+    // Clear all drop zone highlights
+    document.querySelectorAll('.drop-zone, .group-drop-zone, .sentence-drop-zone').forEach(zone => {
+        zone.classList.remove('drop-target', 'drag-over');
+    });
+}
+
+handleNativeDrop(dropzone, draggable) {
+    console.log('Native drop:', draggable.dataset.word, 'into', dropzone.className);
+
+    // Validate the drop
+    if (!this.isValidDrop(dropzone, draggable)) {
+        this.returnToWordBank(draggable);
+        return;
+    }
+
+    // Handle single-item drop zones
+    if (dropzone.classList.contains('drop-zone') || dropzone.classList.contains('sentence-drop-zone')) {
+        const existingItem = dropzone.querySelector('.draggable');
+        if (existingItem && existingItem !== draggable) {
+            this.returnToWordBank(existingItem);
+        }
+    }
+
+    // Place the item
+    dropzone.appendChild(draggable);
+    draggable.classList.add('placed-in-zone');
+
+    // Success feedback
+    if (navigator.vibrate) {
+        navigator.vibrate(50);
+    }
+}
+
+// Keep your existing isValidDrop and returnToWordBank methods
+isValidDrop(dropzone, draggable) {
+    return !dropzone.classList.contains('word-bank');
+}
+
+returnToWordBank(item) {
+    const wordBanks = [
+        'grouping-word-bank',
+        'matching-word-bank',
+        'sentence-word-bank',
+        'forming-sentences-word-bank'
+    ];
+
+    let wordBank = null;
+    for (const bankId of wordBanks) {
+        wordBank = document.getElementById(bankId);
+        if (wordBank) break;
+    }
+
+    if (wordBank) {
+        item.classList.remove('placed-in-zone');
+        wordBank.appendChild(item);
+    }
+}
+
+
 }
 
 const app = new ChineseLearningApp();
