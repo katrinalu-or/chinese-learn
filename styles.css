@@ -855,6 +855,45 @@ body.no-scroll {
     cursor: grab;
 }
 
+#touch-drag-clone {
+    /* Ensure the clone is always on top and smooth */
+    position: fixed !important;
+    z-index: 9999 !important;
+    pointer-events: none !important;
+    transition: none !important;
+    will-change: transform, left, top; /* Optimize for animations */
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -webkit-touch-callout: none !important;
+}
+
+/* Prevent any unwanted touch behaviors during drag */
+body.dragging {
+    overflow: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: none !important;
+}
+
+/* Optimize drop zones for better touch detection */
+.drop-zone,
+.group-drop-zone,
+.sentence-drop-zone {
+    /* Ensure drop zones are easy to target on touch */
+    touch-action: none;
+}
+
+@media (pointer: coarse) {
+    /* iPad-specific improvements */
+    #touch-drag-clone {
+        transform: scale(1.15) !important; /* Slightly larger on touch devices */
+    }
+
+    .drop-target {
+        transform: scale(1.05) !important; /* More obvious visual feedback */
+        border-width: 3px !important;
+    }
+}
+
 /* Drop zone states */
 .drop-zone {
     min-width: 80px;

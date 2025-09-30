@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.1.6';
+        this.APP_VERSION = '1.1.7';
         this.MAX_LEVEL = 20;
-        this.DEFAULT_WORDS_VERSION = '1.1.6';
-        this.LATEST_MINIGAME_VERSION = '1.1.6';
+        this.DEFAULT_WORDS_VERSION = '1.1.7';
+        this.LATEST_MINIGAME_VERSION = '1.1.7';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -3317,33 +3317,32 @@ addTouchSupport(item) {
         // Very short delay to distinguish from scroll
         setTimeout(() => {
             if (startPos) {
-                this.startTouchDrag(item, touch);
+                isDragging = true;
+                dragClone = this.createDragClone(item, touch);
+                item.style.opacity = '0.3';
+                this.currentDragItem = item;
+
+                // Prevent scrolling during drag
+                document.body.style.overflow = 'hidden';
+                e.preventDefault();
             }
-        }, 50);
+        }, 100); // Reduced from 50ms for better responsiveness
     }, { passive: false });
 
     item.addEventListener('touchmove', (e) => {
-        if (!startPos) return;
+        if (!isDragging || !dragClone) return;
 
         const touch = e.touches[0];
-        const deltaX = Math.abs(touch.clientX - startPos.x);
-        const deltaY = Math.abs(touch.clientY - startPos.y);
 
-        if (!isDragging && (deltaX > 10 || deltaY > 10)) {
-            isDragging = true;
-            this.createDragClone(item, touch);
-            e.preventDefault();
-        }
+        // Always update clone position - this is the key fix
+        this.updateDragClone(dragClone, touch);
+        this.highlightDropZoneUnderTouch(touch);
 
-        if (isDragging && dragClone) {
-            this.updateDragClone(dragClone, touch);
-            this.highlightDropZoneUnderTouch(touch);
-            e.preventDefault();
-        }
+        e.preventDefault();
     }, { passive: false });
 
     item.addEventListener('touchend', (e) => {
-        if (isDragging) {
+        if (isDragging && dragClone) {
             const touch = e.changedTouches[0];
             this.handleTouchDrop(item, touch);
         }
@@ -3352,6 +3351,9 @@ addTouchSupport(item) {
         startPos = null;
         isDragging = false;
         dragClone = null;
+
+        // Re-enable scrolling
+        document.body.style.overflow = '';
     });
 }
 
@@ -3363,20 +3365,26 @@ createDragClone(item, touch) {
     clone.style.pointerEvents = 'none';
     clone.style.transform = 'scale(1.1)';
     clone.style.opacity = '0.9';
+    clone.style.transition = 'none'; // Remove any transitions that might interfere
     clone.style.left = (touch.clientX - 30) + 'px';
     clone.style.top = (touch.clientY - 20) + 'px';
+    clone.style.background = '#fff';
+    clone.style.border = '2px solid #007bff';
+    clone.style.borderRadius = '8px';
+    clone.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.3)';
 
     document.body.appendChild(clone);
-
-    item.style.opacity = '0.3';
-    this.currentDragItem = item;
-
     return clone;
 }
 
 updateDragClone(clone, touch) {
-    clone.style.left = (touch.clientX - 30) + 'px';
-    clone.style.top = (touch.clientY - 20) + 'px';
+    if (!clone) return;
+
+    // Use requestAnimationFrame for smoother movement
+    requestAnimationFrame(() => {
+        clone.style.left = (touch.clientX - 30) + 'px';
+        clone.style.top = (touch.clientY - 20) + 'px';
+    });
 }
 
 highlightDropZoneUnderTouch(touch) {
@@ -3385,9 +3393,20 @@ highlightDropZoneUnderTouch(touch) {
         zone.classList.remove('drop-target');
     });
 
+    // Temporarily hide the clone to get element below
+    const clone = document.getElementById('touch-drag-clone');
+    if (clone) {
+        clone.style.display = 'none';
+    }
+
     // Find element under touch point
     const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
     const dropZone = elementBelow?.closest('.drop-zone, .group-drop-zone, .sentence-drop-zone');
+
+    // Restore clone
+    if (clone) {
+        clone.style.display = 'block';
+    }
 
     if (dropZone) {
         dropZone.classList.add('drop-target');
@@ -3395,21 +3414,36 @@ highlightDropZoneUnderTouch(touch) {
 }
 
 handleTouchDrop(item, touch) {
+    // Temporarily hide the clone to get accurate element below
+    const clone = document.getElementById('touch-drag-clone');
+    if (clone) {
+        clone.style.display = 'none';
+    }
+
     const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
     const dropZone = elementBelow?.closest('.drop-zone, .group-drop-zone, .sentence-drop-zone');
+
+    // Restore clone for cleanup
+    if (clone) {
+        clone.style.display = 'block';
+    }
 
     if (dropZone) {
         this.handleNativeDrop(dropZone, item);
     } else {
-        // Return to original position
+        // Return to original position with animation
         item.style.opacity = '';
+        console.log('Touch drop outside valid zone');
     }
 }
 
 cleanupTouchDrag() {
     const clone = document.getElementById('touch-drag-clone');
     if (clone) {
-        clone.remove();
+        // Animate clone disappearing
+        clone.style.transition = 'opacity 0.2s ease';
+        clone.style.opacity = '0';
+        setTimeout(() => clone.remove(), 200);
     }
 
     if (this.currentDragItem) {
@@ -3420,6 +3454,9 @@ cleanupTouchDrag() {
     document.querySelectorAll('.drop-zone, .group-drop-zone, .sentence-drop-zone').forEach(zone => {
         zone.classList.remove('drop-target', 'drag-over');
     });
+
+    // Re-enable scrolling
+    document.body.style.overflow = '';
 }
 
 handleNativeDrop(dropzone, draggable) {
