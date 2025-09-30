@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.1.0';
+        this.APP_VERSION = '1.1.1';
         this.MAX_LEVEL = 20;
-        this.DEFAULT_WORDS_VERSION = '1.1.0';
-        this.LATEST_MINIGAME_VERSION = '1.1.0';
+        this.DEFAULT_WORDS_VERSION = '1.1.1';
+        this.LATEST_MINIGAME_VERSION = '1.1.1';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -248,6 +248,13 @@ class ChineseLearningApp {
         document.getElementById('import-wordlist-file').addEventListener('change', (e) => this.uploadWordList(e));
         document.getElementById('reset-wordlist-btn').addEventListener('click', () => this.resetWordListToDefault());
         document.getElementById('reset-minigames-btn').addEventListener('click', () => this.resetAllMiniGames());
+
+        // --- Handle user navigating away from the page ---
+        window.addEventListener('pagehide', () => {
+            if (this.isExchangeMode) {
+                this.exitExchangeMode();
+            }
+        });
     }
 
     setupDynamicContent() {
@@ -348,6 +355,11 @@ Draw 10 guarantees one Epic or Legendary item!`;
     }
 
     showScreen(screenId) {
+        // Force exit from exchange mode if navigating away ---
+        if (this.isExchangeMode && screenId !== 'collections-screen') {
+            this.exitExchangeMode();
+        }
+
         document.querySelectorAll('.screen').forEach(screen => {
             screen.classList.add('hidden');
         });
@@ -1640,6 +1652,11 @@ Draw 10 guarantees one Epic or Legendary item!`;
     }
 
     // --- Exchange Mode Functions ---
+    exitExchangeMode() {
+        this.isExchangeMode = false;
+        this.exchangeSelection = {};
+    }
+
     toggleExchangeMode() {
         if (!this.isExchangeMode) {
             // Entering exchange mode
@@ -1659,9 +1676,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
             this.setupMainExchangePanelListeners();
 
         } else {
-            // Exiting exchange mode
-            this.isExchangeMode = false;
-            this.exchangeSelection = {}; // Clear selection
+            this.exitExchangeMode();
         }
         this.saveUserData();
         this.renderCollectionGrid(); // Re-render to show/hide cards and controls
@@ -2534,7 +2549,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
                 <div class="word-bank-container">
                     <h4>Words</h4>
                     <div id="grouping-word-bank" class="word-bank">
-                        ${this.currentGroupingGame.words.map(word => `<span class="draggable" draggable="true" data-word="${word}">${word}</span>`).join('')}
+                        ${this.currentGroupingGame.words.map(word => `<span class="draggable" data-word="${word}">${word}</span>`).join('')}
                     </div>
                 </div>
                 <div class="grouping-zones-container">
@@ -2549,37 +2564,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
             </div>
         `;
 
-        this.setupGroupingDragAndDrop();
-    }
-
-    setupGroupingDragAndDrop() {
-        const draggables = document.querySelectorAll('.draggable');
-        const dropZones = document.querySelectorAll('.group-drop-zone');
-
-        draggables.forEach(item => {
-            item.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', item.dataset.word);
-                setTimeout(() => item.classList.add('dragging'), 0);
-            });
-            item.addEventListener('dragend', () => item.classList.remove('dragging'));
-        });
-
-        dropZones.forEach(zone => {
-            zone.addEventListener('dragover', e => {
-                e.preventDefault();
-                zone.classList.add('drag-over');
-            });
-            zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-            zone.addEventListener('drop', e => {
-                e.preventDefault();
-                zone.classList.remove('drag-over');
-                const word = e.dataTransfer.getData('text/plain');
-                const draggableElement = document.querySelector(`.draggable[data-word="${word}"]`);
-                if (draggableElement) {
-                    zone.appendChild(draggableElement);
-                }
-            });
-        });
+        this.setupDragAndDrop();
     }
 
     getGroupDataForLevel(maxLevel, excludedGroupNames = []) {
@@ -2772,7 +2757,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
                 <div class="word-bank-container">
                     <h4>Word Choices</h4>
                     <div id="sentence-word-bank" class="word-bank">
-                        ${[...gameData.options].sort(() => 0.5 - Math.random()).map(word => `<span class="draggable" draggable="true" data-word="${word}">${word}</span>`).join('')}
+                        ${[...gameData.options].sort(() => 0.5 - Math.random()).map(word => `<span class="draggable" data-word="${word}">${word}</span>`).join('')}
                     </div>
                 </div>
             </div>
@@ -2833,54 +2818,17 @@ Draw 10 guarantees one Epic or Legendary item!`;
     }
 
     setupDragAndDrop() {
-        const draggables = document.querySelectorAll('.draggable');
-        const dropZones = document.querySelectorAll('.drop-zone, .group-drop-zone'); // Include group drop zones
+        // Find all containers that hold draggable items (word banks and drop zones)
+        const containers = document.querySelectorAll('.word-bank, .drop-zone, .group-drop-zone, .sentence-drop-area');
 
-        draggables.forEach(item => {
-            item.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', e.target.dataset.word);
-                setTimeout(() => item.classList.add('dragging'), 0);
-            });
-            item.addEventListener('dragend', (e) => {
-                item.classList.remove('dragging');
-            });
-        });
-
-        dropZones.forEach(zone => {
-            zone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                zone.classList.add('drag-over');
-            });
-
-            zone.addEventListener('dragleave', (e) => {
-                zone.classList.remove('drag-over');
-            });
-
-            zone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                zone.classList.remove('drag-over');
-
-                const word = e.dataTransfer.getData('text/plain');
-                const draggableElement = document.querySelector(`.draggable[data-word="${word}"]`);
-
-                if (draggableElement) {
-                    // --- Simple Swapping Logic for Matching Game ---
-                    if (zone.classList.contains('drop-zone') && zone.children.length > 0) {
-                        // There's already a word in this zone, swap them
-                        const existingWord = zone.firstElementChild;
-                        const sourceContainer = draggableElement.parentElement;
-
-                        // Put the existing word where the dragged word came from
-                        sourceContainer.appendChild(existingWord);
-                    }
-
-                    // Place the dragged word in the target zone
-                    zone.appendChild(draggableElement);
-                }
+        containers.forEach(container => {
+            new Sortable(container, {
+                group: 'shared', // This allows dragging between all containers with this group name
+                animation: 150,    // Animation speed in ms
+                ghostClass: 'sortable-ghost' // The class for the placeholder
             });
         });
     }
-
 
     // --- Matching aame ---
     getAvailableMatchThemesForLevel(level) {
@@ -2958,7 +2906,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
                 <div class="word-bank-container">
                     <h4>Word Choices</h4>
                     <div id="matching-word-bank" class="word-bank">
-                        ${shuffledWordsForBank.map(word => `<span class="draggable" draggable="true" data-word="${word}">${word}</span>`).join('')}
+                        ${shuffledWordsForBank.map(word => `<span class="draggable" data-word="${word}">${word}</span>`).join('')}
                     </div>
                 </div>
                 <div class="descriptions-container">
@@ -3080,7 +3028,7 @@ Draw 10 guarantees one Epic or Legendary item!`;
                 <div class="word-bank-container">
                     <h4>Word Choices</h4>
                     <div id="forming-sentences-word-bank" class="word-bank">
-                        ${shuffledWords.map(word => `<span class="draggable" draggable="true" data-word="${word}">${word}</span>`).join('')}
+                        ${shuffledWords.map(word => `<span class="draggable" data-word="${word}">${word}</span>`).join('')}
                     </div>
                 </div>
             </div>

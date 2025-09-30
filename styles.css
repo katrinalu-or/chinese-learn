@@ -816,6 +816,18 @@ body.no-scroll {
     75% { transform: translateX(5px); }
 }
 
+
+/* SortableJS Styles */
+.sortable-ghost {
+    opacity: 0.4;
+    background: #c8ebfb;
+}
+.sortable-drag {
+    opacity: 1 !important; /* Make sure the dragged item is fully visible */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transform: rotate(5deg);
+}
+
 /* Drag and Drop Styles */
 .draggable {
     cursor: grab;
