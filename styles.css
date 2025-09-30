@@ -160,6 +160,10 @@ body.no-scroll {
     letter-spacing: 1px;
 }
 
+.dashboard-screen {
+    overflow: hidden; /* Add this to prevent any internal scrolling */
+}
+
 .header.page-header button {
     /* Remove all the custom styling - let it inherit from .user-info button */
     padding: 0.7rem 1.5rem;

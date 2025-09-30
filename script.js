@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.1.1';
+        this.APP_VERSION = '1.1.2';
         this.MAX_LEVEL = 20;
-        this.DEFAULT_WORDS_VERSION = '1.1.1';
-        this.LATEST_MINIGAME_VERSION = '1.1.1';
+        this.DEFAULT_WORDS_VERSION = '1.1.2';
+        this.LATEST_MINIGAME_VERSION = '1.1.2';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -197,18 +197,6 @@ class ChineseLearningApp {
         document.getElementById('back-from-game').addEventListener('click', () => this.showMiniGameCenter());
         document.getElementById('check-game-btn').addEventListener('click', () => this.checkGameAnswer());
         document.getElementById('reset-game-btn').addEventListener('click', () => this.resetCurrentGame());
-
-        document.getElementById('mini-game-card').addEventListener('click', () => {
-            if (this.MINI_GAME_ENABLED_LEVELS.includes(this.currentUser.level)) {
-                this.showMiniGameCenter();
-            } else {
-                const nextAvailableLevel = this.MINI_GAME_ENABLED_LEVELS.find(level => level > this.currentUser.level);
-                const message = nextAvailableLevel
-                    ? `Mini games unlock at Level ${nextAvailableLevel}. Keep learning!`
-                    : 'Complete more levels to unlock mini games!';
-                alert(message);
-            }
-        });
 
         // Other Screens
         document.getElementById('back-from-progress').addEventListener('click', () => this.showDashboard());
@@ -1945,20 +1933,27 @@ Draw 10 guarantees one Epic or Legendary item!`;
     /* Mini Game Center */
     showMiniGameCenter() {
         const currentLevel = this.currentUser.level;
+        const lastEnabledLevel = this.findLastEnabledMiniGameLevel(currentLevel);
+        const isEnabledForCurrentLevel = this.MINI_GAME_ENABLED_LEVELS.includes(currentLevel);
 
-        if (!this.MINI_GAME_ENABLED_LEVELS.includes(currentLevel)) {
-            alert('Mini games are not available at this level.');
-            return;
+        // CORRECTED LOGIC: Allow access if the user's level is an enabled level OR if they have passed one.
+        if (isEnabledForCurrentLevel || lastEnabledLevel !== null) {
+             // Clear game states when returning to mini game center
+            this.currentPairingGame = null;
+            this.currentGroupingGame = null; // Corrected a typo here from your file
+            this.currentSentenceGame = null;
+
+            this.showScreen('mini-game-screen');
+            this.renderMiniGames();
+            this.updateExchangeTicketDisplay();
+        } else {
+            // This logic will now correctly run only when no games are truly available
+            const nextAvailableLevel = this.findNextEnabledMiniGameLevel(currentLevel);
+            const message = nextAvailableLevel
+                ? `Mini games unlock at Level ${nextAvailableLevel}. Keep learning!`
+                : 'Complete more levels to unlock mini games!';
+            alert(message);
         }
-
-        // Clear game states when returning to mini game center
-        this.currentPairingGame = null;
-        this.currentPairingGame = null;
-        this.currentSentenceGame = null;
-
-        this.showScreen('mini-game-screen');
-        this.renderMiniGames();
-        this.updateExchangeTicketDisplay();
     }
 
     renderMiniGames() {
