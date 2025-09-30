@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.1.3';
+        this.APP_VERSION = '1.1.4';
         this.MAX_LEVEL = 20;
-        this.DEFAULT_WORDS_VERSION = '1.1.3';
-        this.LATEST_MINIGAME_VERSION = '1.1.3';
+        this.DEFAULT_WORDS_VERSION = '1.1.4';
+        this.LATEST_MINIGAME_VERSION = '1.1.4';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;

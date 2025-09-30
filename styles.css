@@ -828,8 +828,10 @@ body.no-scroll {
 }
 .sortable-drag {
     opacity: 1 !important; /* Make sure the dragged item is fully visible */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    transform: rotate(5deg);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
+    transform: rotate(5deg) scale(1.1) !important;
+    z-index: 9999 !important; /* Ensure it renders on top of all other elements */
+    transition: all 0.1s ease-out; /* Add a quick transition for a smoother feel */
 }
 
 /* Drag and Drop Styles */
