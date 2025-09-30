@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.1.4';
+        this.APP_VERSION = '1.1.5';
         this.MAX_LEVEL = 20;
-        this.DEFAULT_WORDS_VERSION = '1.1.4';
-        this.LATEST_MINIGAME_VERSION = '1.1.4';
+        this.DEFAULT_WORDS_VERSION = '1.1.5';
+        this.LATEST_MINIGAME_VERSION = '1.1.5';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -2821,7 +2821,9 @@ Draw 10 guarantees one Epic or Legendary item!`;
             new Sortable(container, {
                 group: 'shared', // This allows dragging between all containers with this group name
                 animation: 150,    // Animation speed in ms
-                ghostClass: 'sortable-ghost' // The class for the placeholder
+                ghostClass: 'sortable-ghost', // The class for the placeholder
+                delay: 50, // Delay in ms to distinguish scroll from drag
+                delayOnTouchOnly: true // Only apply the delay on touch devices
             });
         });
     }
