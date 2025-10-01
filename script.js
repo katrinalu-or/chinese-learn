@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.1.7';
+        this.APP_VERSION = '1.1.8';
         this.MAX_LEVEL = 20;
-        this.DEFAULT_WORDS_VERSION = '1.1.7';
-        this.LATEST_MINIGAME_VERSION = '1.1.7';
+        this.DEFAULT_WORDS_VERSION = '1.1.8';
+        this.LATEST_MINIGAME_VERSION = '1.1.8';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -342,28 +342,37 @@ Draw 10 guarantees one Epic or Legendary item!`;
         this.showScreen('auth-screen');
     }
 
-    showScreen(screenId) {
-        // Force exit from exchange mode if navigating away
-        if (this.isExchangeMode && screenId !== 'collections-screen') {
-            this.exitExchangeMode();
-        }
-
-        document.querySelectorAll('.screen').forEach(screen => {
-            screen.classList.add('hidden');
-        });
-        document.getElementById(screenId).classList.remove('hidden');
-
-        // Store current screen
-        this.currentScreen = screenId;
-
-        // Add/remove a class to the body to control scrolling
-        const noScrollScreens = ['dashboard-screen', 'word-review-screen', 'word-writing-screen', 'sentence-writing-screen'];
-        if (noScrollScreens.includes(screenId)) {
-            document.body.classList.add('no-scroll');
-        } else {
-            document.body.classList.remove('no-scroll');
-        }
+showScreen(screenId) {
+    // Force exit from exchange mode if navigating away
+    if (this.isExchangeMode && screenId !== 'collections-screen') {
+        this.exitExchangeMode();
     }
+
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.add('hidden');
+    });
+    document.getElementById(screenId).classList.remove('hidden');
+
+    // Store current screen
+    this.currentScreen = screenId;
+
+    // Fix for iPad: Reset scroll position when returning to dashboard
+    if (screenId === 'dashboard-screen') {
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+            document.body.scrollTop = 0; // For older browsers
+            document.documentElement.scrollTop = 0; // For newer browsers
+        }, 50);
+    }
+
+    // Add/remove a class to the body to control scrolling
+    const noScrollScreens = ['word-review-screen', 'word-writing-screen', 'sentence-writing-screen'];
+    if (noScrollScreens.includes(screenId)) {
+        document.body.classList.add('no-scroll');
+    } else {
+        document.body.classList.remove('no-scroll');
+    }
+}
 
     showDashboard() {
         this.showScreen('dashboard-screen');
@@ -1362,10 +1371,17 @@ Draw 10 guarantees one Epic or Legendary item!`;
         const words = this.generateSentenceWritingWords();
         const grid = document.getElementById('sentence-word-grid');
         grid.innerHTML = '';
+
         words.forEach(word => {
             const wordDiv = document.createElement('div');
             wordDiv.className = 'sentence-word-item';
             wordDiv.textContent = word;
+
+            // Add click listener for tracking
+            wordDiv.addEventListener('click', () => {
+                this.handleWordTrackingClick(wordDiv);
+            });
+
             grid.appendChild(wordDiv);
         });
     }
@@ -1406,21 +1422,12 @@ Draw 10 guarantees one Epic or Legendary item!`;
     }
 
     handleSentenceCompletion(isComplete) {
-        // Prevent multiple executions if activity is already finishing
-        if (this.currentActivity && this.currentActivity.isFinishing) {
-            return;
-        }
-
         if (isComplete) {
-            // Set flag to prevent multiple executions
-            if (this.currentActivity) {
-                this.currentActivity.isFinishing = true;
-            }
-
             this.currentUser.sentenceWritingCompleted = true;
             this.logActivity('Sentence Writing', 'Completed');
             this.currentUser.diamonds++;
             this.saveUserData();
+
             const canAdvance = this.canAdvanceLevel();
             setTimeout(() => {
                 if (canAdvance) {
@@ -1435,6 +1442,17 @@ Draw 10 guarantees one Epic or Legendary item!`;
         } else {
             this.showDashboard();
         }
+    }
+
+    handleWordTrackingClick(wordElement) {
+        wordElement.classList.toggle('used-tracker');
+
+        // Optional: Add haptic feedback
+        if (navigator.vibrate) {
+            navigator.vibrate(30);
+        }
+
+        console.log('Word tracking toggled:', wordElement.textContent);
     }
 
     // --- Collections & Gacha System ---
