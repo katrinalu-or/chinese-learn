@@ -993,6 +993,9 @@ body.dragging {
     background: transparent;
     /* Keep the text visible but remove all visual styling */
     font-weight: bold;
+    line-height: 1;          /* Make line height match the font size, removing extra space */
+    height: auto;            /* Allow the element's height to shrink to fit the text */
+    vertical-align: middle;  /* Good practice for centering the text line */
 }
 
 /* For group drop zones, keep items visible since they can hold multiple items */
@@ -1895,6 +1898,12 @@ body.dragging {
     border: 1px solid #dee2e6;
     font-size: 1rem;
     width: 400px;
+}
+
+.specific-exchange-wrapper select .diamond-exchange-option {
+    color: #c7cccd; /* DeepSkyBlue */
+    font-weight: bold;
+    background-color: #25659d; /* AliceBlue for better readability */
 }
 
 .ticket-icon {

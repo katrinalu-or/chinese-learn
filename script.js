@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.1.8';
+        this.APP_VERSION = '1.1.9';
         this.MAX_LEVEL = 20;
-        this.DEFAULT_WORDS_VERSION = '1.1.8';
-        this.LATEST_MINIGAME_VERSION = '1.1.8';
+        this.DEFAULT_WORDS_VERSION = '1.1.9';
+        this.LATEST_MINIGAME_VERSION = '1.1.9';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -58,6 +58,8 @@ class ChineseLearningApp {
             Epic: 25,
             Rare: 10,
             Common: 3,
+            diamond_1: 6,
+            diamond_10: 50
         };
 
         this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE = 15; // 15% chance for Legendary on a guaranteed pull
@@ -1719,6 +1721,7 @@ showScreen(screenId) {
         const select = document.createElement('select');
         select.id = 'specific-item-select';
 
+        // --- Rarity exchange ---
         this.gachaPool
             .sort((a, b) => this.GACHA_EXCHANGE_RATES_SPECIFIED[b.rarity] - this.GACHA_EXCHANGE_RATES_SPECIFIED[a.rarity] || a.name.localeCompare(b.name))
             .forEach(item => {
@@ -1729,6 +1732,21 @@ showScreen(screenId) {
                 option.textContent = `${item.name} (${item.rarity}) - ${cost} pts`;
                 select.appendChild(option);
             });
+
+        // --- Diamond exchange ---
+        const diamondOption1 = document.createElement('option');
+        diamondOption1.value = 'diamond_1';
+        diamondOption1.dataset.cost = this.GACHA_EXCHANGE_RATES_SPECIFIED.diamond_1;
+        diamondOption1.textContent = `💎 1 Diamond - ${this.GACHA_EXCHANGE_RATES_SPECIFIED.diamond_1} pts`;
+        diamondOption1.classList.add('diamond-exchange-option');
+        select.appendChild(diamondOption1);
+
+        const diamondOption10 = document.createElement('option');
+        diamondOption10.value = 'diamond_10';
+        diamondOption10.dataset.cost = this.GACHA_EXCHANGE_RATES_SPECIFIED.diamond_10;
+        diamondOption10.textContent = `💎💎 10 Diamonds - ${this.GACHA_EXCHANGE_RATES_SPECIFIED.diamond_10} pts`;
+        diamondOption10.classList.add('diamond-exchange-option');
+        select.appendChild(diamondOption10);
 
         const buyBtn = document.createElement('button');
         buyBtn.id = 'confirm-specific-exchange-btn';
@@ -1845,11 +1863,56 @@ showScreen(screenId) {
     performSpecificExchange() {
         const select = document.getElementById('specific-item-select');
         const itemIdToBuy = select.value;
+        const currentPoints = this.calculateExchangePoints();
+
+        // --- Handle Diamond Exchange ---
+        if (itemIdToBuy === 'diamond_1' || itemIdToBuy === 'diamond_10') {
+            const isTenDiamonds = itemIdToBuy === 'diamond_10';
+            const cost = isTenDiamonds ? this.GACHA_EXCHANGE_RATES_SPECIFIED.diamond_10 : this.GACHA_EXCHANGE_RATES_SPECIFIED.diamond_1;
+            const diamondsToAdd = isTenDiamonds ? 10 : 1;
+
+            if (currentPoints < cost) {
+                alert(`You need ${cost} points to exchange for ${diamondsToAdd} diamond(s), but you only have ${currentPoints}.`);
+                return;
+            }
+
+            const tradedItemsSummary = Object.keys(this.exchangeSelection).map(id => {
+                const item = this.gachaPool.find(p => p.id === id);
+                return `${this.exchangeSelection[id]}x ${item.name}`;
+            }).join(', ');
+
+            if (currentPoints > cost) {
+                 if (!confirm(`This will trade [${tradedItemsSummary}] for ${diamondsToAdd} diamond(s). Any leftover points will be lost. Continue?`)) {
+                    return;
+                }
+            }
+
+            // 1. Deduct traded items
+            for (const itemId in this.exchangeSelection) {
+                this.currentUser.collection[itemId] -= this.exchangeSelection[itemId];
+                if (this.currentUser.collection[itemId] <= 0) {
+                    delete this.currentUser.collection[itemId];
+                }
+            }
+
+            // 2. Add diamonds
+            this.currentUser.diamonds += diamondsToAdd;
+
+            // 3. Reset exchange state and save
+            this.exchangeSelection = {};
+            this.saveUserData();
+
+            // 4. Show success message and refresh UI
+            alert(`✅ Success! You exchanged your items for ${diamondsToAdd} diamond(s)!`);
+            this.renderCollectionGrid();
+            return; // Exit the function to prevent regular item logic
+        }
+
+
         const itemInfo = this.gachaPool.find(p => p.id === itemIdToBuy);
         if (!itemInfo) return;
 
         const cost = this.GACHA_EXCHANGE_RATES_SPECIFIED[itemInfo.rarity];
-        const currentPoints = this.calculateExchangePoints();
 
         if (currentPoints < cost) {
             alert(`You need ${cost} points to buy a ${itemInfo.name}, but you only have ${currentPoints}.`);
