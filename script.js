@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.1.11';
+        this.APP_VERSION = '1.1.12';
         this.MAX_LEVEL = 20;
-        this.DEFAULT_WORDS_VERSION = '1.1.11';
-        this.LATEST_MINIGAME_VERSION = '1.1.11';
+        this.DEFAULT_WORDS_VERSION = '1.1.12';
+        this.LATEST_MINIGAME_VERSION = '1.1.12';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -3554,30 +3554,55 @@ initNativeDragDrop() {
 
 // Lightweight touch support
 addTouchSupport(item) {
-    let lastMoveTime = 0;
-    let stuckCheckTimer = null;
+    let startPos = null;
+    let isDragging = false;
+    let dragClone = null;
+
+    item.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        startPos = { x: touch.clientX, y: touch.clientY };
+
+        // Very short delay to distinguish from scroll
+        setTimeout(() => {
+            if (startPos) {
+                isDragging = true;
+                dragClone = this.createDragClone(item, touch);
+                item.style.opacity = '0.3';
+                this.currentDragItem = item;
+
+                // Prevent scrolling during drag
+                document.body.style.overflow = 'hidden';
+                e.preventDefault();
+            }
+        }, 100); // Reduced from 50ms for better responsiveness
+    }, { passive: false });
 
     item.addEventListener('touchmove', (e) => {
         if (!isDragging || !dragClone) return;
 
-        lastMoveTime = Date.now();
+        const touch = e.touches[0];
 
-        // Clear any stuck check
-        if (stuckCheckTimer) {
-            clearTimeout(stuckCheckTimer);
-        }
-
-        // Only check for stuck if movement stops for 300ms
-        stuckCheckTimer = setTimeout(() => {
-            if (isDragging && dragClone) {
-                // Light refresh without forced reflow
-                dragClone.style.willChange = 'transform';
-            }
-        }, 300);
-
+        // Always update clone position - this is the key fix
         this.updateDragClone(dragClone, touch);
+        this.highlightDropZoneUnderTouch(touch);
+
         e.preventDefault();
     }, { passive: false });
+
+    item.addEventListener('touchend', (e) => {
+        if (isDragging && dragClone) {
+            const touch = e.changedTouches[0];
+            this.handleTouchDrop(item, touch);
+        }
+
+        this.cleanupTouchDrag();
+        startPos = null;
+        isDragging = false;
+        dragClone = null;
+
+        // Re-enable scrolling
+        document.body.style.overflow = '';
+    });
 }
 
 createDragClone(item, touch) {
@@ -3586,14 +3611,15 @@ createDragClone(item, touch) {
     clone.style.position = 'fixed';
     clone.style.zIndex = '9999';
     clone.style.pointerEvents = 'none';
+    clone.style.transform = 'scale(1.1)';
     clone.style.opacity = '0.9';
-    clone.style.transition = 'none';
+    clone.style.transition = 'none'; // Remove any transitions that might interfere
+    clone.style.left = (touch.clientX - 30) + 'px';
+    clone.style.top = (touch.clientY - 20) + 'px';
     clone.style.background = '#fff';
     clone.style.border = '2px solid #007bff';
     clone.style.borderRadius = '8px';
     clone.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.3)';
-    clone.style.willChange = 'transform'; // GPU acceleration
-    clone.style.transform = `translate(${touch.clientX - 30}px, ${touch.clientY - 20}px) scale(1.1)`;
 
     document.body.appendChild(clone);
     return clone;
@@ -3602,10 +3628,11 @@ createDragClone(item, touch) {
 updateDragClone(clone, touch) {
     if (!clone) return;
 
-    // GPU-accelerated movement
-    const x = touch.clientX - 30;
-    const y = touch.clientY - 20;
-    clone.style.transform = `translate(${x}px, ${y}px) scale(1.1)`;
+    // Use requestAnimationFrame for smoother movement
+    requestAnimationFrame(() => {
+        clone.style.left = (touch.clientX - 30) + 'px';
+        clone.style.top = (touch.clientY - 20) + 'px';
+    });
 }
 
 highlightDropZoneUnderTouch(touch) {
