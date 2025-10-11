@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.1.10';
+        this.APP_VERSION = '1.1.11';
         this.MAX_LEVEL = 20;
-        this.DEFAULT_WORDS_VERSION = '1.1.10';
-        this.LATEST_MINIGAME_VERSION = '1.1.10';
+        this.DEFAULT_WORDS_VERSION = '1.1.11';
+        this.LATEST_MINIGAME_VERSION = '1.1.11';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -37,6 +37,7 @@ class ChineseLearningApp {
         this.MINI_GAMES_GROUPING_MAX_GROUPS = 3;
         this.MINI_GAMES_GROUPING_MIN_GROUPS = 2;
         this.MINI_GAMES_FORMING_SENTENCE_NUM_SENTENCES = 5;
+        this.MINI_GAMES_SENTENCE_COMPLETION_MIN_WORDS = 8;
 
         // Gacha probabilities (must add up to 100)
         this.GACHA_PROBABILITIES = {
@@ -143,6 +144,7 @@ class ChineseLearningApp {
         this.currentUser.listeningLowerLevelWords = this.currentUser.listeningLowerLevelWords || [];
         this.currentUser.reviewLowerLevelWords = this.currentUser.reviewLowerLevelWords || [];
         this.currentUser.sentenceWritingCompleted = this.currentUser.sentenceWritingCompleted || false;
+        this.currentUser.sentenceWritingWords = this.currentUser.sentenceWritingWords || {};
         this.currentUser.miniGameProgress = this.currentUser.miniGameProgress || {};
         this.currentUser.generatedMiniGames = this.currentUser.generatedMiniGames || {};
         this.currentUser.activityLog = this.currentUser.activityLog || [];
@@ -159,6 +161,12 @@ class ChineseLearningApp {
 
         if ((!this.currentUser.listeningLowerLevelWords || this.currentUser.listeningLowerLevelWords.length === 0 || !this.currentUser.reviewLowerLevelWords || this.currentUser.reviewLowerLevelWords.length === 0) && this.currentUser.level > 1) {
             this.generatePracticeSubsets();
+            this.saveUserData();
+        }
+
+        // Generate sentence writing words for current level if not exists
+        if (!this.currentUser.sentenceWritingWords[this.currentUser.level]) {
+            this.generateSentenceWritingWordList();
             this.saveUserData();
         }
     }
@@ -646,6 +654,9 @@ showScreen(screenId) {
         // First, generate the new random subsets for the new level
         this.generatePracticeSubsets();
 
+        // Generate fixed sentence writing word list for the new level
+        this.generateSentenceWritingWordList();
+
         // Then, reset progress ONLY for the words in the new subsets
         const wordsToReset = [
             ...(this.currentUser.reviewLowerLevelWords || []),
@@ -742,7 +753,7 @@ showScreen(screenId) {
         }
         reviewContainer.innerHTML = reviewHTML;
 
-        // Word Writing Progress (Right Column) - WITH COLLAPSIBLE WORD LIST
+        // Word Writing Progress (Right Column)
         const writingContainer = document.getElementById('word-writing-progress');
         let writingHTML = '<h4>Word Writing Progress</h4>';
         required = this.LISTENING_CURRENT_LEVEL_COMPLETIONS;
@@ -782,11 +793,29 @@ showScreen(screenId) {
         }
         writingContainer.innerHTML = writingHTML;
 
-        // Sentence Writing Progress (moves to left column in 2-column layout)
+        // Sentence Writing Progress (Third Column)
         const sentenceContainer = document.getElementById('sentence-writing-progress');
         let sentenceHTML = '<h4>Sentence Writing Progress</h4>';
         const sentenceProgress = this.currentUser.sentenceWritingCompleted ? 100 : 0;
         sentenceHTML += `<div class="level-progress-item ${sentenceProgress >= 100 ? 'completed' : ''}"><div class="level-header"><h5>Practice Task</h5></div><div class="level-progress-bar"><div class="level-progress-fill" style="width: ${sentenceProgress}%">${sentenceProgress}%</div></div></div>`;
+
+        // Add sentence writing word list
+        const sentenceWritingWords = this.currentUser.sentenceWritingWords[currentLevel] || [];
+        if (sentenceWritingWords.length > 0) {
+            sentenceHTML += `<div class="listening-word-list">
+                <h5 class="collapsible-header">
+                    <span>Sentence Writing Words</span>
+                    <span class="expand-icon">▼</span>
+                </h5>
+                <div class="collapsible-content">
+                    <div class="listening-word-grid">`;
+            sentenceWritingWords.forEach(word => {
+                // All words show as "available" since sentence writing is pass/fail
+                sentenceHTML += `<div class="listening-word-item">${word}</div>`;
+            });
+            sentenceHTML += `</div></div></div>`;
+        }
+
         sentenceContainer.innerHTML = sentenceHTML;
 
         // Set up collapsible functionality AFTER the HTML is added
@@ -926,16 +955,27 @@ showScreen(screenId) {
             });
         }
 
-        // 3. Generate new practice subsets for the target level
+        // 3. Reset sentence writing words for levels >= targetLevel
+        if (this.currentUser.sentenceWritingWords) {
+            Object.keys(this.currentUser.sentenceWritingWords).forEach(level => {
+                if (parseInt(level) >= targetLevel) {
+                    delete this.currentUser.sentenceWritingWords[level];
+                }
+            });
+        }
+
+        // 4. Generate new practice subsets for the target level
         this.generatePracticeSubsets();
 
-        // 4. Save the data
+        // 5. Generate sentence writing words for the target level
+        this.generateSentenceWritingWordList();
+
+        // 6. Save the data
         this.saveUserData();
 
         alert(`✅ Successfully reset to Level ${targetLevel}!\n\nMini-game progress preserved for levels below ${targetLevel}.\nReturning to the dashboard with a fresh state.`);
 
         // Force a full re-initialization of the user state, then show the dashboard.
-        // This is like a "soft refresh" and guarantees all UI elements update.
         this.checkLoggedInUser();
     }
 
@@ -1370,7 +1410,17 @@ showScreen(screenId) {
     }
 
     displaySentenceWritingWords() {
-        const words = this.generateSentenceWritingWords();
+        // Get the fixed word list for the current level
+        const currentLevel = this.currentUser.level;
+        let words = this.currentUser.sentenceWritingWords[currentLevel];
+
+        // Generate if it doesn't exist (fallback)
+        if (!words) {
+            this.generateSentenceWritingWordList();
+            words = this.currentUser.sentenceWritingWords[currentLevel];
+            this.saveUserData();
+        }
+
         const grid = document.getElementById('sentence-word-grid');
         grid.innerHTML = '';
 
@@ -1410,10 +1460,14 @@ showScreen(screenId) {
 
         const candidateWords = allWords.filter(word => !exclusionList.has(word));
         const shuffledCandidates = candidateWords.sort(() => 0.5 - Math.random());
-        const smartRandomWords = shuffledCandidates.slice(0, 5);
+
+        // Take ALL available smart random words (up to what's needed)
+        const remainingNeeded = this.SENTENCE_WORDS_PER_SESSION - topCrossedWords.length;
+        const smartRandomWords = shuffledCandidates.slice(0, remainingNeeded);
 
         let finalWords = [...new Set([...topCrossedWords, ...smartRandomWords])];
 
+        // Only fill if we still don't have enough words
         const needed = this.SENTENCE_WORDS_PER_SESSION - finalWords.length;
         if (needed > 0) {
             const filler = allWords.filter(w => !finalWords.includes(w)).sort(() => 0.5 - Math.random()).slice(0, needed);
@@ -1421,6 +1475,20 @@ showScreen(screenId) {
         }
 
         return finalWords.slice(0, this.SENTENCE_WORDS_PER_SESSION);
+    }
+
+    generateSentenceWritingWordList() {
+        // Initialize the property if it doesn't exist
+        if (!this.currentUser.sentenceWritingWords) {
+            this.currentUser.sentenceWritingWords = {};
+        }
+
+        const currentLevel = this.currentUser.level;
+
+        // Only generate if we don't already have words for this level
+        if (!this.currentUser.sentenceWritingWords[currentLevel]) {
+            this.currentUser.sentenceWritingWords[currentLevel] = this.generateSentenceWritingWords();
+        }
     }
 
     handleSentenceCompletion(isComplete) {
@@ -2024,8 +2092,9 @@ showScreen(screenId) {
         if (isEnabledForCurrentLevel || lastEnabledLevel !== null) {
              // Clear game states when returning to mini game center
             this.currentPairingGame = null;
-            this.currentGroupingGame = null; // Corrected a typo here from your file
+            this.currentGroupingGame = null;
             this.currentSentenceGame = null;
+            this.currentSentenceCompletionGame = null;
 
             this.showScreen('mini-game-screen');
             this.renderMiniGames();
@@ -2194,10 +2263,30 @@ showScreen(screenId) {
                 const allSentences = this.getAllSentenceCompletionData(level);
                 const availableSentences = allSentences.filter(s => !usedSentences.includes(s.sentence));
 
-                if (availableSentences.length > 0) {
-                    const selectedSentence = availableSentences[Math.floor(Math.random() * availableSentences.length)];
+                // Calculate total blanks needed
+                const minBlanks = this.MINI_GAMES_SENTENCE_COMPLETION_MIN_WORDS;
+                let selectedSentences = [];
+                let totalBlanks = 0;
+
+                // Keep adding sentences until we meet the minimum blank requirement
+                while (totalBlanks < minBlanks && availableSentences.length > 0) {
+                    // Find a sentence that hasn't been used
+                    const availableForSelection = availableSentences.filter(s =>
+                        !selectedSentences.some(selected => selected.sentence === s.sentence)
+                    );
+
+                    if (availableForSelection.length === 0) break;
+
+                    const selectedSentence = availableForSelection[Math.floor(Math.random() * availableForSelection.length)];
+                    selectedSentences.push(selectedSentence);
+                    totalBlanks += selectedSentence.blanks.length;
+
+                    // Mark this sentence as used for future games
                     usedSentences.push(selectedSentence.sentence);
-                    gameData = { sentenceData: selectedSentence };
+                }
+
+                if (selectedSentences.length > 0 && totalBlanks >= minBlanks) {
+                    gameData = { sentences: selectedSentences };
                 }
             } else if (gameType === 'formingSentences') {
                 const allFormingSentences = this.getAllSentenceFormingData(level);
@@ -2808,41 +2897,87 @@ showScreen(screenId) {
 
     // --- Setence completion game ---
     renderSentenceCompletion(container, game) {
-        // --- Use the pre-selected sentence from gameData ---
-        const gameData = game.gameData ? game.gameData.sentenceData : null;
+        // Use the pre-selected sentences from gameData
+        const gameData = game.gameData ? game.gameData.sentences : null;
 
-        if (!gameData) {
-            container.innerHTML = '<p style="text-align: center; padding: 2rem;">No unique sentence available for this game.</p>';
+        if (!gameData || gameData.length === 0) {
+            container.innerHTML = '<p style="text-align: center; padding: 2rem;">No sentences available for this game.</p>';
             this.showGameControls(false, false);
             return;
         }
 
-        // Store the game state for the current session
-        this.currentSentenceGame = {
-            gameId: game.id,
-            level: game.level,
-            data: gameData,
-        };
+        // Initialize or update current sentence completion game state
+        if (!this.currentSentenceCompletionGame || this.currentSentenceCompletionGame.gameId !== game.id) {
+            this.currentSentenceCompletionGame = {
+                gameId: game.id,
+                sentences: gameData,
+                currentSentenceIndex: 0,
+                completedSentences: new Array(gameData.length).fill(false)
+            };
+        }
 
-        // --- Render UI ---
+        this.renderCurrentSentenceCompletion(container);
+    }
+
+    renderCurrentSentenceCompletion(container) {
+        const gameData = this.currentSentenceCompletionGame;
+        const currentSentence = gameData.sentences[gameData.currentSentenceIndex];
+        const isCompleted = gameData.completedSentences[gameData.currentSentenceIndex];
+
+        // Shuffle options for current sentence
+        const shuffledOptions = [...currentSentence.options].sort(() => 0.5 - Math.random());
+
         container.innerHTML = `
             <div class="sentence-completion-layout">
+                <div class="sentence-navigation">
+                    <button id="prev-sentence-completion-btn" class="nav-btn" ${gameData.currentSentenceIndex === 0 ? 'disabled' : ''}>← Previous</button>
+                    <span class="sentence-counter">
+                        Sentence ${gameData.currentSentenceIndex + 1}/${gameData.sentences.length}
+                        ${isCompleted ? '<span class="completion-check">✓</span>' : ''}
+                    </span>
+                    <button id="next-sentence-completion-btn" class="nav-btn" ${gameData.currentSentenceIndex === gameData.sentences.length - 1 ? 'disabled' : ''}>Next →</button>
+                </div>
+
                 <div class="grouping-zones-container">
-                    <h4>Sentence</h4>
+                    <h4>Complete the Sentence</h4>
                     <div class="sentence-display">
-                        <h3>${this.createSentenceWithDropZones(gameData.sentence)}</h3>
+                        <h3>${this.createSentenceWithDropZones(currentSentence.sentence)}</h3>
                     </div>
                 </div>
+
                 <div class="word-bank-container">
                     <h4>Word Choices</h4>
                     <div id="sentence-word-bank" class="word-bank">
-                        ${[...gameData.options].sort(() => 0.5 - Math.random()).map(word => `<span class="draggable" data-word="${word}">${word}</span>`).join('')}
+                        ${shuffledOptions.map(word => `<span class="draggable" data-word="${word}">${word}</span>`).join('')}
                     </div>
                 </div>
             </div>
         `;
 
+        this.setupSentenceCompletionEventListeners();
         this.setupDragAndDrop();
+    }
+
+    setupSentenceCompletionEventListeners() {
+        const prevBtn = document.getElementById('prev-sentence-completion-btn');
+        const nextBtn = document.getElementById('next-sentence-completion-btn');
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => this.navigateSentenceCompletion(-1));
+        }
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.navigateSentenceCompletion(1));
+        }
+    }
+
+    navigateSentenceCompletion(direction) {
+        const gameData = this.currentSentenceCompletionGame;
+        const newIndex = gameData.currentSentenceIndex + direction;
+
+        if (newIndex >= 0 && newIndex < gameData.sentences.length) {
+            gameData.currentSentenceIndex = newIndex;
+            this.renderCurrentSentenceCompletion(document.getElementById('game-content'));
+        }
     }
 
     getAllSentenceCompletionData(maxLevel) {
@@ -2864,8 +2999,10 @@ showScreen(screenId) {
     }
 
     checkSentenceCompletionAnswer() {
+        const gameData = this.currentSentenceCompletionGame;
+        const currentSentence = gameData.sentences[gameData.currentSentenceIndex];
         const dropZones = document.querySelectorAll('.drop-zone');
-        const correctAnswers = this.currentSentenceGame.data.blanks;
+        const correctAnswers = currentSentence.blanks;
         let allCorrect = true;
 
         // Clear previous highlights
@@ -2873,13 +3010,26 @@ showScreen(screenId) {
             zone.classList.remove('wrong', 'correct');
         });
 
+        // Check if current sentence has all blanks filled (not the entire word bank)
+        let currentSentenceBlanksFilled = true;
+        dropZones.forEach(zone => {
+            if (!zone.textContent || zone.textContent.trim() === '') {
+                currentSentenceBlanksFilled = false;
+            }
+        });
+
+        if (!currentSentenceBlanksFilled) {
+            alert("Please fill in all the blanks for this sentence before checking.");
+            return;
+        }
+
         if (dropZones.length !== correctAnswers.length) {
             alert("Please fill in all the blanks before checking.");
             return;
         }
 
         dropZones.forEach((zone, index) => {
-            const userWord = zone.textContent;
+            const userWord = zone.textContent.trim();
             if (userWord === correctAnswers[index]) {
                 zone.classList.add('correct');
             } else {
@@ -2889,8 +3039,27 @@ showScreen(screenId) {
         });
 
         if (allCorrect) {
-            alert("Correct! Well done! 🎉");
-            this.completeCurrentMiniGame(); // Use a generic completion function
+            gameData.completedSentences[gameData.currentSentenceIndex] = true;
+
+            // Update the checkmark immediately
+            const sentenceCounter = document.querySelector('.sentence-counter');
+            if (sentenceCounter && !sentenceCounter.querySelector('.completion-check')) {
+                const checkMark = document.createElement('span');
+                checkMark.className = 'completion-check';
+                checkMark.textContent = '✓';
+                sentenceCounter.appendChild(checkMark);
+            }
+
+            // Check if all sentences are completed
+            const allSentencesComplete = gameData.completedSentences.every(completed => completed);
+
+            if (allSentencesComplete) {
+                alert("Congratulations! You've completed all sentences! 🎉");
+                this.completeCurrentMiniGame();
+            } else {
+                const remaining = gameData.completedSentences.filter(c => !c).length;
+                alert(`Correct! This sentence is complete. ${remaining} sentences remaining.`);
+            }
         } else {
             alert("Not quite right. The red blanks are incorrect.");
         }
@@ -3385,55 +3554,30 @@ initNativeDragDrop() {
 
 // Lightweight touch support
 addTouchSupport(item) {
-    let startPos = null;
-    let isDragging = false;
-    let dragClone = null;
-
-    item.addEventListener('touchstart', (e) => {
-        const touch = e.touches[0];
-        startPos = { x: touch.clientX, y: touch.clientY };
-
-        // Very short delay to distinguish from scroll
-        setTimeout(() => {
-            if (startPos) {
-                isDragging = true;
-                dragClone = this.createDragClone(item, touch);
-                item.style.opacity = '0.3';
-                this.currentDragItem = item;
-
-                // Prevent scrolling during drag
-                document.body.style.overflow = 'hidden';
-                e.preventDefault();
-            }
-        }, 100); // Reduced from 50ms for better responsiveness
-    }, { passive: false });
+    let lastMoveTime = 0;
+    let stuckCheckTimer = null;
 
     item.addEventListener('touchmove', (e) => {
         if (!isDragging || !dragClone) return;
 
-        const touch = e.touches[0];
+        lastMoveTime = Date.now();
 
-        // Always update clone position - this is the key fix
-        this.updateDragClone(dragClone, touch);
-        this.highlightDropZoneUnderTouch(touch);
-
-        e.preventDefault();
-    }, { passive: false });
-
-    item.addEventListener('touchend', (e) => {
-        if (isDragging && dragClone) {
-            const touch = e.changedTouches[0];
-            this.handleTouchDrop(item, touch);
+        // Clear any stuck check
+        if (stuckCheckTimer) {
+            clearTimeout(stuckCheckTimer);
         }
 
-        this.cleanupTouchDrag();
-        startPos = null;
-        isDragging = false;
-        dragClone = null;
+        // Only check for stuck if movement stops for 300ms
+        stuckCheckTimer = setTimeout(() => {
+            if (isDragging && dragClone) {
+                // Light refresh without forced reflow
+                dragClone.style.willChange = 'transform';
+            }
+        }, 300);
 
-        // Re-enable scrolling
-        document.body.style.overflow = '';
-    });
+        this.updateDragClone(dragClone, touch);
+        e.preventDefault();
+    }, { passive: false });
 }
 
 createDragClone(item, touch) {
@@ -3442,15 +3586,14 @@ createDragClone(item, touch) {
     clone.style.position = 'fixed';
     clone.style.zIndex = '9999';
     clone.style.pointerEvents = 'none';
-    clone.style.transform = 'scale(1.1)';
     clone.style.opacity = '0.9';
-    clone.style.transition = 'none'; // Remove any transitions that might interfere
-    clone.style.left = (touch.clientX - 30) + 'px';
-    clone.style.top = (touch.clientY - 20) + 'px';
+    clone.style.transition = 'none';
     clone.style.background = '#fff';
     clone.style.border = '2px solid #007bff';
     clone.style.borderRadius = '8px';
     clone.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.3)';
+    clone.style.willChange = 'transform'; // GPU acceleration
+    clone.style.transform = `translate(${touch.clientX - 30}px, ${touch.clientY - 20}px) scale(1.1)`;
 
     document.body.appendChild(clone);
     return clone;
@@ -3459,11 +3602,10 @@ createDragClone(item, touch) {
 updateDragClone(clone, touch) {
     if (!clone) return;
 
-    // Use requestAnimationFrame for smoother movement
-    requestAnimationFrame(() => {
-        clone.style.left = (touch.clientX - 30) + 'px';
-        clone.style.top = (touch.clientY - 20) + 'px';
-    });
+    // GPU-accelerated movement
+    const x = touch.clientX - 30;
+    const y = touch.clientY - 20;
+    clone.style.transform = `translate(${x}px, ${y}px) scale(1.1)`;
 }
 
 highlightDropZoneUnderTouch(touch) {
