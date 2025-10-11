@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.1.9';
+        this.APP_VERSION = '1.1.10';
         this.MAX_LEVEL = 20;
-        this.DEFAULT_WORDS_VERSION = '1.1.9';
-        this.LATEST_MINIGAME_VERSION = '1.1.9';
+        this.DEFAULT_WORDS_VERSION = '1.1.10';
+        this.LATEST_MINIGAME_VERSION = '1.1.10';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -34,7 +34,7 @@ class ChineseLearningApp {
         this.MINI_GAMES_MAX_PAIRING_PAIRS = 10;
         this.MINI_GAMES_GROUPING_MIN_WORDS = 18;
         this.MINI_GAMES_GROUPING_MAX_WORDS = 25;
-        this.MINI_GAMES_GROUPING_MAX_GROUPS = 4;
+        this.MINI_GAMES_GROUPING_MAX_GROUPS = 3;
         this.MINI_GAMES_GROUPING_MIN_GROUPS = 2;
         this.MINI_GAMES_FORMING_SENTENCE_NUM_SENTENCES = 5;
 
@@ -3319,7 +3319,7 @@ setupDragAndDrop() {
 
 initNativeDragDrop() {
     const draggables = document.querySelectorAll('.draggable');
-    const dropZones = document.querySelectorAll('.drop-zone, .group-drop-zone, .sentence-drop-zone');
+    const dropZones = document.querySelectorAll('.drop-zone, .group-drop-zone, .sentence-drop-zone, .word-bank');
 
     // Setup draggable items
     draggables.forEach(item => {
@@ -3330,10 +3330,7 @@ initNativeDragDrop() {
             e.dataTransfer.setData('text/plain', item.dataset.word);
             e.dataTransfer.setData('text/element-id', item.id || '');
             item.classList.add('is-dragging');
-
-            // Store reference for touch fallback
             this.currentDragItem = item;
-
             console.log('Drag started:', item.dataset.word);
         });
 
@@ -3341,8 +3338,6 @@ initNativeDragDrop() {
         item.addEventListener('dragend', (e) => {
             item.classList.remove('is-dragging');
             this.currentDragItem = null;
-
-            // Clean up all drop zone states
             dropZones.forEach(zone => {
                 zone.classList.remove('drag-over', 'drop-target');
             });
@@ -3354,23 +3349,26 @@ initNativeDragDrop() {
 
     // Setup drop zones
     dropZones.forEach(zone => {
-        // Prevent default to allow drop
         zone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            zone.classList.add('drag-over');
+            // Only add visual effects if it's NOT a word bank
+            if (!zone.classList.contains('word-bank')) {
+                zone.classList.add('drag-over');
+            }
         });
 
-        // Visual feedback
         zone.addEventListener('dragenter', (e) => {
             e.preventDefault();
-            zone.classList.add('drop-target');
+            // Only add visual effects if it's NOT a word bank
+            if (!zone.classList.contains('word-bank')) {
+                zone.classList.add('drop-target');
+            }
         });
 
         zone.addEventListener('dragleave', (e) => {
             zone.classList.remove('drag-over', 'drop-target');
         });
 
-        // Handle drop
         zone.addEventListener('drop', (e) => {
             e.preventDefault();
             zone.classList.remove('drag-over', 'drop-target');
@@ -3470,7 +3468,7 @@ updateDragClone(clone, touch) {
 
 highlightDropZoneUnderTouch(touch) {
     // Clear previous highlights
-    document.querySelectorAll('.drop-zone, .group-drop-zone, .sentence-drop-zone').forEach(zone => {
+    document.querySelectorAll('.drop-zone, .group-drop-zone, .sentence-drop-zone, .word-bank').forEach(zone => {
         zone.classList.remove('drop-target');
     });
 
@@ -3482,7 +3480,7 @@ highlightDropZoneUnderTouch(touch) {
 
     // Find element under touch point
     const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-    const dropZone = elementBelow?.closest('.drop-zone, .group-drop-zone, .sentence-drop-zone');
+    const dropZone = elementBelow?.closest('.drop-zone, .group-drop-zone, .sentence-drop-zone, .word-bank');
 
     // Restore clone
     if (clone) {
@@ -3549,6 +3547,28 @@ handleNativeDrop(dropzone, draggable) {
         return;
     }
 
+    // Special handling for word bank drops
+    if (dropzone.classList.contains('word-bank')) {
+        // Reset the draggable item styling when returning to word bank
+        draggable.style.display = '';
+        draggable.style.height = '';
+        draggable.style.lineHeight = '';
+        draggable.style.verticalAlign = '';
+        draggable.style.background = '';
+        draggable.style.border = '';
+        draggable.style.padding = '';
+        draggable.style.margin = '';
+
+        // Place item in word bank
+        dropzone.appendChild(draggable);
+
+        // Success feedback
+        if (navigator.vibrate) {
+            navigator.vibrate(50);
+        }
+        return;
+    }
+
     // Handle single-item drop zones
     if (dropzone.classList.contains('drop-zone') || dropzone.classList.contains('sentence-drop-zone')) {
         const existingItem = dropzone.querySelector('.draggable');
@@ -3559,7 +3579,14 @@ handleNativeDrop(dropzone, draggable) {
 
     // Place the item
     dropzone.appendChild(draggable);
-    draggable.classList.add('placed-in-zone');
+
+    // Force inline styling for sentence games
+    if (dropzone.classList.contains('drop-zone') || dropzone.classList.contains('sentence-drop-zone')) {
+        draggable.style.display = 'inline';
+        draggable.style.height = 'auto';
+        draggable.style.lineHeight = '1';
+        draggable.style.verticalAlign = 'baseline';
+    }
 
     // Success feedback
     if (navigator.vibrate) {
@@ -3567,8 +3594,13 @@ handleNativeDrop(dropzone, draggable) {
     }
 }
 
-// Keep your existing isValidDrop and returnToWordBank methods
 isValidDrop(dropzone, draggable) {
+    // Word banks are always valid drop targets
+    if (dropzone.classList.contains('word-bank')) {
+        return true;
+    }
+
+    // Original validation for other drop zones
     return !dropzone.classList.contains('word-bank');
 }
 
@@ -3587,7 +3619,6 @@ returnToWordBank(item) {
     }
 
     if (wordBank) {
-        item.classList.remove('placed-in-zone');
         wordBank.appendChild(item);
     }
 }

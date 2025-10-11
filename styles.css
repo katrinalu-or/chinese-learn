@@ -855,11 +855,11 @@ body.no-scroll {
     75% { transform: translateX(5px); }
 }
 
-/* Native HTML5 Drag and Drop Styles - MODIFIED SECTION */
+/* Native HTML5 Drag and Drop Styles */
 .draggable {
     cursor: grab;
     padding: 0.2rem 0.5rem;
-    line-height: 1.5;
+    line-height: 1.5; /* This creates the extra space we need to fix */
     margin: 0.25rem;
     background: #f8f9fa;
     border: 1px solid #dee2e6;
@@ -875,62 +875,8 @@ body.no-scroll {
     -webkit-touch-callout: none;
 }
 
-.draggable:hover {
-    background: #e9ecef;
-    transform: scale(1.05);
-    border-color: #007bff;
-}
-
-.draggable.is-dragging {
-    opacity: 0.4;
-    cursor: grabbing;
-}
-
-.draggable[draggable="true"] {
-    cursor: grab;
-}
-
-#touch-drag-clone {
-    /* Ensure the clone is always on top and smooth */
-    position: fixed !important;
-    z-index: 9999 !important;
-    pointer-events: none !important;
-    transition: none !important;
-    will-change: transform, left, top; /* Optimize for animations */
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    -webkit-touch-callout: none !important;
-}
-
-/* Prevent any unwanted touch behaviors during drag */
-body.dragging {
-    overflow: hidden !important;
-    -webkit-overflow-scrolling: touch;
-    touch-action: none !important;
-}
-
-/* Optimize drop zones for better touch detection */
 .drop-zone,
-.group-drop-zone,
 .sentence-drop-zone {
-    /* Ensure drop zones are easy to target on touch */
-    touch-action: none;
-}
-
-@media (pointer: coarse) {
-    /* iPad-specific improvements */
-    #touch-drag-clone {
-        transform: scale(1.15) !important; /* Slightly larger on touch devices */
-    }
-
-    .drop-target {
-        transform: scale(1.05) !important; /* More obvious visual feedback */
-        border-width: 3px !important;
-    }
-}
-
-/* Drop zone states */
-.drop-zone {
     min-width: 80px;
     min-height: 40px;
     border: 2px dashed #dee2e6;
@@ -938,27 +884,17 @@ body.dragging {
     padding: 0.2rem 0.5rem;
     margin: 0 0.2rem;
     background: #f8f9fa;
-    display: inline-block;
-    vertical-align: middle;
-    transition: all 0.2s ease;
-    font-weight: bold;
-    line-height: 1;
-    text-align: center;
-}
 
-.sentence-drop-zone {
-    min-width: 80px;
-    min-height: 40px;
-    border: 2px dashed #ced4da;
-    border-radius: 6px;
-    background: white;
+    /* Use flexbox for perfect centering */
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin: 0 0.2rem;
-    padding: 0.2rem 0.5rem;
+    vertical-align: middle; /* Helps align the flex container with surrounding text */
     transition: all 0.2s ease;
-    font-weight: bold;
+}
+
+.sentence-drop-zone {
+    background: white;
 }
 
 .group-drop-zone {
@@ -973,42 +909,63 @@ body.dragging {
     transition: all 0.2s ease-in-out;
 }
 
+.drop-zone .draggable,
+.sentence-drop-zone .draggable {
+    /* Make it look like plain text */
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    line-height: 1 !important;
+    display: inline !important; /* This is the key fix - force inline display */
+    vertical-align: baseline !important;
+    height: auto !important; /* Reset height to auto */
+    min-height: unset !important; /* Remove any min-height constraints */
+}
+
+/* Ensure items in the group zone look normal again */
+.group-drop-zone .draggable {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 0.2rem 0.5rem;
+    margin: 0.25rem;
+    line-height: 1.5; /* Restore original line height */
+}
+
+.draggable:hover {
+    background: #e9ecef;
+    transform: scale(1.05);
+    border-color: #19426d;
+}
+
+.draggable.is-dragging {
+    opacity: 0.4;
+    cursor: grabbing;
+}
+
+#touch-drag-clone {
+    position: fixed !important;
+    z-index: 9999 !important;
+    pointer-events: none !important;
+    transition: none !important;
+    will-change: transform, left, top;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -webkit-touch-callout: none !important;
+}
+
 .drop-target {
-    border-color: #007bff !important;
+    border-color: #0e335c !important;
     background: rgba(0, 123, 255, 0.1) !important;
     transform: scale(1.02);
 }
 
 .drag-over {
-    border-color: #28a745 !important;
-    background: rgba(40, 167, 69, 0.1) !important;
+    border-color: #6c757d !important;
+    background: rgba(108, 117, 125, 0.1) !important;
 }
 
-/* IMPORTANT: Make dropped items invisible in drop zones like your original design */
-.drop-zone .draggable,
-.sentence-drop-zone .draggable {
-    margin: 0;
-    padding: 0;
-    border: none;
-    background: transparent;
-    /* Keep the text visible but remove all visual styling */
-    font-weight: bold;
-    line-height: 1;          /* Make line height match the font size, removing extra space */
-    height: auto;            /* Allow the element's height to shrink to fit the text */
-    vertical-align: middle;  /* Good practice for centering the text line */
-}
-
-/* For group drop zones, keep items visible since they can hold multiple items */
-.group-drop-zone .draggable {
-    /* Keep normal styling in group zones */
-    margin: 0.25rem;
-    padding: 0.2rem 0.5rem;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-}
-
-/* Correct/wrong feedback - keep your existing styles */
 .draggable.correct {
     background: #d4edda !important;
     border-color: #28a745 !important;
@@ -1075,6 +1032,13 @@ body.dragging {
     background-color: rgba(0,0,0,0);
 }
 
+.word-bank.drag-over,
+.word-bank.drop-target {
+    border-color: transparent !important;
+    background: rgba(0,0,0,0) !important;
+    transform: none !important;
+}
+
 .word-bank-container, .grouping-zones-container {
     background: rgba(255,255,255,0.9); /* Increased opacity from 0.8 */
     padding: 1rem;
@@ -1111,6 +1075,15 @@ body.dragging {
 .group-drop-zone.drag-over {
     border-color: #667eea;
     background: rgba(102, 126, 234, 0.1);
+}
+
+.group-drop-zone .draggable.in-zone {
+    /* These styles override the transparent ones above */
+    background: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    padding: 0.2rem 0.5rem !important;
+    margin: 0.25rem !important;
+    line-height: 1.5 !important; /* Restore line-height for multi-item zones */
 }
 
 .grouping-game-container .word-bank-container {
@@ -1242,6 +1215,9 @@ body.dragging {
     border: none;
     background: transparent;
     font-weight: 500;
+    line-height: 1; /* Add this line to fix the spacing issue */
+    display: inline-block; /* Change to inline-block for better control */
+    vertical-align: middle; /* Center vertically within the drop zone */
 }
 
 /* --- Matching Game Layout --- */
@@ -1898,12 +1874,7 @@ body.dragging {
     border: 1px solid #dee2e6;
     font-size: 1rem;
     width: 400px;
-}
-
-.specific-exchange-wrapper select .diamond-exchange-option {
-    color: #c7cccd; /* DeepSkyBlue */
-    font-weight: bold;
-    background-color: #25659d; /* AliceBlue for better readability */
+    transition: all 0.3s ease;
 }
 
 .ticket-icon {
