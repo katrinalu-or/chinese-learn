@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.1.12';
+        this.APP_VERSION = '1.2.0';
         this.MAX_LEVEL = 20;
-        this.DEFAULT_WORDS_VERSION = '1.1.12';
-        this.LATEST_MINIGAME_VERSION = '1.1.12';
+        this.DEFAULT_WORDS_VERSION = '1.2.0';
+        this.LATEST_MINIGAME_VERSION = '1.2.0';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -31,7 +31,7 @@ class ChineseLearningApp {
         // Mini Game Configuration
         this.MINI_GAME_ENABLED_LEVELS = [5, 7, 8, 10, 12, 14, 15];
         this.MINI_GAMES_PER_LEVEL = 8;
-        this.MINI_GAMES_MAX_PAIRING_PAIRS = 10;
+        this.MINI_GAMES_PAIRING_MAX_PAIRS = 10;
         this.MINI_GAMES_GROUPING_MIN_WORDS = 18;
         this.MINI_GAMES_GROUPING_MAX_WORDS = 25;
         this.MINI_GAMES_GROUPING_MAX_GROUPS = 3;
@@ -48,14 +48,14 @@ class ChineseLearningApp {
         };
 
         this.GACHA_EXCHANGE_RATES_DRAW = {
-            Legendary: 40,
+            Legendary: 30,
             Epic: 10,
             Rare: 3,
             Common: 1
         };
 
         this.GACHA_EXCHANGE_RATES_SPECIFIED = {
-            Legendary: 40,
+            Legendary: 45,
             Epic: 25,
             Rare: 10,
             Common: 3,
@@ -68,6 +68,7 @@ class ChineseLearningApp {
         this.isExchangeMode = false;
         this.exchangeSelection = {}; // { id: count }
 
+        this.currentGachaPool = 'villains';
         this.gachaPool = this.defineGachaPool();
         this.init();
     }
@@ -81,10 +82,33 @@ class ChineseLearningApp {
     }
 
     defineGachaPool() {
+        // Current active pool - Disney Villains
+        const villainsPool = [
+            { id: 'maleficent', name: 'Maleficent', rarity: 'Legendary', image: 'villains/maleficent.png' },
+            { id: 'ursula', name: 'Ursula', rarity: 'Legendary', image: 'villains/ursula.png' },
+            { id: 'evil', name: 'Evil Queen', rarity: 'Epic', image: 'villains/evil_queen.png' },
+            { id: 'cruella', name: 'Cruella De Vil', rarity: 'Epic', image: 'villains/cruella.png' },
+            { id: 'scar', name: 'Scar', rarity: 'Rare', image: 'villains/scar.png' },
+            { id: 'gaston', name: 'Gaston', rarity: 'Rare', image: 'villains/gaston.png' },
+            { id: 'jafar', name: 'Jafar', rarity: 'Rare', image: 'villains/jafar.png' },
+            { id: 'yzma', name: 'Yzma', rarity: 'Rare', image: 'villains/yzma.png' },
+            { id: 'hook', name: 'Captain Hook', rarity: 'Common', image: 'villains/hook.png' },
+            { id: 'hades_villain', name: 'Hades', rarity: 'Common', image: 'villains/hades.png' },
+            { id: 'stepmother', name: 'Lady Tremaine', rarity: 'Common', image: 'villains/tremaine.png' },
+            { id: 'mim', name: 'Madam Mim', rarity: 'Common', image: 'villains/madam_mim.png' },
+            { id: 'magnifico', name: 'King Magnifico', rarity: 'Common', image: 'villains/magnifico.png' },
+            { id: 'gothel', name: 'Mother Gothel', rarity: 'Common', image: 'villains/gothel.png' }
+        ];
+
+        return villainsPool;
+    }
+
+    getGreekGodsPool() {
+        // Retired Greek Gods collection
         return [
             { id: 'zeus', name: 'Zeus', rarity: 'Legendary', image: 'greek/zeus.png' },
             { id: 'poseidon', name: 'Poseidon', rarity: 'Epic', image: 'greek/poseidon.png' },
-            { id: 'hades', name: 'Hades', rarity: 'Epic', image: 'greek/hades.png' },
+            { id: 'hades_greek', name: 'Hades', rarity: 'Epic', image: 'greek/hades.png' },
             { id: 'hercules', name: 'Hercules', rarity: 'Rare', image: 'greek/hercules.png' },
             { id: 'hera', name: 'Hera', rarity: 'Rare', image: 'greek/hera.png' },
             { id: 'athena', name: 'Athena', rarity: 'Rare', image: 'greek/athena.png' },
@@ -148,6 +172,21 @@ class ChineseLearningApp {
         this.currentUser.miniGameProgress = this.currentUser.miniGameProgress || {};
         this.currentUser.generatedMiniGames = this.currentUser.generatedMiniGames || {};
         this.currentUser.activityLog = this.currentUser.activityLog || [];
+
+        // Collection migration and initialization
+        this.migrateCollectionData();
+
+        // Migrate old wordProgress data (stop calculating mistakes and start tracking them directly)
+        if (this.currentUser.wordProgress) {
+            Object.keys(this.currentUser.wordProgress).forEach(word => {
+                const entry = this.currentUser.wordProgress[word];
+                if (entry && typeof entry.incorrect === 'undefined') {
+                    // Initialize 'incorrect' property if it doesn't exist.
+                    // We can't know past mistakes, so we start at 0.
+                    entry.incorrect = 0;
+                }
+            });
+        }
 
         if (Array.isArray(this.currentUser.collection)) {
             const newCollection = {};
@@ -218,6 +257,11 @@ class ChineseLearningApp {
         document.getElementById('back-from-dev').addEventListener('click', () => this.showDashboard());
         document.getElementById('exchange-ticket-wrapper').addEventListener('click', () => this.toggleExchangeMode());
 
+        // Collections History
+        document.getElementById('collections-history-btn').addEventListener('click', () => this.showCollectionsHistory());
+        document.getElementById('back-from-collections-history').addEventListener('click', () => this.showCollectionsPage());
+
+
         const tooltipIcon = document.querySelector('.tooltip-icon');
         if (tooltipIcon) {
             tooltipIcon.addEventListener('click', function(event) {
@@ -260,7 +304,7 @@ class ChineseLearningApp {
         const tooltipText = document.getElementById('gacha-tooltip-text');
         if (tooltipText) {
             tooltipText.innerHTML = `Epic probability is ${this.GACHA_PROBABILITIES.Epic}% and Legendary is ${this.GACHA_PROBABILITIES.Legendary}%
-Draw 10 guarantees one Epic or Legendary item!`;
+Draw 10 guarantees one Epic or Legendary!`;
         }
     }
 
@@ -376,7 +420,7 @@ showScreen(screenId) {
     }
 
     // Add/remove a class to the body to control scrolling
-    const noScrollScreens = ['word-review-screen', 'word-writing-screen', 'sentence-writing-screen'];
+    const noScrollScreens = ['word-review-screen', 'word-writing-screen', 'sentence-writing-screen', 'collections-history-screen'];
     if (noScrollScreens.includes(screenId)) {
         document.body.classList.add('no-scroll');
     } else {
@@ -615,11 +659,14 @@ showScreen(screenId) {
 
     updateWordProgress(word, isCorrect) {
         if (!this.currentUser.wordProgress[word]) {
-            this.currentUser.wordProgress[word] = { correct: 0, total: 0, level: this.getWordLevel(word) };
+            this.currentUser.wordProgress[word] = { correct: 0, total: 0, level: this.getWordLevel(word), incorrect: 0 };
         }
         this.currentUser.wordProgress[word].total++;
         if (isCorrect) {
             this.currentUser.wordProgress[word].correct++;
+        } else {
+            // Explicitly track incorrect answers
+            this.currentUser.wordProgress[word].incorrect = (this.currentUser.wordProgress[word].incorrect || 0) + 1;
         }
         this.saveUserData();
     }
@@ -1099,6 +1146,7 @@ showScreen(screenId) {
                 if (userData.currentUser) {
                     this.currentUser = userData.currentUser;
                     this.initializeUserProperties();
+                    this.logActivity('Restore Data', `${file.name}`);
 
                     const users = JSON.parse(localStorage.getItem('users') || '{}');
                     users[this.currentUser.username] = this.currentUser;
@@ -1117,6 +1165,11 @@ showScreen(screenId) {
     }
 
     saveUserData() {
+        // Ensure current collection is saved to the active pool
+        if (this.currentUser.collectionsByPool) {
+            this.currentUser.collectionsByPool[this.currentGachaPool] = { ...this.currentUser.collection };
+        }
+
         const users = JSON.parse(localStorage.getItem('users') || '{}');
         users[this.currentUser.username] = this.currentUser;
         localStorage.setItem('users', JSON.stringify(users));
@@ -1444,7 +1497,8 @@ showScreen(screenId) {
         const wordsByCrosses = allWords
             .map(word => ({
                 word: word,
-                crosses: (this.currentUser.wordProgress[word]?.total || 0) - (this.currentUser.wordProgress[word]?.correct || 0)
+                // Use the new 'incorrect' property instead of calculating
+                crosses: this.currentUser.wordProgress[word]?.incorrect || 0
             }))
             .filter(item => item.crosses > 0)
             .sort((a, b) => b.crosses - a.crosses)
@@ -1531,6 +1585,11 @@ showScreen(screenId) {
         this.renderCollectionGrid();
     }
 
+    showCollectionsHistory() {
+        this.showScreen('collections-history-screen');
+        this.renderGreekGodsCollection();
+    }
+
     renderCollectionGrid() {
         document.getElementById('diamond-count').textContent = this.currentUser.diamonds || 0;
         const grid = document.getElementById('collection-grid');
@@ -1544,16 +1603,17 @@ showScreen(screenId) {
 
         if (this.isExchangeMode) {
             exchangeUI.classList.remove('hidden');
-            gachaControls.classList.add('hidden'); // Hide gacha buttons
+            gachaControls.classList.add('hidden');
             exchangeTicketWrapper.classList.add('exchange-active');
             exchangeTicketWrapper.title = 'Exit Exchange Mode';
         } else {
             exchangeUI.classList.add('hidden');
-            gachaControls.classList.remove('hidden'); // Show gacha buttons
+            gachaControls.classList.remove('hidden');
             exchangeTicketWrapper.classList.remove('exchange-active');
             exchangeTicketWrapper.title = 'Enter Exchange Mode';
         }
 
+        // Render current collection (villains)
         this.gachaPool.forEach(item => {
             const count = this.currentUser.collection[item.id] || 0;
             const isOwned = count > 0;
@@ -1563,7 +1623,6 @@ showScreen(screenId) {
             let countBadge = isOwned ? `<div class="item-count-badge">x${count}</div>` : '';
             let exchangeControlsHTML = '';
 
-            // Add exchange controls if in exchange mode and item is owned
             if (this.isExchangeMode && isOwned) {
                 const selectedCount = this.exchangeSelection[item.id] || 0;
                 exchangeControlsHTML = `
@@ -1590,10 +1649,32 @@ showScreen(screenId) {
         // Update exchange ticket display when rendering collections
         this.updateExchangeTicketDisplay();
 
-        // Add event listeners ONLY to the card buttons that were just re-created
         if (this.isExchangeMode) {
             this.setupCardExchangeListeners();
         }
+    }
+
+    renderGreekGodsCollection() {
+        const grid = document.getElementById('greek-collection-grid');
+        const greekPool = this.getGreekGodsPool();
+        const greekCollection = this.currentUser.collectionsByPool?.greek || {};
+
+        grid.innerHTML = '';
+        greekPool.forEach(item => {
+            const count = greekCollection[item.id] || 0;
+            const isOwned = count > 0;
+            const itemDiv = document.createElement('div');
+            itemDiv.className = `collection-item ${item.rarity} ${isOwned ? 'owned' : ''}`;
+
+            let countBadge = isOwned ? `<div class="item-count-badge">x${count}</div>` : '';
+
+            itemDiv.innerHTML = `
+                ${countBadge}
+                <img src="${item.image}" alt="${item.name}" class="collection-item-image">
+                <span class="collection-item-name">${item.name}</span>
+            `;
+            grid.appendChild(itemDiv);
+        });
     }
 
     _performSingleDraw() {
@@ -1727,6 +1808,56 @@ showScreen(screenId) {
         // If we were in exchange mode, also update the button states
         if (this.isExchangeMode) {
             this.updateExchangeButtonStates();
+        }
+    }
+
+    migrateCollectionData() {
+        // Handle backward compatibility for existing users
+        if (Array.isArray(this.currentUser.collection)) {
+            const newCollection = {};
+            this.currentUser.collection.forEach(id => {
+                newCollection[id] = (newCollection[id] || 0) + 1;
+            });
+            this.currentUser.collection = newCollection;
+        } else {
+            this.currentUser.collection = this.currentUser.collection || {};
+        }
+
+        // Initialize collections by pool
+        if (!this.currentUser.collectionsByPool) {
+            this.currentUser.collectionsByPool = {
+                greek: {},
+                villains: {}
+            };
+
+            // Handle the Hades migration FIRST (before other migrations)
+            if (this.currentUser.collection['hades']) {
+                // Move old 'hades' to Greek collection as 'hades_greek'
+                this.currentUser.collectionsByPool.greek['hades_greek'] = this.currentUser.collection['hades'];
+                delete this.currentUser.collection['hades'];
+                console.log(`Migrated ${this.currentUser.collectionsByPool.greek['hades_greek']} Hades items to Greek collection`);
+            }
+
+            // Migrate other existing collection items to Greek pool
+            const greekIds = this.getGreekGodsPool().map(item => item.id);
+            Object.keys(this.currentUser.collection).forEach(itemId => {
+                if (greekIds.includes(itemId)) {
+                    this.currentUser.collectionsByPool.greek[itemId] = this.currentUser.collection[itemId];
+                    delete this.currentUser.collection[itemId];
+                    console.log(`Migrated ${itemId} to Greek collection`);
+                }
+            });
+
+            // Current collection now points to villains (should be empty for new pool)
+            this.currentUser.collectionsByPool.villains = {};
+            this.currentUser.collection = this.currentUser.collectionsByPool.villains;
+
+            // Save the migration
+            this.saveUserData();
+
+        } else {
+            // Ensure current collection points to active pool
+            this.currentUser.collection = this.currentUser.collectionsByPool[this.currentGachaPool] || {};
         }
     }
 
@@ -2480,7 +2611,7 @@ showScreen(screenId) {
             this.currentPairingGame.level !== game.level) {
 
             // Generate fresh pairs for new game entry
-            const selectedPairs = this.selectRandomPairs(allPairsForTheme, this.MINI_GAMES_MAX_PAIRING_PAIRS);
+            const selectedPairs = this.selectRandomPairs(allPairsForTheme, this.MINI_GAMES_PAIRING_MAX_PAIRS);
 
             // Generate shuffled word layout (only on new game entry)
             const allWords = [];

@@ -256,6 +256,22 @@
         </div>
     </div>
 
+    <!-- Collections History Screen -->
+    <div id="collections-history-screen" class="screen hidden">
+        <div class="header page-header">
+            <button id="back-from-collections-history">← Back</button>
+            <h2>Collection Book</h2>
+            <div class="header-right"></div>
+        </div>
+        <div class="collections-history-container">
+            <div class="collection-archive-grid-container">
+                <h3>Greek Gods Collection</h3>
+                <p class="collection-subtitle archived">Event: Sep 14 ~ Oct 15 2025 (Ended)</p>
+                <div class="collection-grid" id="greek-collection-grid"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Collections Screen -->
     <div id="collections-screen" class="screen hidden">
         <div class="header page-header">
@@ -267,10 +283,11 @@
                         <span class="diamond-icon">💎</span>
                         <span id="diamond-count">0</span>
                     </div>
-                    <div id="exchange-ticket-wrapper" class="exchange-ticket-display">
+                    <button id="exchange-ticket-wrapper" class="header-icon-btn" type="button" title="Enter Exchange Mode">
                         <span class="ticket-icon">🎟️</span>
                         <span id="exchange-ticket-count-collections">0</span>
-                    </div>
+                    </button>
+                    <button id="collections-history-btn" class="header-icon-btn" title="Collection Book">🗃️</button>
                 </div>
             </div>
         </div>
@@ -299,8 +316,8 @@
                 </div>
             </div>
             <div class="collection-grid-container">
-                <h3>Greek Gods Collection</h3>
-                <p class="collection-subtitle">Event: Sep 14 ~ Oct 15 2025</p>
+                <h3>Disney Villains Collection</h3>
+                <p class="collection-subtitle">Event: Oct 16 ~ Nov 16 2025</p>
                 <div class="collection-grid" id="collection-grid"></div>
             </div>
         </div>
@@ -333,5 +350,50 @@
     <input type="file" id="import-wordlist-file" accept=".json" style="display: none;">
     <script src="https://unpkg.com/js-year-calendar@latest/dist/js-year-calendar.min.js"></script>
     <script src="script.js"></script>
+
+    <!-- Script for dynamic header height -->
+    <script>
+        function updateHeaderHeight() {
+            const visibleScreen = document.querySelector('.screen:not(.hidden)');
+            if (!visibleScreen) return;
+
+            const header = visibleScreen.querySelector('.header');
+            const historyContainer = visibleScreen.querySelector('.collections-history-container');
+            let headerHeight = 0;
+
+            if (header) {
+            headerHeight = header.offsetHeight;
+            document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+            }
+
+            // --- JAVASCRIPT FIX FOR IPAD ---
+            if (historyContainer) {
+                const viewportHeight = window.innerHeight;
+                const containerHeight = viewportHeight - headerHeight;
+
+                // Apply the calculated height directly to the container's style
+                historyContainer.style.minHeight = `${containerHeight}px`;
+                historyContainer.style.backgroundSize = `100vw ${containerHeight}px`;
+            }
+        }
+
+        // Run on initial load and when a screen's visibility changes
+        document.addEventListener('DOMContentLoaded', () => {
+            updateHeaderHeight();
+
+            const screens = document.querySelectorAll('.screen');
+            const observer = new MutationObserver(() => {
+                // A short delay ensures the layout is complete before measuring
+                setTimeout(updateHeaderHeight, 50);
+            });
+
+            screens.forEach(screen => {
+                observer.observe(screen, { attributes: true, attributeFilter: ['class'] });
+            });
+        });
+
+        // Also run when the window is resized
+        window.addEventListener('resize', updateHeaderHeight);
+    </script>
 </body>
 </html>

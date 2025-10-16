@@ -1,3 +1,7 @@
+:root {
+  --header-height: 86px; /* Default height, will be updated by JS */
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -30,7 +34,7 @@ body.no-scroll {
 }
 
 .screen {
-    min-height: 100vh; /* Use height instead of min-height */
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
@@ -139,8 +143,12 @@ body.no-scroll {
 
 .header.page-header {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
+}
+
+.header.page-header > button {
+    justify-self: start;
 }
 
 .header.page-header h2 {
@@ -153,19 +161,13 @@ body.no-scroll {
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    justify-self: end;
 }
 
 .header h1, .header h2 {
     font-weight: 300;
     letter-spacing: 1px;
 }
-
-
-/* Add this to prevent any internal scrolling */
-.dashboard-screen {
-    overflow: hidden;
-}
-
 
 .header.page-header button {
     /* Remove all the custom styling - let it inherit from .user-info button */
@@ -1366,10 +1368,11 @@ body.no-scroll {
     transition: opacity 0.2s, transform 0.2s !important;
     transform: translateY(10px) !important;
     font-size: 0.9rem !important;
-    max-width: 300px !important;
-    white-space: nowrap !important;
-    min-width: 200px !important;
-    min-height: 50px !important;
+    max-width: 600px !important;   /* A reasonable max width */
+    min-width: 180px !important;   /* A good minimum width for short entries */
+    white-space: normal !important; /* ALLOW text to wrap */
+    text-align: left;             /* Better for multi-line text readability */
+    overflow-wrap: break-word;
 }
 
 #calendar-tooltip.visible {
@@ -1760,29 +1763,50 @@ body.no-scroll {
 }
 
 /* Exchange Ticket Display */
-.exchange-ticket-display {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1.6rem;
-    font-weight: bold;
-    color: #333;
-}
+/* shared by both exchange ticket and collection history */
 
-#exchange-ticket-wrapper {
+.header-icon-btn {
+    font-family: inherit;
+    background: transparent !important;
+    color: #333;
+    border: 1px solid transparent !important;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 5px 10px !important;
+    border-radius: 10px !important;
     cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 10px;
     transition: all 0.3s ease;
 }
-#exchange-ticket-wrapper:hover {
-    background-color: rgba(0,0,0,0.1);
+
+.header-icon-btn span.ticket-icon {
+    font-size: 2.3rem; /* Make ticket emoji bigger */
 }
+
+#collections-history-btn {
+    font-size: 2rem; /* Make book emoji bigger */
+}
+
+.header-icon-btn span:not(.ticket-icon) {
+    font-size: 1.4rem; /* Keep the count numbers at original size */
+    font-weight: bold;
+}
+
+.header-icon-btn:hover {
+    background: rgba(0,0,0,0.1) !important; /* Add !important to override the transparent background */
+    border-color: rgba(0,0,0,0.1) !important; /* Add !important to override the transparent border */
+    transform: translateY(-1px);
+}
+
 #exchange-ticket-wrapper.exchange-active {
-    background: #daa520; /* Goldenrod */
+    background: #daa520 !important; /* Keep !important for active state */
     color: white;
     box-shadow: 0 0 10px rgba(218, 165, 32, 0.7);
+    border-color: transparent !important;
 }
+
 
 .exchange-ui-container {
     background: #fffaf0; /* A light, creamy yellow */
@@ -1932,7 +1956,7 @@ body.no-scroll {
 
 .tooltip-text {
     visibility: hidden;
-    width: 220px;
+    width: 330px;
     background-color: #333;
     color: #fff;
     text-align: center;
@@ -1940,9 +1964,10 @@ body.no-scroll {
     padding: 8px 10px;
     position: absolute;
     z-index: 1;
-    bottom: 150%;
-    left: 50%;
-    margin-left: -110px;
+    top: 50%;
+    left: calc(100% + 10px); /* Position it to the right of the '?' with a 10px gap */
+    transform: translateY(-50%); /* Vertically center it */
+    margin-left: 0;
     opacity: 0;
     transition: opacity 0.3s;
     font-size: 0.9rem;
@@ -1958,12 +1983,12 @@ body.no-scroll {
 .tooltip-text::after {
     content: "";
     position: absolute;
-    top: 100%;
-    left: 50%;
+    top: 50%;
+    right: 100%; /* Place it on the left edge of the tooltip */
     margin-left: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: #333 transparent transparent transparent;
+    border-color: transparent #333 transparent transparent;
 }
 
 .gacha-draw-btn.multi-draw {
@@ -1986,7 +2011,7 @@ body.no-scroll {
 .collection-grid-container h3 {
     text-align: center;
     margin-bottom: 0.5rem;
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     color: #333;
 }
 .collection-subtitle {
@@ -1999,36 +2024,150 @@ body.no-scroll {
 
 .collection-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 1.5rem;
 }
 
-.collection-item {
-    background: #f8f9fa;
+/* Villain collection specific styles - full image with invisible names */
+#collections-screen .collection-grid .collection-item {
+    background: #f8f9fa !important;
     border-radius: 12px;
-    padding: 1rem;
+    padding: 0 !important; /* Force no padding */
     text-align: center;
     border: 2px solid #e9ecef;
     transition: all 0.3s ease;
     position: relative;
+    min-height: 220px;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-.item-count-badge {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    font-size: 0.8rem;
-    font-weight: bold;
-    padding: 2px 6px;
+#collections-screen .collection-grid .collection-item-image {
+    width: 100% !important;
+    height: 100% !important; /* Always fill entire height */
+    object-fit: cover !important; /* Always cover entire area */
+    margin-bottom: 0 !important;
     border-radius: 10px;
+    position: absolute !important;
+    top: 0;
+    left: 0;
+}
+
+#collections-screen .collection-grid .collection-item-name {
+    visibility: visible; /* Change from 'hidden' to 'visible' to show it*/
+    position: absolute;
+    bottom: 8px;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    font-size: 0.9rem;
+    z-index: 5;
+    display: block !important;
+}
+
+/* --- NORMAL MODE --- */
+#collections-screen .collection-item.Common .collection-item-name {
+    background-color: rgba(134, 142, 150, 0.7); /* Common - Grey */
+}
+#collections-screen .collection-item.Rare .collection-item-name {
+    background-color: rgba(75, 137, 218, 0.7); /* Rare - Blue */
+}
+#collections-screen .collection-item.Epic .collection-item-name {
+    background-color: rgba(138, 78, 218, 0.7); /* Epic - Purple */
+}
+#collections-screen .collection-item.Legendary .collection-item-name {
+    background-color: rgba(245, 166, 35, 0.7); /* Legendary - Gold */
+}
+
+#collections-screen .collection-grid.in-exchange-mode .collection-item-name {
+    /*display: none !important; /* Hide names when in exchange mode */
+    bottom: 90px;
+}
+
+#collections-screen .collection-grid .item-count-badge {
+    position: absolute !important;
+    top: 13px !important;
+    right: 8px !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    color: white !important;
+    font-size: 0.9rem !important;
+    font-weight: bold;
+    padding: 4px 8px !important;
+    border-radius: 12px;
     line-height: 1.2;
+    z-index: 10;
+}
+
+#collections-screen .collection-grid .collection-item:not(.owned) {
+    filter: none;
+    opacity: 1;
+    background: #f0f2f5 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 220px;
+}
+
+#collections-screen .collection-grid .collection-item:not(.owned)::before {
+    content: '???';
+    color: #adb5bd;
+    font-size: 4rem;
+    font-weight: bold;
+    text-align: center;
+    z-index: 5;
+}
+
+#collections-screen .collection-grid .collection-item:not(.owned) .collection-item-name {
+    display: none !important;
+}
+
+#collections-screen .collection-grid .collection-item:not(.owned) .collection-item-image {
+    display: none !important;
+}
+
+#collections-screen .collection-grid .exchange-item-controls {
+    position: absolute !important;
+    bottom: 8px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.95) !important;
+    padding: 6px 12px !important;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    z-index: 10;
+    height: 36px;
+}
+
+#collections-screen .collection-grid .collection-item.selected-for-exchange {
+    box-shadow: 0 0 15px 5px #ffd700 !important;
+    transform: scale(1.05) !important;
+}
+
+/* End of Villain collection specific styles */
+
+/* Default collection item styles (for history page and fallbacks) */
+.collection-item {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.2rem;
+    text-align: center;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+    position: relative;
+    min-height: 220px;
 }
 
 .collection-item-image {
     width: 100%;
-    height: 120px;
+    height: 150px;
     object-fit: contain;
     margin-bottom: 1rem;
 }
@@ -2045,7 +2184,7 @@ body.no-scroll {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 185px;
+    min-height: 220px;
 }
 
 .collection-item:not(.owned) .collection-item-image {
@@ -2055,7 +2194,7 @@ body.no-scroll {
 .collection-item:not(.owned) .collection-item-name::before {
     content: '???';
     color: #adb5bd;
-    font-size: 2.5rem;
+    font-size: 3rem;
     font-weight: bold;
     text-align: center;
 }
@@ -2064,28 +2203,23 @@ body.no-scroll {
     display: none;
 }
 
+.item-count-badge {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 10px;
+    line-height: 1.2;
+}
+
 .collection-item.Common { border-color: #adb5bd; }
 .collection-item.Rare { border-color: #4B89DA; }
 .collection-item.Epic { border-color: #8A4EDA; }
 .collection-item.Legendary { border-color: #F5A623; }
-
-.collection-grid.in-exchange-mode .collection-item-image {
-    height: 120px; /* Revert to original size */
-    margin-bottom: 1rem;
-}
-.collection-grid.in-exchange-mode .collection-item:not(.owned) .collection-item-name::before {
-    content: '???';
-}
-.collection-grid.in-exchange-mode .collection-item:not(.owned) .collection-item-name {
-    display: none;
-}
-.collection-grid.in-exchange-mode .collection-item:not(.owned) .collection-item-image {
-    display: none;
-}
-.collection-grid.in-exchange-mode .collection-item:not(.owned) {
-    background: #f0f2f5;
-    display: flex;
-}
 
 .collection-item .exchange-actions-wrapper {
     position: absolute;
@@ -2325,13 +2459,128 @@ body.no-scroll {
 .rarity-text.Epic { color: #8A4EDA; }
 .rarity-text.Legendary { color: #F5A623; }
 
+/* Collections History Styles */
+.collections-history-container {
+    /*For Mac --> padding: 3.5rem 14.5rem;*/
+    padding: clamp(4rem, 8vh, 8rem) clamp(7rem, 9vw, 20rem);
+    gap: 0;
+    margin: 0;
+    background-image: url('collections.jpg');
+    background-position: center top;
+    background-repeat: no-repeat;
+    width: 100vw;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.collection-archive-grid-container {
+    /* Make container invisible */
+    background: transparent;
+    backdrop-filter: none;
+    padding: 2rem;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+}
+
+.collection-archive-grid-container h3,
+.collection-archive-grid-container .collection-subtitle {
+    /* Make text visible on background */
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    text-align: center;
+}
+
+.collections-history-btn {
+    background: transparent !important; /* Force transparent background */
+    color: #333;
+    border: 0.5px solid transparent !important;
+    border-radius: 10px !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    padding: 5px 10px;
+    margin-left: 0.5rem;
+    font-size: 1.6rem;
+    width: 60px;
+    height: 41px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none !important; /* Force no box shadow */
+}
+
+.collections-history-btn:hover {
+    background: rgba(0,0,0,0.1) !important; /* Only show background on hover */
+    border: 1px solid rgba(0,0,0,0.1) !important; /* Only show border on hover */
+    transform: translateY(-1px);
+}
+
+.collections-history-container .collection-grid {
+    /*grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); */
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1.5rem 1.5rem; /* vertical, horizontal */
+}
+
+.collections-history-container .collection-item {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+    padding: 0;
+    margin: 0;
+    border-radius: 12px;
+    border: 1px solid #8b8076;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center vertically */
+    align-items: center; /* Center horizontally */
+    text-align: center;
+    min-height: 180px;
+}
+
+.collections-history-container .collection-item-image {
+    flex: 0.9;
+    width: 100%;
+    object-fit: contain;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+}
+
+.collections-history-container .collection-item-name {
+    flex-grow: 0.15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.collections-history-container .item-count-badge {
+    top: 11px;
+    right: 8px;
+}
+
+.collections-history-container .collection-item.Common .item-count-badge {
+    background-color: #919ba8; /* Common - Grey */
+    color: white;
+}
+.collections-history-container .collection-item.Rare .item-count-badge {
+    background-color: #34629e; /* Rare - Blue */
+    color: white;
+}
+.collections-history-container .collection-item.Epic .item-count-badge {
+    background-color: #7940c2; /* Epic - Purple */
+    color: white;
+}
+.collections-history-container .collection-item.Legendary .item-count-badge {
+    background-color: #ef9d1a; /* Legendary - Gold */
+    color: white;
+}
+
 /* Responsive breakpoints */
 /* iPad 1180px */
 @media (max-width: 1200px) {
     .header {
-        padding: 0.8rem 2rem; /* Much more compact */
+        padding: 0.8rem 2rem;
     }
-
     .header h1, .header h2 {
         font-size: 1.2rem;
         margin: 0;
@@ -2346,7 +2595,7 @@ body.no-scroll {
         padding: 1.5rem;
     }
     .collection-grid-container {
-        padding: 1rem;
+        padding: 1rem; /* spacing between item vs. container border */
     }
     .collection-grid-container h3 {
         margin-top: 0.5rem;
@@ -2359,10 +2608,14 @@ body.no-scroll {
         font-weight: 500;
     }
     .gacha-draw-btn {
-        padding: 0.8rem 2rem;
+        padding: 0.8rem 1.8rem;
         font-size: 1.2rem;
         font-weight: 600;
     }
+    .collections-history-container .collection-grid {
+        gap: 1.5rem 0.5rem; /* from screen boundary - vertical, horizontal */
+    }
+
 }
 
 @media (max-width: 768px) {
@@ -2447,6 +2700,33 @@ body.no-scroll {
     }
     .grouping-game-container {
         grid-template-columns: 1fr;
+    }
+    .collection-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); /* Adjust for mobile */
+    }
+
+    .collection-item-image {
+        height: 120px; /* Slightly smaller on mobile */
+    }
+
+    .collection-item {
+        min-height: 180px; /* Adjust minimum height for mobile */
+        padding: 1rem;
+    }
+
+    .collection-item:not(.owned) {
+        min-height: 180px;
+    }
+
+    .collection-item:not(.owned) .collection-item-name::before {
+        font-size: 2.5rem; /* Adjust ??? size for mobile */
+    }
+    .collection-grid .collection-item {
+        min-height: 180px;
+    }
+
+    .collection-grid .collection-item:not(.owned)::before {
+        font-size: 3rem;
     }
 }
 
