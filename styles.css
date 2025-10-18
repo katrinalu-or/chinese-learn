@@ -1355,6 +1355,13 @@ body.no-scroll {
     box-shadow: 0 2px 4px rgba(44, 143, 201, 0.3) !important; /* Subtle blue shadow */
 }
 
+.calendar .day[style*="box-shadow"] .day-content.special-activity-day,
+.calendar .day.has-event .day-content.special-activity-day,
+.calendar .day[style*="inset"] .day-content.special-activity-day {
+    background-color: #8b6bbf !important; /* A nice pastel purple */
+    box-shadow: 0 2px 4px rgba(120, 91, 167, 0.4) !important; /* A matching purple shadow */
+}
+
 #calendar-tooltip {
     position: fixed !important;
     background: #333 !important;

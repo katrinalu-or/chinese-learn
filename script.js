@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.2.0';
-        this.MAX_LEVEL = 20;
-        this.DEFAULT_WORDS_VERSION = '1.2.0';
-        this.LATEST_MINIGAME_VERSION = '1.2.0';
+        this.APP_VERSION = '1.2.1';
+        this.MAX_LEVEL = 22;
+        this.DEFAULT_WORDS_VERSION = '1.2.1';
+        this.LATEST_MINIGAME_VERSION = '1.2.1';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -29,9 +29,11 @@ class ChineseLearningApp {
         this.SENTENCE_WORDS_PER_SESSION = 12;
 
         // Mini Game Configuration
-        this.MINI_GAME_ENABLED_LEVELS = [5, 7, 8, 10, 12, 14, 15];
+        this.MINI_GAME_ENABLED_LEVELS = [5, 7, 8, 10, 11, 13, 14, 16, 18];
         this.MINI_GAMES_PER_LEVEL = 8;
+        this.MINI_GAMES_LEVEL_RANGE = 8;
         this.MINI_GAMES_PAIRING_MAX_PAIRS = 10;
+        this.MINI_GAMES_MATCHING_MAX_PAIRS = 10;
         this.MINI_GAMES_GROUPING_MIN_WORDS = 18;
         this.MINI_GAMES_GROUPING_MAX_WORDS = 25;
         this.MINI_GAMES_GROUPING_MAX_GROUPS = 3;
@@ -169,9 +171,8 @@ class ChineseLearningApp {
         this.currentUser.reviewLowerLevelWords = this.currentUser.reviewLowerLevelWords || [];
         this.currentUser.sentenceWritingCompleted = this.currentUser.sentenceWritingCompleted || false;
         this.currentUser.sentenceWritingWords = this.currentUser.sentenceWritingWords || {};
-        this.currentUser.miniGameProgress = this.currentUser.miniGameProgress || {};
-        this.currentUser.generatedMiniGames = this.currentUser.generatedMiniGames || {};
         this.currentUser.activityLog = this.currentUser.activityLog || [];
+        this.currentUser.miniGameDataForLevel = this.currentUser.miniGameDataForLevel || {};
 
         // Collection migration and initialization
         this.migrateCollectionData();
@@ -313,6 +314,7 @@ Draw 10 guarantees one Epic or Legendary!`;
         if (savedUser) {
             this.currentUser = JSON.parse(savedUser);
             this.initializeUserProperties();
+            this.manageMiniGameDataLifecycle();
             this.showDashboard();
         } else {
             this.showScreen('auth-screen');
@@ -421,7 +423,17 @@ showScreen(screenId) {
 
     // Add/remove a class to the body to control scrolling
     const noScrollScreens = ['word-review-screen', 'word-writing-screen', 'sentence-writing-screen', 'collections-history-screen'];
-    if (noScrollScreens.includes(screenId)) {
+    let shouldBeNoScroll = noScrollScreens.includes(screenId);
+
+    // Special check for specific mini-game types
+    if (screenId === 'game-play-screen' && this.currentGame) {
+        const noScrollGameTypes = ['sentenceCompletion', 'formingSentences'];
+        if (noScrollGameTypes.includes(this.currentGame.type)) {
+            shouldBeNoScroll = true;
+        }
+    }
+
+    if (shouldBeNoScroll) {
         document.body.classList.add('no-scroll');
     } else {
         document.body.classList.remove('no-scroll');
@@ -721,6 +733,7 @@ showScreen(screenId) {
         });
 
         this.saveUserData();
+        this.manageMiniGameDataLifecycle();
     }
 
     generatePracticeSubsets() {
@@ -966,7 +979,9 @@ showScreen(screenId) {
             return;
         }
         const confirmMessage = `Are you sure you want to reset to Level ${targetLevel}?\n\nThis will:\n• Set your level to ${targetLevel}\n• Clear ALL word progress\n• Clear all test scores\n• This action cannot be undone!\n\nCurrent level: ${this.currentUser.level}`;
+
         if (!confirm(confirmMessage)) return;
+
         const doubleConfirm = prompt(`Type "RESET" to confirm you want to reset to Level ${targetLevel}:`);
         if (doubleConfirm !== "RESET") {
             alert('Reset cancelled. You must type "RESET" exactly to confirm.');
@@ -985,24 +1000,7 @@ showScreen(screenId) {
         this.currentUser.sentenceWritingCompleted = false;
         this.currentUser.testScores = [];
 
-        // 2. Smart mini-game reset: only clear levels >= targetLevel
-        if (this.currentUser.miniGameProgress) {
-            Object.keys(this.currentUser.miniGameProgress).forEach(level => {
-                if (parseInt(level) >= targetLevel) {
-                    delete this.currentUser.miniGameProgress[level];
-                }
-            });
-        }
-
-        if (this.currentUser.generatedMiniGames) {
-            Object.keys(this.currentUser.generatedMiniGames).forEach(level => {
-                if (parseInt(level) >= targetLevel) {
-                    delete this.currentUser.generatedMiniGames[level];
-                }
-            });
-        }
-
-        // 3. Reset sentence writing words for levels >= targetLevel
+        // Clear all sentence writing word lists from the target level onwards
         if (this.currentUser.sentenceWritingWords) {
             Object.keys(this.currentUser.sentenceWritingWords).forEach(level => {
                 if (parseInt(level) >= targetLevel) {
@@ -1011,16 +1009,23 @@ showScreen(screenId) {
             });
         }
 
-        // 4. Generate new practice subsets for the target level
+        // 2. Completely wipe all mini-game data.
+        // The lifecycle manager will regenerate it for the new level.
+        this.currentUser.miniGameDataForLevel = {};
+
+        // 3. Generate new practice subsets for the new target level
         this.generatePracticeSubsets();
 
-        // 5. Generate sentence writing words for the target level
+        // 4. Generate the sentence writing word list for the new target level
         this.generateSentenceWritingWordList();
 
-        // 6. Save the data
+        // 5. Save the reset user data
         this.saveUserData();
 
-        alert(`✅ Successfully reset to Level ${targetLevel}!\n\nMini-game progress preserved for levels below ${targetLevel}.\nReturning to the dashboard with a fresh state.`);
+        // 6. Run the lifecycle manager to create a fresh set of mini-games for the new level
+        this.manageMiniGameDataLifecycle();
+
+        alert(`✅ Successfully reset to Level ${targetLevel}!`);
 
         // Force a full re-initialization of the user state, then show the dashboard.
         this.checkLoggedInUser();
@@ -1039,21 +1044,19 @@ showScreen(screenId) {
 
         try {
             // 1. Clear all user mini-game progress
-            this.currentUser.miniGameProgress = {};
+            this.currentUser.miniGameDataForLevel = {};
 
-            // 2. Clear all generated mini-game sets
-            this.currentUser.generatedMiniGames = {};
-
-            // 3. Clear cached mini-game content from localStorage
+            // 2. Clear cached mini-game content from localStorage
             localStorage.removeItem('miniGameContent');
             localStorage.removeItem('miniGameContentVersion');
 
-            // 4. Save the cleared user data
+            // 3. Save the cleared user data
             this.saveUserData();
 
-            // 5. Force reload of mini-game content
+            // 4. Force reload of mini-game content
             this.initializeMiniGameContent().then(() => {
-                alert('✅ Mini-game reset completed successfully!\n\n• All mini-game progress cleared\n• All generated games cleared\n• Content reloaded from minigame.json\n\nReturning to dashboard.');
+                this.manageMiniGameDataLifecycle(); // Regenerate games for current level
+                alert('✅ Mini-game reset completed successfully!');
                 this.showDashboard();
             }).catch((error) => {
                 console.error('Error reloading mini-game content:', error);
@@ -1209,12 +1212,27 @@ showScreen(screenId) {
             calendarEl.innerHTML = '';
         }
 
+        const dataSource = this.getCalendarEvents();
+
         this.calendar = new Calendar(calendarEl, {
             numberMonthsDisplayed: 1,
             dataSource: this.getCalendarEvents(),
             language: 'en',
             startDate: new Date(),
             weekStart: 1,
+            customDayRenderer: (element, date) => {
+                // Find event from pre-calculated data to avoid timing issue
+                const eventForDay = dataSource.find(event => {
+                    const eventDate = event.startDate;
+                    return eventDate.getFullYear() === date.getFullYear() &&
+                           eventDate.getMonth() === date.getMonth() &&
+                           eventDate.getDate() === date.getDate();
+                });
+
+                if (eventForDay && eventForDay.isSpecialOnly) {
+                    element.classList.add('special-activity-day');
+                }
+            },
             mouseOnDay: (e) => {
                 if (e.events && e.events.length > 0) {
                     this.showCalendarTooltip(e.element, e.events, tooltip);
@@ -1246,7 +1264,15 @@ showScreen(screenId) {
             return acc;
         }, {});
 
+        const specialActivities = ['Mini-Games Cleared', 'Entered Exchange Mode', 'Restore Data'];
+
         return Object.keys(eventsByDay).map(date => {
+            const logsForDay = eventsByDay[date];
+
+            // Determine if the day contains ONLY special activities
+            const hasRegularActivity = logsForDay.some(log => !specialActivities.includes(log.name));
+            const isSpecialOnly = !hasRegularActivity && logsForDay.some(log => specialActivities.includes(log.name));
+
             // Create date object using local timezone
             const [year, month, day] = date.split('-').map(num => parseInt(num, 10));
             const dateObj = new Date(year, month - 1, day); // month is 0-indexed
@@ -1256,7 +1282,8 @@ showScreen(screenId) {
                 startDate: dateObj,
                 endDate: dateObj,
                 // We'll store the actual logs in a custom property
-                customData: eventsByDay[date]
+                customData: logsForDay,
+                isSpecialOnly: isSpecialOnly
             };
         });
     }
@@ -1878,6 +1905,7 @@ showScreen(screenId) {
                 return;
             }
             this.currentUser.exchangeTickets--;
+            this.logActivity('Entered Exchange Mode', `${this.currentUser.exchangeTickets} tickets left`);
             this.isExchangeMode = true;
             this.exchangeSelection = {}; // Reset selection
 
@@ -2064,73 +2092,53 @@ showScreen(screenId) {
         const itemIdToBuy = select.value;
         const currentPoints = this.calculateExchangePoints();
 
-        // --- Handle Diamond Exchange ---
+        let cost, itemName, performAddition, showResult;
+
+        // Step 1: Define the properties of the item being purchased
         if (itemIdToBuy === 'diamond_1' || itemIdToBuy === 'diamond_10') {
             const isTenDiamonds = itemIdToBuy === 'diamond_10';
-            const cost = isTenDiamonds ? this.GACHA_EXCHANGE_RATES_SPECIFIED.diamond_10 : this.GACHA_EXCHANGE_RATES_SPECIFIED.diamond_1;
             const diamondsToAdd = isTenDiamonds ? 10 : 1;
+            cost = this.GACHA_EXCHANGE_RATES_SPECIFIED[itemIdToBuy];
+            itemName = `${diamondsToAdd} diamond(s)`;
 
-            if (currentPoints < cost) {
-                alert(`You need ${cost} points to exchange for ${diamondsToAdd} diamond(s), but you only have ${currentPoints}.`);
-                return;
-            }
+            performAddition = () => { this.currentUser.diamonds += diamondsToAdd; };
+            showResult = () => {
+                alert(`✅ Success! You exchanged your items for ${diamondsToAdd} diamond(s)!`);
+                this.renderCollectionGrid();
+                this.updateExchangeButtonStates();
+            };
+        } else {
+            const itemInfo = this.gachaPool.find(p => p.id === itemIdToBuy);
+            if (!itemInfo) return; // Exit if item not found in pool
 
-            const tradedItemsSummary = Object.keys(this.exchangeSelection).map(id => {
-                const item = this.gachaPool.find(p => p.id === id);
-                return `${this.exchangeSelection[id]}x ${item.name}`;
-            }).join(', ');
+            cost = this.GACHA_EXCHANGE_RATES_SPECIFIED[itemInfo.rarity];
+            itemName = `a specific item: [${itemInfo.name}]`;
 
-            if (currentPoints > cost) {
-                 if (!confirm(`This will trade [${tradedItemsSummary}] for ${diamondsToAdd} diamond(s). Any leftover points will be lost. Continue?`)) {
-                    return;
-                }
-            }
-
-            // 1. Deduct traded items
-            for (const itemId in this.exchangeSelection) {
-                this.currentUser.collection[itemId] -= this.exchangeSelection[itemId];
-                if (this.currentUser.collection[itemId] <= 0) {
-                    delete this.currentUser.collection[itemId];
-                }
-            }
-
-            // 2. Add diamonds
-            this.currentUser.diamonds += diamondsToAdd;
-
-            // 3. Reset exchange state and save
-            this.exchangeSelection = {};
-            this.saveUserData();
-
-            // 4. Show success message and refresh UI
-            alert(`✅ Success! You exchanged your items for ${diamondsToAdd} diamond(s)!`);
-            this.renderCollectionGrid();
-            return; // Exit the function to prevent regular item logic
+            performAddition = () => { this.currentUser.collection[itemInfo.id] = (this.currentUser.collection[itemInfo.id] || 0) + 1; };
+            showResult = () => { this._showItemRevealAnimation(itemInfo); };
         }
 
-
-        const itemInfo = this.gachaPool.find(p => p.id === itemIdToBuy);
-        if (!itemInfo) return;
-
-        const cost = this.GACHA_EXCHANGE_RATES_SPECIFIED[itemInfo.rarity];
-
+        // Step 2: Validate the transaction
         if (currentPoints < cost) {
-            alert(`You need ${cost} points to buy a ${itemInfo.name}, but you only have ${currentPoints}.`);
+            alert(`You need ${cost} points to buy ${itemName}, but you only have ${currentPoints}.`);
             return;
         }
 
+        // Step 3: Confirm the exchange, especially if points will be wasted
         const tradedItemsSummary = Object.keys(this.exchangeSelection).map(id => {
             const item = this.gachaPool.find(p => p.id === id);
             return `${this.exchangeSelection[id]}x ${item.name}`;
         }).join(', ');
 
-        // Only ask for confirmation if points will be wasted.
         if (currentPoints > cost) {
-            if (!confirm(`This will trade [${tradedItemsSummary}] for a specific item: [${itemInfo.name}]. Any leftover points will be lost. Continue?`)) {
+            const confirmMessage = `This will trade [${tradedItemsSummary}] for ${itemName}. Any leftover points will be lost. Continue?`;
+            if (!confirm(confirmMessage)) {
                 return;
             }
         }
 
-        // 1. Deduct traded items
+        // Step 4: Execute the transaction (this code is now shared)
+        // Deduct traded items
         for (const itemId in this.exchangeSelection) {
             this.currentUser.collection[itemId] -= this.exchangeSelection[itemId];
             if (this.currentUser.collection[itemId] <= 0) {
@@ -2138,15 +2146,15 @@ showScreen(screenId) {
             }
         }
 
-        // 2. Add the SPECIFIC new item
-        this.currentUser.collection[itemInfo.id] = (this.currentUser.collection[itemInfo.id] || 0) + 1;
+        // Add the new item or diamonds
+        performAddition();
 
-        // 3. Reset exchange state
+        // Reset exchange state and save
         this.exchangeSelection = {};
         this.saveUserData();
 
-        // 4. Show animation
-        this._showItemRevealAnimation(itemInfo);
+        // Step 5: Show the result to the user
+        showResult();
     }
 
     _showItemRevealAnimation(item) {
@@ -2242,14 +2250,14 @@ showScreen(screenId) {
 
     renderMiniGames() {
         const grid = document.getElementById('mini-games-grid');
-        const currentLevel = this.currentUser.level;
-
-        const games = this.generateLevelGames(currentLevel);
+        const miniGameData = this.currentUser.miniGameDataForLevel;
+        const games = miniGameData.games || [];
+        const progress = miniGameData.progress || {};
 
         grid.innerHTML = '';
         games.forEach((game, index) => {
             const gameDiv = document.createElement('div');
-            const isCompleted = this.currentUser.miniGameProgress[currentLevel]?.[index] || false;
+            const isCompleted = progress[index] || false;
 
             gameDiv.className = `mini-game-card ${isCompleted ? 'completed' : ''}`;
 
@@ -2326,14 +2334,6 @@ showScreen(screenId) {
     }
 
     generateLevelGames(level) {
-        // --- This logic ensures games are regenerated only on the specific enabled levels ---
-        const lastEnabledLevel = this.findLastEnabledMiniGameLevel(level);
-        const generationLevel = lastEnabledLevel !== null ? lastEnabledLevel : level;
-
-        if (this.currentUser.generatedMiniGames[generationLevel]) {
-            return this.currentUser.generatedMiniGames[generationLevel];
-        }
-
         const allPossibleGameTypes = ['sentenceCompletion', 'matching', 'pairing', 'formingSentences'];
         const groupData = this.getGroupDataForLevel(level);
         if (groupData && groupData.groupNames && groupData.groupNames.length >= 2) {
@@ -2452,33 +2452,15 @@ showScreen(screenId) {
             });
         }
 
-        // Save the generated games for this level
-        this.currentUser.generatedMiniGames[generationLevel] = games;
-        this.saveUserData();
-
         return games;
-    }
-
-    getAvailablePairThemesForLevel(level) {
-        const allThemes = new Set();
-        for (let i = 1; i <= level; i++) {
-            const levelContent = this.getMiniGameContentForLevel(i);
-            if (levelContent && levelContent.pairs) {
-                Object.keys(levelContent.pairs).forEach(theme => allThemes.add(theme));
-            }
-        }
-        return Array.from(allThemes);
     }
 
      getAvailableGroupThemesForLevel(level) {
         const allThemes = new Set();
-        // In the future, if you structure groups by theme like pairs, this will work.
-        // For now, it will likely return a single theme if available.
-        for (let i = 1; i <= level; i++) {
+        const startLevel = Math.max(1, level - this.MINI_GAMES_LEVEL_RANGE);
+        for (let i = startLevel; i <= level; i++) {
             const levelContent = this.getMiniGameContentForLevel(i);
             if (levelContent && levelContent.groups) {
-                // Assuming minigame.json might have multiple themed groups in the future
-                // e.g., groups: { colors: {...}, animals: {...} }
                 Object.keys(levelContent.groups).forEach(theme => {
                     // Check if the theme itself contains groupNames, which indicates it's a theme object
                     if(levelContent.groups[theme].groupNames) {
@@ -2490,6 +2472,36 @@ showScreen(screenId) {
         return Array.from(allThemes);
     }
 
+    saveMiniGameProgress(level, gameIndex, progressData) {
+        const miniGameData = this.currentUser.miniGameDataForLevel;
+
+        // Check if we are saving to the correct and active level's data
+        if (miniGameData && miniGameData.level === level) {
+            miniGameData.saves[gameIndex] = progressData;
+            this.saveUserData();
+        }
+    }
+
+    manageMiniGameDataLifecycle() {
+        const currentLevel = this.currentUser.level;
+        const lastEnabledLevel = this.findLastEnabledMiniGameLevel(currentLevel);
+
+        // This is the level for which games should be active.
+        // If no past level is enabled, it's null (no games available yet).
+        const activeGameLevel = lastEnabledLevel !== null ? lastEnabledLevel : null;
+
+        // If the stored data is not for the current active game level, reset it.
+        if (!this.currentUser.miniGameDataForLevel || this.currentUser.miniGameDataForLevel.level !== activeGameLevel) {
+            console.log(`New active mini-game level: ${activeGameLevel}. Resetting mini-game data.`);
+            this.currentUser.miniGameDataForLevel = {
+                level: activeGameLevel,
+                games: activeGameLevel !== null ? this.generateLevelGames(activeGameLevel) : [],
+                progress: {}, // Tracks full game completions { gameIndex: true }
+                saves: {}     // Tracks in-game progress { gameIndex: { ... } }
+            };
+        }
+        this.saveUserData();
+    }
 
     distributeGameTypes(gameTypes, totalGames) {
         const distributedTypes = [];
@@ -2629,7 +2641,8 @@ showScreen(screenId) {
                 words: shuffledWords, // Fixed layout for this game session
                 selectedWords: [],
                 foundPairs: [],
-                total: selectedPairs.length
+                total: selectedPairs.length,
+                isChecking: false // lock flag
             };
         }
 
@@ -2637,6 +2650,7 @@ showScreen(screenId) {
         this.currentPairingGame.selectedWords = [];
         this.currentPairingGame.foundPairs = [];
         this.currentPairingGame.score = 0;
+        this.currentPairingGame.isChecking = false;
 
         // Calculate grid size
         const totalWords = this.currentPairingGame.words.length;
@@ -2659,11 +2673,24 @@ showScreen(screenId) {
         this.setupPairingGameEvents();
     }
 
+    getAvailablePairThemesForLevel(level) {
+        const allThemes = new Set();
+        const startLevel = Math.max(1, level - this.MINI_GAMES_LEVEL_RANGE);
+        for (let i = startLevel; i <= level; i++) {
+            const levelContent = this.getMiniGameContentForLevel(i);
+            if (levelContent && levelContent.pairs) {
+                Object.keys(levelContent.pairs).forEach(theme => allThemes.add(theme));
+            }
+        }
+        return Array.from(allThemes);
+    }
+
     getAllPairsForTheme(theme, maxLevel) {
         const allPairs = [];
+        const startLevel = Math.max(1, level - this.MINI_GAMES_LEVEL_RANGE);
 
         // Collect all pairs from level 1 up to maxLevel for the specified theme
-        for (let level = 1; level <= maxLevel; level++) {
+        for (let i = startLevel; i <= level; i++) {
             const levelContent = this.getMiniGameContentForLevel(level);
             if (levelContent && levelContent.pairs && levelContent.pairs[theme]) {
                 const levelPairs = levelContent.pairs[theme];
@@ -2712,6 +2739,11 @@ showScreen(screenId) {
 
         wordElements.forEach(element => {
             element.addEventListener('click', (e) => {
+                // If we are already checking a pair, ignore new clicks
+                if (this.currentPairingGame.isChecking) {
+                    return;
+                }
+
                 const word = e.target.dataset.word;
                 const index = parseInt(e.target.dataset.index);
 
@@ -2733,6 +2765,7 @@ showScreen(screenId) {
 
                 // Check if we have 2 selected words
                 if (this.currentPairingGame.selectedWords.length === 2) {
+                    this.currentPairingGame.isChecking = true; // Engage the lock
                     setTimeout(() => this.checkPairingMatch(), 500);
                 }
             });
@@ -2761,8 +2794,10 @@ showScreen(screenId) {
 
             // Check if game is complete and call the completion logic
             if (this.currentPairingGame.foundPairs.length === this.currentPairingGame.total) {
-                setTimeout(() => this.completePairingGame(), 500);
+                setTimeout(() => this.completeCurrentMiniGame(), 500);
             }
+
+            this.currentPairingGame.isChecking = false; // Release the lock
         } else {
             // Wrong pair - reset selection
             selected.forEach(item => {
@@ -2775,40 +2810,12 @@ showScreen(screenId) {
                 selected.forEach(item => {
                     item.element.classList.remove('wrong');
                 });
-            }, 1000);
+                this.currentPairingGame.isChecking = false; // Release the lock
+            }, 500);
         }
 
         // Clear selection
         this.currentPairingGame.selectedWords = [];
-    }
-
-    completePairingGame() {
-        const isCompleted = this.currentPairingGame.foundPairs.length === this.currentPairingGame.total;
-
-        if (isCompleted) {
-            // Mark this specific game as completed
-            const currentLevel = this.currentUser.level;
-            const gameIndex = this.currentGame.gameIndex;
-
-            if (!this.currentUser.miniGameProgress[currentLevel]) {
-                this.currentUser.miniGameProgress[currentLevel] = {};
-            }
-
-            this.currentUser.miniGameProgress[currentLevel][gameIndex] = true;
-
-            // Check if all games are completed for this level using the global variable
-            const completedGames = Object.keys(this.currentUser.miniGameProgress[currentLevel] || {}).length;
-            let message = `Pairing game completed! 🎉\n\nFound all ${this.currentPairingGame.total} pairs correctly!`;
-
-            if (completedGames === this.MINI_GAMES_PER_LEVEL) { // Use global variable here
-                // Award exchange ticket
-                this.currentUser.exchangeTickets = (this.currentUser.exchangeTickets || 0) + 1;
-                message += `\n\n🎫 Bonus: You've completed all ${this.MINI_GAMES_PER_LEVEL} games at Level ${currentLevel}!\nYou earned 1 Exchange Ticket!`;
-            }
-
-            this.saveUserData();
-            alert(message);
-        }
     }
 
     // --- Grouping game ---
@@ -2873,7 +2880,9 @@ showScreen(screenId) {
         };
 
         // 1. Collect and merge all possible group data up to the maxLevel
-        for (let level = 1; level <= maxLevel; level++) {
+        const startLevel = Math.max(1, maxLevel - this.MINI_GAMES_LEVEL_RANGE);
+
+        for (let level = startLevel; level <= maxLevel; level++) {
             const levelContent = this.getMiniGameContentForLevel(level);
             if (levelContent && levelContent.groups) {
                 const levelGroups = levelContent.groups;
@@ -2983,37 +2992,10 @@ showScreen(screenId) {
         });
 
         if (allCorrect) {
-            this.completeGroupingGame();
+            this.completeCurrentMiniGame();
         } else {
             alert("Not quite! Check the highlighted words and make sure all words are sorted.");
         }
-    }
-
-    completeGroupingGame() {
-        const currentLevel = this.currentUser.level;
-        const gameIndex = this.currentGame.gameIndex;
-
-        // Mark this specific game as completed
-        if (!this.currentUser.miniGameProgress[currentLevel]) {
-            this.currentUser.miniGameProgress[currentLevel] = {};
-        }
-        this.currentUser.miniGameProgress[currentLevel][gameIndex] = true;
-
-        // Check if all games are completed for this level
-        const completedGames = Object.keys(this.currentUser.miniGameProgress[currentLevel] || {}).length;
-        let message = "Congratulations! All words are in the correct groups! 🎉";
-
-        if (completedGames === this.MINI_GAMES_PER_LEVEL) {
-            // Award exchange ticket
-            this.currentUser.exchangeTickets = (this.currentUser.exchangeTickets || 0) + 1;
-            message += `\n\n🎫 Bonus: You've completed all ${this.MINI_GAMES_PER_LEVEL} games at Level ${currentLevel}!\nYou earned 1 Exchange Ticket!`;
-        }
-
-        this.saveUserData();
-        alert(message);
-
-        // To prevent re-completing, you might want to automatically go back
-        // this.showMiniGameCenter();
     }
 
     findCorrectGroupForWord(word) {
@@ -3038,12 +3020,16 @@ showScreen(screenId) {
         }
 
         // Initialize or update current sentence completion game state
+        const savedProgress = this.currentUser.miniGameDataForLevel.saves?.[game.id];
+
         if (!this.currentSentenceCompletionGame || this.currentSentenceCompletionGame.gameId !== game.id) {
             this.currentSentenceCompletionGame = {
                 gameId: game.id,
+                level: game.level,
                 sentences: gameData,
                 currentSentenceIndex: 0,
-                completedSentences: new Array(gameData.length).fill(false)
+                // Load saved progress if it exists, otherwise create a new array
+                completedSentences: savedProgress ? savedProgress.completedSentences : new Array(gameData.length).fill(false)
             };
         }
 
@@ -3113,7 +3099,8 @@ showScreen(screenId) {
 
     getAllSentenceCompletionData(maxLevel) {
         const allSentences = [];
-        for (let level = 1; level <= maxLevel; level++) {
+        const startLevel = Math.max(1, maxLevel - this.MINI_GAMES_LEVEL_RANGE);
+        for (let level = startLevel; level <= maxLevel; level++) {
             const levelContent = this.getMiniGameContentForLevel(level);
             if (levelContent && levelContent.sentenceCompletion) {
                 allSentences.push(...levelContent.sentenceCompletion);
@@ -3172,6 +3159,10 @@ showScreen(screenId) {
         if (allCorrect) {
             gameData.completedSentences[gameData.currentSentenceIndex] = true;
 
+            this.saveMiniGameProgress(this.currentGame.level, this.currentGame.gameIndex, {
+                completedSentences: gameData.completedSentences
+            });
+
             // Update the checkmark immediately
             const sentenceCounter = document.querySelector('.sentence-counter');
             if (sentenceCounter && !sentenceCounter.querySelector('.completion-check')) {
@@ -3213,7 +3204,8 @@ showScreen(screenId) {
         console.log("Theme:", theme, "Max Level:", maxLevel);
 
         const allMatches = [];
-        for (let level = 1; level <= maxLevel; level++) {
+        const startLevel = Math.max(1, maxLevel - this.MINI_GAMES_LEVEL_RANGE);
+        for (let level = startLevel; level <= maxLevel; level++) {
             const levelContent = this.getMiniGameContentForLevel(level);
             console.log(`Level ${level} content:`, levelContent);
 
@@ -3246,7 +3238,7 @@ showScreen(screenId) {
             this.currentMatchingGame.level !== game.level) {
 
             // 2. Select a random SUBSET of those matches for this game session.
-            const maxWords = Math.min(allMatches.length, 8); // Use a max of 8 pairs.
+            const maxWords = Math.min(allMatches.length, this.MINI_GAMES_MATCHING_MAX_PAIRS);
             const selectedMatches = [...allMatches].sort(() => 0.5 - Math.random()).slice(0, maxWords);
 
             // 3. Store the selected subset as the definitive set for this game instance.
@@ -3333,7 +3325,8 @@ showScreen(screenId) {
     // --- Forming sentences game ---
     getAllSentenceFormingData(maxLevel) {
         const allSentences = [];
-        for (let level = 1; level <= maxLevel; level++) {
+        const startLevel = Math.max(1, maxLevel - this.MINI_GAMES_LEVEL_RANGE);
+        for (let level = startLevel; level <= maxLevel; level++) {
             const levelContent = this.getMiniGameContentForLevel(level);
             if (levelContent && levelContent.forming) {
                 allSentences.push(...levelContent.forming);
@@ -3351,12 +3344,16 @@ showScreen(screenId) {
         }
 
         // Use the pre-selected sentences from game generation
+        const savedProgress = this.currentUser.miniGameDataForLevel.saves?.[game.id];
+
         if (!this.currentFormingSentencesGame || this.currentFormingSentencesGame.gameId !== game.id) {
             this.currentFormingSentencesGame = {
                 gameId: game.id,
+                level: game.level,
                 sentences: game.gameData.formingSentences,
                 currentSentenceIndex: 0,
-                completedSentences: new Array(game.gameData.formingSentences.length).fill(false)
+                // Load saved progress if it exists, otherwise create a new array
+                completedSentences: savedProgress ? savedProgress.completedSentences : new Array(game.gameData.formingSentences.length).fill(false)
             };
         }
 
@@ -3466,6 +3463,10 @@ showScreen(screenId) {
         if (allCorrect) {
             gameData.completedSentences[gameData.currentSentenceIndex] = true;
 
+            this.saveMiniGameProgress(this.currentGame.level, this.currentGame.gameIndex, {
+                completedSentences: gameData.completedSentences
+            });
+
             // Update the checkmark immediately
             const sentenceCounter = document.querySelector('.sentence-counter');
             if (sentenceCounter && !sentenceCounter.querySelector('.completion-check')) {
@@ -3492,20 +3493,19 @@ showScreen(screenId) {
 
     // --- Generic completion function ---
     completeCurrentMiniGame() {
-        const currentLevel = this.currentUser.level;
+        const miniGameData = this.currentUser.miniGameDataForLevel;
         const gameIndex = this.currentGame.gameIndex;
 
-        if (!this.currentUser.miniGameProgress[currentLevel]) {
-            this.currentUser.miniGameProgress[currentLevel] = {};
-        }
-        this.currentUser.miniGameProgress[currentLevel][gameIndex] = true;
+        // Mark the game as complete in the new 'progress' object
+        miniGameData.progress[gameIndex] = true;
 
-        const completedGames = Object.keys(this.currentUser.miniGameProgress[currentLevel] || {}).length;
+        const completedGames = Object.keys(miniGameData.progress).length;
         let message = "Game completed successfully!";
 
-        if (completedGames === this.MINI_GAMES_PER_LEVEL) {
+        if (completedGames === (miniGameData.games?.length || this.MINI_GAMES_PER_LEVEL)) {
             this.currentUser.exchangeTickets = (this.currentUser.exchangeTickets || 0) + 1;
-            message += `\n\n🎫 Bonus: You've completed all ${this.MINI_GAMES_PER_LEVEL} games at Level ${currentLevel}!\nYou earned 1 Exchange Ticket!`;
+            this.logActivity('Mini-Games Cleared', `Level ${this.currentUser.miniGameDataForLevel.level}`);
+            message += `\n\nYou've completed all games at this level!\nYou earned 1 Exchange Ticket 🎟️!`;
         }
 
         this.saveUserData();
@@ -3578,8 +3578,8 @@ showScreen(screenId) {
 
         // For pairing games, the checking happens automatically
         if (this.currentGame && this.currentGame.type === 'pairing') {
-            if (this.currentPairingGame && this.currentPairingGame.score === this.currentPairingGame.total) {
-                this.completePairingGame();
+            if (this.currentPairingGame && this.currentPairingGame.foundPairs.length === this.currentPairingGame.total) {
+                this.completeCurrentMiniGame();
             } else {
                 alert('Keep finding pairs! You need to match all words correctly.');
             }
