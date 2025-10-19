@@ -598,7 +598,7 @@ body.no-scroll {
 /* Mini Game Center Styles */
 .mini-games-container {
     padding: 2rem;
-    max-width: 1200px;
+    max-width: 1080px; /* CHECK */
     margin: 0 auto;
 }
 
@@ -606,6 +606,7 @@ body.no-scroll {
     display: grid;
     grid-template-columns: repeat(4, 1fr); /* 4 columns */
     gap: 1.5rem;
+    justify-content: center;
 }
 
 .mini-game-card {

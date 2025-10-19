@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.2.1';
+        this.APP_VERSION = '1.2.2';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.2.1';
-        this.LATEST_MINIGAME_VERSION = '1.2.1';
+        this.DEFAULT_WORDS_VERSION = '1.2.2';
+        this.LATEST_MINIGAME_VERSION = '1.2.2';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -185,6 +185,16 @@ class ChineseLearningApp {
                     // Initialize 'incorrect' property if it doesn't exist.
                     // We can't know past mistakes, so we start at 0.
                     entry.incorrect = 0;
+                }
+            });
+        }
+
+        // Clean up old sentence writing words to only keep the current level's list
+        const currentLevel = this.currentUser.level;
+        if (this.currentUser.sentenceWritingWords) {
+            Object.keys(this.currentUser.sentenceWritingWords).forEach(levelKey => {
+                if (parseInt(levelKey) !== currentLevel) {
+                    delete this.currentUser.sentenceWritingWords[levelKey];
                 }
             });
         }
@@ -709,6 +719,7 @@ showScreen(screenId) {
         this.currentUser.level++;
         this.currentUser.diamonds += this.LEVEL_UP_DIAMOND_BONUS;
         this.currentUser.sentenceWritingCompleted = false;
+        this.currentUser.sentenceWritingWords = {};
 
         // First, generate the new random subsets for the new level
         this.generatePracticeSubsets();
@@ -999,15 +1010,7 @@ showScreen(screenId) {
         this.currentUser.reviewLowerLevelWords = [];
         this.currentUser.sentenceWritingCompleted = false;
         this.currentUser.testScores = [];
-
-        // Clear all sentence writing word lists from the target level onwards
-        if (this.currentUser.sentenceWritingWords) {
-            Object.keys(this.currentUser.sentenceWritingWords).forEach(level => {
-                if (parseInt(level) >= targetLevel) {
-                    delete this.currentUser.sentenceWritingWords[level];
-                }
-            });
-        }
+        this.currentUser.sentenceWritingWords = {};
 
         // 2. Completely wipe all mini-game data.
         // The lifecycle manager will regenerate it for the new level.
@@ -1032,7 +1035,7 @@ showScreen(screenId) {
     }
 
     resetAllMiniGames() {
-        const confirmMessage = `Are you sure you want to reset ALL mini-game data?\n\nThis will:\n• Clear all mini-game progress for all levels\n• Clear all generated mini-game sets\n• Clear cached mini-game content\n• Force reload from minigame.json\n• This action cannot be undone!`;
+        const confirmMessage = `Are you sure you want to reset ALL mini-game data?\n\nThis will:\n• Clear all mini-game progress\n• Clear all generated mini-game sets\n• Clear cached mini-game content\n• Force reload from minigame.json\n• This action cannot be undone!`;
 
         if (!confirm(confirmMessage)) return;
 
@@ -1125,10 +1128,10 @@ showScreen(screenId) {
         const dataStr = JSON.stringify(userData, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
 
-        // --- Create a detailed timestamp in the format YYYY_MM_DD-HH:mm:ss ---
+        // --- Create a detailed timestamp in the format YYYY_MM_DD-HH:mm (not doing ss) ---
         const now = new Date();
         const date = now.getFullYear() + '_' + String(now.getMonth() + 1).padStart(2, '0') + '_' + String(now.getDate()).padStart(2, '0');
-        const time = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
+        const time = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 
         const filename = `chinese-learning-${this.currentUser.username}-level${this.currentUser.level}-${date}-${time}.json`;
 
@@ -2483,6 +2486,22 @@ showScreen(screenId) {
     }
 
     manageMiniGameDataLifecycle() {
+        // --- START: One-Time Cleanup of Old Data Structures ---
+        // This block will run on every load and safely delete the old properties if they exist.
+        if (this.currentUser.generatedMiniGames) {
+            delete this.currentUser.generatedMiniGames;
+            console.log("Cleanup: Removed old 'generatedMiniGames' property.");
+        }
+        if (this.currentUser.miniGameProgress) {
+            delete this.currentUser.miniGameProgress;
+            console.log("Cleanup: Removed old 'miniGameProgress' property.");
+        }
+        if (this.currentUser.miniGameSaves) {
+            delete this.currentUser.miniGameSaves;
+            console.log("Cleanup: Removed old 'miniGameSaves' property.");
+        }
+        // --- END: One-Time Cleanup ---
+
         const currentLevel = this.currentUser.level;
         const lastEnabledLevel = this.findLastEnabledMiniGameLevel(currentLevel);
 
@@ -2687,11 +2706,11 @@ showScreen(screenId) {
 
     getAllPairsForTheme(theme, maxLevel) {
         const allPairs = [];
-        const startLevel = Math.max(1, level - this.MINI_GAMES_LEVEL_RANGE);
+        const startLevel = Math.max(1, maxLevel - this.MINI_GAMES_LEVEL_RANGE);
 
         // Collect all pairs from level 1 up to maxLevel for the specified theme
-        for (let i = startLevel; i <= level; i++) {
-            const levelContent = this.getMiniGameContentForLevel(level);
+        for (let i = startLevel; i <= maxLevel; i++) {
+            const levelContent = this.getMiniGameContentForLevel(i);
             if (levelContent && levelContent.pairs && levelContent.pairs[theme]) {
                 const levelPairs = levelContent.pairs[theme];
                 if (Array.isArray(levelPairs)) {
@@ -3190,7 +3209,8 @@ showScreen(screenId) {
     // --- Matching aame ---
     getAvailableMatchThemesForLevel(level) {
         const allThemes = new Set();
-        for (let i = 1; i <= level; i++) {
+        const startLevel = Math.max(1, level - this.MINI_GAMES_LEVEL_RANGE);
+        for (let i = startLevel; i <= level; i++) {
             const levelContent = this.getMiniGameContentForLevel(i);
             if (levelContent && levelContent.matches) {
                 Object.keys(levelContent.matches).forEach(theme => allThemes.add(theme));
