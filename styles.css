@@ -598,7 +598,7 @@ body.no-scroll {
 /* Mini Game Center Styles */
 .mini-games-container {
     padding: 2rem;
-    max-width: 1080px; /* CHECK */
+    max-width: 1050px; /* CHECK */
     margin: 0 auto;
 }
 
