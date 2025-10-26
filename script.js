@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.3.0';
+        this.APP_VERSION = '1.3.1';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.3.0';
-        this.LATEST_MINIGAME_VERSION = '1.3.0';
+        this.DEFAULT_WORDS_VERSION = '1.3.1';
+        this.LATEST_MINIGAME_VERSION = '1.3.1';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -101,7 +101,6 @@ class ChineseLearningApp {
         await this.initializeSocialStudiesContent();
         this.setupEventListeners();
         this.checkLoggedInUser();
-        this.setupDynamicContent();
     }
 
     defineGachaPool() {
@@ -523,6 +522,7 @@ class ChineseLearningApp {
         document.getElementById('level-display').textContent = this.currentUser.level;
         this.updateProgressDisplay();
         this.updateMiniGameCardVisibility();
+        this.setupDynamicContent();
 
         // Clear current game state when returning to dashboard
         this.currentPairingGame = null;
