@@ -5151,7 +5151,7 @@ Draw 10 guarantees one Epic or Legendary!`;
                 id: 'unlock_halloween_theme',
                 name: 'Seasonal Limited Theme',
                 maxLevel: 1,
-                cost: () => 100,
+                cost: () => 0,
                 levels: [
                     { description: 'Unlock access to exclusive, time-limited theme', effects: [] }
                 ],
