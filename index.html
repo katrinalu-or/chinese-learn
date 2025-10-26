@@ -60,9 +60,9 @@
                 <h3>小遊戲天地</h3>
                 <p>Interactive games with words</p>
             </div>
-            <div class="activity-card disabled">
-                <h3>Coming Soon</h3>
-                <p>Activity 5</p>
+            <div class="activity-card active" id="social-studies-card">
+                <h3>文化中心</h3>
+                <p>Immersive cultural activites<br>Earn cultural points and unlock perks!</p>
             </div>
             <div class="activity-card progress-card" id="progress-card">
                 <h3>升級進度</h3>
@@ -84,6 +84,9 @@
             </div>
         </div>
         <div class="word-display">
+            <div class="progress-info" id="word-counter">
+                0/20
+            </div>
             <div class="word-card">
                 <div class="chinese-word" id="chinese-word">準備中...</div>
                 <button id="review-audio-btn" class="replay-audio-btn">🔊</button>
@@ -91,9 +94,6 @@
             <div class="action-buttons">
                 <button id="cross-btn" class="action-btn cross">✗</button>
                 <button id="check-btn" class="action-btn check">✓</button>
-            </div>
-            <div class="progress-info" id="word-counter">
-                0/20
             </div>
         </div>
     </div>
@@ -108,6 +108,9 @@
             </div>
         </div>
         <div class="word-display">
+            <div class="progress-info" id="writing-word-counter">
+                0/10
+            </div>
             <div class="word-card">
                 <div class="chinese-word" id="writing-chinese-word">???</div>
                 <button id="replay-audio-btn" class="replay-audio-btn">🔊</button>
@@ -118,9 +121,6 @@
             <div class="action-buttons">
                 <button id="writing-cross-btn" class="action-btn cross">✗</button>
                 <button id="writing-check-btn" class="action-btn check">✓</button>
-            </div>
-            <div class="progress-info" id="writing-word-counter">
-                0/10
             </div>
         </div>
     </div>
@@ -135,7 +135,6 @@
         <div class="sentence-writing-container">
             <div class="sentence-instructions">
                 <p>Use the following words to practice forming sentences. When you're done, mark this activity as complete.</p>
-                <p>You can click on the words to help you keep track of which words have been used.</p>
             </div>
             <div class="sentence-word-grid" id="sentence-word-grid"></div>
             <div class="action-buttons">
@@ -157,6 +156,166 @@
         <div class="mini-games-container">
             <div class="mini-games-grid" id="mini-games-grid">
                 <!-- Games will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Social Studies Screen -->
+    <div id="social-studies-screen" class="screen hidden">
+        <div class="header page-header">
+            <button id="back-from-social-studies">← Back</button>
+            <h2>文化中心</h2>
+            <div class="header-right">
+                <span class="perk-icon" title="Cultural Points">🎵</span>
+                <span id="cultural-points-display">0</span>
+                <button id="cultural-recognition-btn" class="header-icon-btn" title="Cultural Recognition">🏛️</button>
+            </div>
+        </div>
+        <div class="social-studies-container">
+            <div class="social-studies-tabs-container">
+                <button class="social-studies-tab-button active" data-tab="history">歷史 History</button>
+                <button class="social-studies-tab-button" data-tab="geography">地理 Geography</button>
+                <button class="social-studies-tab-button" data-tab="idioms">成語</button>
+                <button class="social-studies-tab-button" data-tab="literature">文學 Literature</button>
+                <button class="social-studies-tab-button" data-tab="culture">人文 Culture</button>
+            </div>
+            <div class="social-studies-content-container">
+                <!-- Level Complete screen, hidden by default -->
+                <div class="level-complete-summary hidden">
+                    <div class="summary-controls-container"></div>
+                    <h3>Your Score: <span class="final-score-display">0/0</span></h3>
+                    <button class="game-action-btn secondary" id="review-social-studies-btn">Review Quiz</button>
+                    <button class="game-action-btn" id="restart-social-studies-level-btn">Restart Quiz</button>
+                </div>
+                <!-- This wrapper will now contain the quiz content and be toggled -->
+                <div class="quiz-content-wrapper">
+                    <!-- History Tab Content -->
+                    <div id="history-content" class="social-studies-tab-content">
+                        <div class="quiz-header">
+                            <div class="tab-controls">
+                                <label for="history-level-select">Level:</label>
+                                <select id="history-level-select" class="level-select-dropdown"></select>
+                            </div>
+                            <h3 class="quiz-title"></h3>
+                            <div class="quiz-page-status"></div>
+                        </div>
+                        <div class="tab-display-content">
+                            <p>Content for History at the selected level will appear here.</p>
+                        </div>
+                    </div>
+                    <!-- Geography Tab Content -->
+                    <div id="geography-content" class="social-studies-tab-content hidden">
+                        <div class="quiz-header">
+                            <div class="tab-controls">
+                                <label for="geography-level-select">Level:</label>
+                                <select id="geography-level-select" class="level-select-dropdown"></select>
+                            </div>
+                            <h3 class="quiz-title"></h3>
+                            <div class="quiz-page-status"></div>
+                        </div>
+                        <div class="tab-display-content">
+                            <p>Content for Geography at the selected level will appear here.</p>
+                        </div>
+                    </div>
+                    <!-- Idioms Tab Content -->
+                    <div id="idioms-content" class="social-studies-tab-content hidden">
+                        <div class="quiz-header">
+                            <div class="tab-controls">
+                                <label for="idioms-level-select">Level:</label>
+                                <select id="idioms-level-select" class="level-select-dropdown"></select>
+                            </div>
+                            <h3 class="quiz-title"></h3>
+                            <div class="quiz-page-status"></div>
+                        </div>
+                        <div class="tab-display-content">
+                            <p>Content for Idioms at the selected level will appear here.</p>
+                        </div>
+                    </div>
+                    <!-- Literature Tab Content -->
+                    <div id="literature-content" class="social-studies-tab-content hidden">
+                        <div class="quiz-header">
+                            <div class="tab-controls">
+                                <label for="literature-level-select">Level:</label>
+                                <select id="literature-level-select" class="level-select-dropdown"></select>
+                            </div>
+                            <h3 class="quiz-title"></h3>
+                            <div class="quiz-page-status"></div>
+                        </div>
+                        <div class="tab-display-content">
+                            <p>Content for Literature at the selected level will appear here.</p>
+                        </div>
+                    </div>
+                    <!-- Culture Tab Content -->
+                    <div id="culture-content" class="social-studies-tab-content hidden">
+                        <div class="quiz-header">
+                            <div class="tab-controls">
+                                <label for="culture-level-select">Level:</label>
+                                <select id="culture-level-select" class="level-select-dropdown"></select>
+                            </div>
+                            <h3 class="quiz-title"></h3>
+                            <div class="quiz-page-status"></div>
+                        </div>
+                        <div class="tab-display-content">
+                            <!-- JS will render the quiz here -->
+                        </div>
+                    </div>
+
+                    <!-- Page Navigation -->
+                    <div class="quiz-navigation-controls">
+                        <button class="game-action-btn secondary" id="prev-ss-page-btn">Previous Page</button>
+                        <div id="ss-submit-placeholder"></div>
+                        <button class="game-action-btn secondary" id="next-ss-page-btn">Next Page</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cultural Recognition Screen -->
+    <div id="cultural-recognition-screen" class="screen hidden">
+        <div class="header page-header">
+            <button id="back-from-recognition">← Back</button>
+            <h2>Cultural Recognition</h2>
+            <div class="header-right">
+                <span class="perk-icon" title="Cultural Points">🎵</span>
+                <span id="cultural-points-display-recognition">0</span>
+            </div>
+        </div>
+        <div class="recognition-grid-container">
+            <div class="recognition-grid">
+                <div class="recognition-box">
+                    <h4>Legendary Probability Increase</h4>
+                    <p>Permanently increase the chance of drawing Legendary items.</p>
+                </div>
+                <div class="recognition-box">
+                    <h4>Draw 10 Extra Perks</h4>
+                    <p>Gain bonus rewards when using the "Draw 10" feature.</p>
+                </div>
+                <div class="recognition-box">
+                    <h4>Reduced Exchange Rate</h4>
+                    <p>Get more points for your items in Exchange Mode.</p>
+                </div>
+                <div class="recognition-box">
+                    <h4>Diamond Discount</h4>
+                    <p>Use 9💎 instead of 10💎 for 'Draw 10'</p>
+                </div>
+                <div class="recognition-box">
+                    <h4>Budget for Collection Completion Reward + $5</h4>
+                    <p>Unlock it for Villains collection. Will be reset in next collection</p>
+                </div>
+                <div class="recognition-box">
+                    <h4>Redeem Reward for Second Collection Completionh</h4>
+                    <p>Unlock it for Villains collection. Will be reset in next collection.</p>
+                </div>
+                <div class="recognition-box placeholder">
+                    <h4>???</h4>
+                    <p>More perks coming soon!</p>
+                </div>
+                <div class="recognition-box">
+                    <h4>Seasonal Limited Theme</h4>
+                    <p>Unlock access to exclusive, time-limited theme</p>
+                    <div class="theme-selector-container"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -210,6 +369,13 @@
             </div>
         </div>
         <div class="developer-content">
+            <div class="theme-section">
+                <h3>Theme Selection</h3>
+                <p>💡 Themes are limited editions unlocked via the Cultural Recognition page.</p>
+                <div class="theme-selector-container" id="dev-theme-selector">
+                    <!-- Theme buttons will be rendered here by JS -->
+                </div>
+            </div>
             <div class="backup-section">
                 <h3>Data Management</h3>
                 <p>💡 Use backup to save your progress to a file. Use restore to load progress from a backup file.</p>
@@ -338,6 +504,7 @@
         <div class="modal-content multi-result-modal">
             <h2>Your 10 Draws!</h2>
             <div id="multi-result-grid" class="multi-result-grid"></div>
+            <div id="multi-result-bonus" class="hidden"></div>
             <button id="close-multi-gacha-modal-btn">Awesome!</button>
         </div>
     </div>

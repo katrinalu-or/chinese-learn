@@ -1,0 +1,222 @@
+{
+    "culture": {
+        "1": {
+            "title": "節日",
+            "pages": [
+                {
+                    "type": "pic_match",
+                    "data": {
+                        "items": [
+                            { "image": "social/dragon_boat.jpeg", "text": "端午節" },
+                            { "image": "social/dragon_dance.jpg", "text": "新年" },
+                            { "image": "social/dumpling.jpg", "text": "元宵節" },
+                            { "image": "social/fire_cracker.jpg", "text": "新年" },
+                            { "image": "social/lady_to_moon.jpg", "text": "中秋節" },
+                            { "image": "social/lantern_festival.jpg", "text": "元宵節" },
+                            { "image": "social/moon_cake.jpg", "text": "中秋節" },
+                            { "image": "social/rabbit_moon.jpg", "text": "中秋節" },
+                            { "image": "social/red_envelop.jpg", "text": "新年" },
+                            { "image": "social/worship.png", "text": "清明節" },
+                            { "image": "social/zongzi.jpg", "text": "端午節" }
+                        ]
+                    }
+                },
+                {
+                    "type": "match",
+                    "data": {
+                        "description": "Match the holiday and the date",
+                        "pairs": [
+                            ["端午節", "農曆5月5日"],
+                            ["新年", "農曆1月1日"],
+                            ["元宵節", "農曆1月15日"],
+                            ["清明節", "農曆4月4日"],
+                            ["中秋節", "農曆8月15日"],
+                            ["父親節", "8月8日"],
+                            ["母親節", "5月第二個禮拜"]
+                        ]
+                    }
+                },
+                {
+                    "type": "mchoice",
+                    "data": {
+                        "questions": [
+                            {
+                                "id": "q1",
+                                "question": "在農曆新年時，去給親友拜年時應該穿什麼樣的衣服？",
+                                "options": [
+                                    "灰色的衣服",
+                                    "色彩明亮的衣服",
+                                    "白色的衣服",
+                                    "全黑的衣服"
+                                ],
+                                "answer": "色彩明亮的衣服"
+                            },
+                            {
+                                "id": "q2",
+                                "question": "中秋節時人們會吃什麼？",
+                                "options": [
+                                    "粽子",
+                                    "月餅",
+                                    "水餃",
+                                    "湯圓"
+                                ],
+                                "answer": "月餅"
+                            },
+                            {
+                                "id": "q3",
+                                "question": "端午節是為了紀念哪位詩人？",
+                                "options": [
+                                    "屈原",
+                                    "孔子",
+                                    "李白",
+                                    "諸葛亮"
+                                ],
+                                "answer": "屈原"
+                            },
+                            {
+                                "id": "q4",
+                                "question": "中秋節賞的是什麼？",
+                                "options": [
+                                    "太陽",
+                                    "星星",
+                                    "天空",
+                                    "月亮"
+                                ],
+                                "answer": "月亮"
+                            },
+                            {
+                                "id": "q5",
+                                "question": "在農曆新年時，去別人家中拜年時可以送上什麼樣的祝福語？",
+                                "options": [
+                                    "紅包拿來",
+                                    "恭喜發財",
+                                    "聖誕快樂",
+                                    "Trick or treat!"
+                                ],
+                                "answer": "恭喜發財"
+                            },
+                            {
+                                "id": "q6",
+                                "question": "粽子是用什麼來包飯？",
+                                "options": [
+                                    "荷葉",
+                                    "楓葉",
+                                    "地瓜葉",
+                                    "米紙"
+                                ],
+                                "answer": "荷葉"
+                            },
+                            {
+                                "id": "q7",
+                                "question": "下面哪個不會出現在粽子裡面？",
+                                "options": [
+                                    "豬肉",
+                                    "糯米飯",
+                                    "高麗菜",
+                                    "蛋黃"
+                                ],
+                                "answer": "高麗菜"
+                            },
+                            {
+                                "id": "q8",
+                                "question": "下面哪個不是清明節會做的事情？",
+                                "options": [
+                                    "烤肉",
+                                    "掃墓",
+                                    "掛紙",
+                                    "郊遊踏青"
+                                ],
+                                "answer": "烤肉"
+                            },
+                            {
+                                "id": "q9",
+                                "question": "哪個節日在台灣會放假放最久？",
+                                "options": [
+                                    "中秋節",
+                                    "新年春節",
+                                    "聖誕節",
+                                    "清明節"
+                                ],
+                                "answer": "新年春節"
+                            },
+                            {
+                                "id": "q10",
+                                "question": "哪個節日會猜燈謎？",
+                                "options": [
+                                    "中秋節",
+                                    "新年",
+                                    "端午節",
+                                    "元宵節"
+                                ],
+                                "answer": "元宵節"
+                            },
+                            {
+                                "id": "q11",
+                                "image": "social/north_south_zongzi.jpg",
+                                "question": "小軒和舅媽愛吃的是...",
+                                "options": [
+                                    "北部粽",
+                                    "南部粽"
+                                ],
+                                "answer": "北部粽"
+                            },
+                            {
+                                "id": "q12",
+                                "question": "端午節的時候不能說端午節快樂",
+                                "options": [
+                                    "對",
+                                    "不對"
+                                ],
+                                "answer": "對"
+                            },
+                            {
+                                "id": "q13",
+                                "image": "social/pomelo.jpg",
+                                "question": "這個水果是哪個節日吃?",
+                                "options": [
+                                    "中秋節",
+                                    "新年",
+                                    "端午節",
+                                    "母親節"
+                                ],
+                                "answer": "中秋節"
+                            },
+                            {
+                                "id": "q14",
+                                "question": "母親節媽媽會想收到什麼禮物?",
+                                "options": [
+                                    "媽媽要休息，今天不用做中文",
+                                    "帶媽媽去吃平常很少吃的noodles company",
+                                    "自己做的podcast"
+                                ],
+                                "answer": "自己做的podcast"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "match",
+                    "data": {
+                        "description": "Answer riddle about zodiac years",
+                        "pairs": [
+                            ["很有禮貌的老鼠", "不好意思"],
+                            ["一口吃掉牛尾巴（打一字)", "告"],
+                            ["什麼動物兩隻一起跑得比較快?", "老虎"],
+                            ["小白加小白是什麼?", "小白兔(two)"],
+                            ["什麼龍是白色的不會吃人？", "保麗龍"],
+                            ["Yes, sir! 這句是跟誰說？", "蛇"],
+                            ["叫馬不是馬，地上不見它，請到海里找 (打一動物)", "海馬"],
+                            ["羊來了 (打一水果)", "草莓(草沒)"],
+                            ["一身毛，四隻手，坐著像人，走著像狗 (打一動物)", "猴子"],
+                            ["一朵紅花頭上戴，一件花衣身上蓋，天還沒亮就起床，唱得太陽升起來 (打一動物)", "公雞"],
+                            ["名字叫小花，喜歡搖尾巴，夜晚睡門口，小偷最怕他 (打一動物)", "狗"],
+                            ["真正的豬都在喝什麼飲料?", "珍珠奶茶"]
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    "geography": {
+    }
+}

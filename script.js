@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.2.2';
+        this.APP_VERSION = '1.3.0';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.2.2';
-        this.LATEST_MINIGAME_VERSION = '1.2.2';
+        this.DEFAULT_WORDS_VERSION = '1.3.0';
+        this.LATEST_MINIGAME_VERSION = '1.3.0';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -66,18 +66,39 @@ class ChineseLearningApp {
         };
 
         this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE = 15; // 15% chance for Legendary on a guaranteed pull
+        this.DRAW_TEN_DIAMOND_REWARD_AMOUNT = 10;
+        this.DRAW_TEN_COST = 10;
 
         this.isExchangeMode = false;
         this.exchangeSelection = {}; // { id: count }
 
         this.currentGachaPool = 'villains';
         this.gachaPool = this.defineGachaPool();
+
+        // Social studies configuration
+        this.SOCIAL_STUDIES_FILENAME = 'social.json';
+        this.SOCIAL_STUDIES_PASSING_SCORE = 90;
+        this.SOCIAL_STUDIES_BASE_CULTURAL_POINTS_EARNED = 100;
+        this.SOCIAL_STUDIES_CULTURAL_POINTS_INCREMENT = 10;
+
+        this.socialStudiesContent = null;
+        this.currentSocialStudiesPage = 0;
+        this.currentSelectedAnswer = null; // For pic_match
+        this.currentMatchSelection = null; // For match quiz
+        this.mChoiceSelections = {}; // For mchoice quiz
+        this.socialStudiesReviewMode = false;
+        this.perkDefinitions = this.definePerkDefinitions(); // Perks from cultural recognizition page
+        this.themeManifest = this.defineThemeManifest();
+        this.effectiveConfig = null; // Initialize the stored config
+        // renderCulturalPerks controls theme names, this.currentUser.activeTheme
+
         this.init();
     }
 
     async init() {
         await this.initializeDefaultWords(); // Wait for words to load before continuing
         await this.initializeMiniGameContent();
+        await this.initializeSocialStudiesContent();
         this.setupEventListeners();
         this.checkLoggedInUser();
         this.setupDynamicContent();
@@ -163,9 +184,29 @@ class ChineseLearningApp {
         }
     }
 
+    async initializeSocialStudiesContent() {
+        if (!this.socialStudiesContent) {
+            try {
+                const response = await fetch(this.SOCIAL_STUDIES_FILENAME);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                this.socialStudiesContent = await response.json();
+            } catch (error) {
+                console.error('Failed to load social studies content:', error);
+                // We don't show an error screen here, as it's not a critical file like words.json
+                // The feature just won't work.
+            }
+        }
+    }
+
     initializeUserProperties() {
         this.currentUser.diamonds = this.currentUser.diamonds || 0;
         this.currentUser.exchangeTickets = this.currentUser.exchangeTickets || 0;
+        this.currentUser.culturalPoints = this.currentUser.culturalPoints || 0;
+        this.currentUser.perkLevels = this.currentUser.perkLevels || {};
+        this.currentUser.lastPerkResetPool = this.currentUser.lastPerkResetPool || "";
+        this.currentUser.activeTheme = this.currentUser.activeTheme || 'default';
         this.currentUser.listeningProgress = this.currentUser.listeningProgress || {};
         this.currentUser.listeningLowerLevelWords = this.currentUser.listeningLowerLevelWords || [];
         this.currentUser.reviewLowerLevelWords = this.currentUser.reviewLowerLevelWords || [];
@@ -173,6 +214,7 @@ class ChineseLearningApp {
         this.currentUser.sentenceWritingWords = this.currentUser.sentenceWritingWords || {};
         this.currentUser.activityLog = this.currentUser.activityLog || [];
         this.currentUser.miniGameDataForLevel = this.currentUser.miniGameDataForLevel || {};
+        this.currentUser.socialStudiesProgress = this.currentUser.socialStudiesProgress || {};
 
         // Collection migration and initialization
         this.migrateCollectionData();
@@ -219,6 +261,12 @@ class ChineseLearningApp {
             this.generateSentenceWritingWordList();
             this.saveUserData();
         }
+
+        // Calculate benefits earned from cultural reconginition page
+        this._recalculateEffectiveConfig();
+
+        // Check for collection-based perk reset ---
+        this._checkCollectionPerkReset();
     }
 
     setupEventListeners() {
@@ -236,6 +284,8 @@ class ChineseLearningApp {
         document.getElementById('word-writing-card').addEventListener('click', () => this.startWordWriting());
         document.getElementById('sentence-writing-card').addEventListener('click', () => this.startSentenceWriting());
         document.getElementById('progress-card').addEventListener('click', () => this.showProgressDetail());
+        document.getElementById('social-studies-card').addEventListener('click', () => this.showSocialStudies());
+        document.getElementById('cultural-recognition-btn').addEventListener('click', () => this.showCulturalRecognitionPage());
 
         // Activities
         document.getElementById('back-to-dashboard').addEventListener('click', () => this.showDashboard());
@@ -250,6 +300,8 @@ class ChineseLearningApp {
         document.getElementById('back-from-sentence').addEventListener('click', () => this.showDashboard());
         document.getElementById('sentence-check-btn').addEventListener('click', () => this.handleSentenceCompletion(true));
         document.getElementById('sentence-cross-btn').addEventListener('click', () => this.handleSentenceCompletion(false));
+        document.getElementById('back-from-social-studies').addEventListener('click', () => this.showDashboard());
+        document.getElementById('back-from-recognition').addEventListener('click', () => this.showSocialStudies());
 
         // Mini Game event listeners
         document.getElementById('mini-game-card').addEventListener('click', () => this.showMiniGameCenter());
@@ -291,6 +343,24 @@ class ChineseLearningApp {
             }
         });
 
+        // Social Studies Tabs
+        document.querySelectorAll('.social-studies-tab-button').forEach(button => {
+            button.addEventListener('click', (e) => this.handleSocialStudiesTabSwitch(e));
+        });
+
+        // Social Studies Page Navigation & Level Select
+        document.getElementById('prev-ss-page-btn').addEventListener('click', () => this.navigateSocialStudiesPage(-1));
+        document.getElementById('next-ss-page-btn').addEventListener('click', () => this.navigateSocialStudiesPage(1));
+        document.querySelectorAll('.level-select-dropdown').forEach(select => {
+            select.addEventListener('change', () => {
+                this.socialStudiesReviewMode = false; // Exit review mode
+                this.currentSocialStudiesPage = 0;    // Go to first page of new level
+                this.renderSocialStudiesContent();
+            });
+        });
+        document.getElementById('restart-social-studies-level-btn').addEventListener('click', () => this.restartSocialStudiesLevel());
+        document.getElementById('review-social-studies-btn').addEventListener('click', () => this.reviewSocialStudiesLevel());
+
         // Dev Mode
         document.getElementById('backup-btn').addEventListener('click', () => this.exportUserData());
         document.getElementById('restore-btn').addEventListener('click', () => document.getElementById('import-file').click());
@@ -310,25 +380,21 @@ class ChineseLearningApp {
         });
     }
 
-    setupDynamicContent() {
-        // Set the gacha tooltip text dynamically
-        const tooltipText = document.getElementById('gacha-tooltip-text');
-        if (tooltipText) {
-            tooltipText.innerHTML = `Epic probability is ${this.GACHA_PROBABILITIES.Epic}% and Legendary is ${this.GACHA_PROBABILITIES.Legendary}%
-Draw 10 guarantees one Epic or Legendary!`;
-        }
-    }
-
     checkLoggedInUser() {
         const savedUser = localStorage.getItem('currentUser');
         if (savedUser) {
             this.currentUser = JSON.parse(savedUser);
             this.initializeUserProperties();
             this.manageMiniGameDataLifecycle();
+            this._applyTheme(); // Apply theme on load
             this.showDashboard();
         } else {
             this.showScreen('auth-screen');
         }
+    }
+
+    _applyTheme() {
+        document.body.className = this.currentUser.activeTheme === 'default' ? '' : `theme-${this.currentUser.activeTheme}`;
     }
 
     showAuthForm(type) {
@@ -392,6 +458,7 @@ Draw 10 guarantees one Epic or Legendary!`;
             testScores: [],
             activityLog: [],
             diamonds: 0,
+            culturalPoints: 0,
             collection: {},
         };
 
@@ -408,47 +475,47 @@ Draw 10 guarantees one Epic or Legendary!`;
         this.showScreen('auth-screen');
     }
 
-showScreen(screenId) {
-    // Force exit from exchange mode if navigating away
-    if (this.isExchangeMode && screenId !== 'collections-screen') {
-        this.exitExchangeMode();
-    }
+    showScreen(screenId) {
+        // Force exit from exchange mode if navigating away
+        if (this.isExchangeMode && screenId !== 'collections-screen') {
+            this.exitExchangeMode();
+        }
 
-    document.querySelectorAll('.screen').forEach(screen => {
-        screen.classList.add('hidden');
-    });
-    document.getElementById(screenId).classList.remove('hidden');
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.classList.add('hidden');
+        });
+        document.getElementById(screenId).classList.remove('hidden');
 
-    // Store current screen
-    this.currentScreen = screenId;
+        // Store current screen
+        this.currentScreen = screenId;
 
-    // Fix for iPad: Reset scroll position when returning to dashboard
-    if (screenId === 'dashboard-screen') {
-        setTimeout(() => {
-            window.scrollTo(0, 0);
-            document.body.scrollTop = 0; // For older browsers
-            document.documentElement.scrollTop = 0; // For newer browsers
-        }, 50);
-    }
+        // Fix for iPad: Reset scroll position when returning to dashboard
+        if (screenId === 'dashboard-screen') {
+            setTimeout(() => {
+                window.scrollTo(0, 0);
+                document.body.scrollTop = 0; // For older browsers
+                document.documentElement.scrollTop = 0; // For newer browsers
+            }, 50);
+        }
 
-    // Add/remove a class to the body to control scrolling
-    const noScrollScreens = ['word-review-screen', 'word-writing-screen', 'sentence-writing-screen', 'collections-history-screen'];
-    let shouldBeNoScroll = noScrollScreens.includes(screenId);
+        // Add/remove a class to the body to control scrolling
+        const noScrollScreens = ['word-review-screen', 'word-writing-screen', 'sentence-writing-screen', 'collections-history-screen'];
+        let shouldBeNoScroll = noScrollScreens.includes(screenId);
 
-    // Special check for specific mini-game types
-    if (screenId === 'game-play-screen' && this.currentGame) {
-        const noScrollGameTypes = ['sentenceCompletion', 'formingSentences'];
-        if (noScrollGameTypes.includes(this.currentGame.type)) {
-            shouldBeNoScroll = true;
+        // Special check for specific mini-game types
+        if (screenId === 'game-play-screen' && this.currentGame) {
+            const noScrollGameTypes = ['sentenceCompletion', 'formingSentences'];
+            if (noScrollGameTypes.includes(this.currentGame.type)) {
+                shouldBeNoScroll = true;
+            }
+        }
+
+        if (shouldBeNoScroll) {
+            document.body.classList.add('no-scroll');
+        } else {
+            document.body.classList.remove('no-scroll');
         }
     }
-
-    if (shouldBeNoScroll) {
-        document.body.classList.add('no-scroll');
-    } else {
-        document.body.classList.remove('no-scroll');
-    }
-}
 
     showDashboard() {
         this.showScreen('dashboard-screen');
@@ -942,7 +1009,6 @@ showScreen(screenId) {
                 setTimeout(() => {
                     if (parentEl.classList.contains('expanded')) {
                         contentEl.style.height = 'auto';
-                        contentEl.style.maxHeight = '500px';
                     } else {
                         contentEl.style.height = '0';
                         contentEl.style.maxHeight = '0';
@@ -963,6 +1029,7 @@ showScreen(screenId) {
         this.showScreen('developer-screen');
         document.getElementById('current-level-display').textContent = this.currentUser.level;
         document.getElementById('app-version-display').textContent = `Version: ${this.APP_VERSION}`;
+
         const currentLevel = this.currentUser.level;
         const resetSelect = document.getElementById('reset-level-select');
 
@@ -980,6 +1047,34 @@ showScreen(screenId) {
         }
         Array.from(resetSelect.options).forEach(option => {
             option.disabled = parseInt(option.value) > currentLevel;
+        });
+
+        // Theme selection
+        const devThemeSelector = document.getElementById('dev-theme-selector');
+        devThemeSelector.innerHTML = '';
+
+        // Read directly from the central manifest
+        this.themeManifest.forEach(theme => {
+            let isUnlocked = !theme.requiredPerk || (this.currentUser.perkLevels[theme.requiredPerk] || 0) > 0;
+
+            const themeBtn = document.createElement('button');
+            themeBtn.className = 'theme-btn';
+            themeBtn.textContent = theme.name;
+            themeBtn.dataset.theme = theme.id;
+            themeBtn.disabled = !isUnlocked;
+
+            if (this.currentUser.activeTheme === theme.id) {
+                themeBtn.classList.add('active');
+            }
+            devThemeSelector.appendChild(themeBtn);
+        });
+
+        // Attach event listeners (this part is unchanged)
+        devThemeSelector.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.handleThemeChange(e.currentTarget.dataset.theme);
+                this.showDeveloperMode();
+            });
         });
     }
 
@@ -1267,7 +1362,7 @@ showScreen(screenId) {
             return acc;
         }, {});
 
-        const specialActivities = ['Mini-Games Cleared', 'Entered Exchange Mode', 'Restore Data'];
+        const specialActivities = ['Mini-Games Cleared', 'Entered Exchange Mode', 'Restore Data', 'Social Studies'];
 
         return Object.keys(eventsByDay).map(date => {
             const logsForDay = eventsByDay[date];
@@ -1613,6 +1708,13 @@ showScreen(screenId) {
     showCollectionsPage() {
         this.showScreen('collections-screen');
         this.renderCollectionGrid();
+
+        // Update "Draw 10" button text based on perks
+        const effectiveConfig = this.getEffectiveConfig();
+        const drawTenBtn = document.getElementById('draw-ten-gacha-btn');
+        if (drawTenBtn) {
+            drawTenBtn.textContent = `Draw 10 (${effectiveConfig.drawTenCost}💎)`;
+        }
     }
 
     showCollectionsHistory() {
@@ -1707,14 +1809,15 @@ showScreen(screenId) {
         });
     }
 
-    _performSingleDraw() {
+    _performSingleDraw(effectiveConfig) {
+        const probabilities = effectiveConfig.gachaProbabilities;
         const rng = Math.random() * 100;
         let cumulativeProb = 0;
         let chosenRarity;
 
-        if (rng < (cumulativeProb += this.GACHA_PROBABILITIES.Legendary)) chosenRarity = 'Legendary';
-        else if (rng < (cumulativeProb += this.GACHA_PROBABILITIES.Epic)) chosenRarity = 'Epic';
-        else if (rng < (cumulativeProb += this.GACHA_PROBABILITIES.Rare)) chosenRarity = 'Rare';
+        if (rng < (cumulativeProb += probabilities.Legendary)) chosenRarity = 'Legendary';
+        else if (rng < (cumulativeProb += probabilities.Epic)) chosenRarity = 'Epic';
+        else if (rng < (cumulativeProb += probabilities.Rare)) chosenRarity = 'Rare';
         else chosenRarity = 'Common';
 
         const possibleItems = this.gachaPool.filter(item => item.rarity === chosenRarity);
@@ -1727,38 +1830,39 @@ showScreen(screenId) {
             return;
         }
         this.currentUser.diamonds--;
-        const drawnItem = this._performSingleDraw();
 
-        // Save data before showing animation
+        const effectiveConfig = this.getEffectiveConfig();
+        const drawnItem = this._performSingleDraw(effectiveConfig);
+
         this.currentUser.collection[drawnItem.id] = (this.currentUser.collection[drawnItem.id] || 0) + 1;
         this.saveUserData();
-
-        // Trigger animation
         this._showItemRevealAnimation(drawnItem);
-
-        // The UI will be updated when the modal is closed via closeGachaModal()
     }
 
     drawTenGachaItems() {
-        if ((this.currentUser.diamonds || 0) < 10) {
-            alert("You don't have enough diamonds to draw 10 times!");
+        const effectiveConfig = this.getEffectiveConfig();
+        const cost = effectiveConfig.drawTenCost;
+
+        if ((this.currentUser.diamonds || 0) < cost) {
+            alert(`You don't have enough diamonds! You need ${cost} to draw 10 times.`);
             return;
         }
-        this.currentUser.diamonds -= 10;
+        this.currentUser.diamonds -= cost;
+
         const results = [];
         let hasHighRarity = false;
 
         for (let i = 0; i < 9; i++) {
-            const drawnItem = this._performSingleDraw();
+            const drawnItem = this._performSingleDraw(effectiveConfig);
             results.push(drawnItem);
             if (drawnItem.rarity === 'Epic' || drawnItem.rarity === 'Legendary') hasHighRarity = true;
         }
 
         if (hasHighRarity) {
-            results.push(this._performSingleDraw());
+            results.push(this._performSingleDraw(effectiveConfig));
         } else {
-            const rng = Math.random();
-            let guaranteedRarity = (rng < (this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE / 100)) ? 'Legendary' : 'Epic';
+            const rng = Math.random() * 100;
+            let guaranteedRarity = (rng < effectiveConfig.drawTenGuaranteeLegendaryChance) ? 'Legendary' : 'Epic';
             const possibleItems = this.gachaPool.filter(item => item.rarity === guaranteedRarity);
             const guaranteedItem = possibleItems[Math.floor(Math.random() * possibleItems.length)];
             results.push(guaranteedItem);
@@ -1768,12 +1872,28 @@ showScreen(screenId) {
             this.currentUser.collection[item.id] = (this.currentUser.collection[item.id] || 0) + 1;
         });
 
+        // --- Bonus Roll Logic ---
+        let bonusReward = null;
+        const bonusTable = effectiveConfig.drawTenBonusTable;
+        const bonusRng = Math.random() * 100;
+        let bonusCumulativeProb = 0;
+
+        if (bonusRng < (bonusCumulativeProb += bonusTable.diamonds)) {
+            const amount = effectiveConfig.drawTenDiamondRewardAmount;
+            this.currentUser.diamonds += amount;
+            bonusReward = { type: 'Diamonds', amount: amount };
+        } else if (bonusRng < (bonusCumulativeProb += bonusTable.ticket)) {
+            this.currentUser.exchangeTickets = (this.currentUser.exchangeTickets || 0) + 1;
+            bonusReward = { type: 'Exchange Ticket', amount: 1 };
+        }
+        // If it falls into "nothing", bonusReward remains null.
+
         this.saveUserData();
-        this.showMultiGachaResult(results);
+        this.showMultiGachaResult(results, bonusReward);
         this.renderCollectionGrid();
     }
 
-    showMultiGachaResult(items) {
+    showMultiGachaResult(items, bonusReward = null) {
         const modal = document.getElementById('gacha-multi-result-modal');
         const modalContent = modal.querySelector('.modal-content');
 
@@ -1806,6 +1926,20 @@ showScreen(screenId) {
                 itemEl.classList.add('is-revealed', `${itemData.rarity}-reveal`);
             }, index * 800 + 400); // Slower reveal: 350ms delay between each item
         });
+
+        // --- Add Bonus Reward Display ---
+        const bonusDisplay = document.getElementById('multi-result-bonus');
+        if (bonusReward) {
+            bonusDisplay.innerHTML = `
+                <div class="bonus-reward-notification">
+                    ✨ Bonus! You received ${bonusReward.amount} ${bonusReward.type}! ✨
+                </div>
+            `;
+            bonusDisplay.classList.remove('hidden');
+        } else {
+            bonusDisplay.innerHTML = '';
+            bonusDisplay.classList.add('hidden');
+        }
     }
 
     showGachaResult(item) {
@@ -1838,6 +1972,25 @@ showScreen(screenId) {
         // If we were in exchange mode, also update the button states
         if (this.isExchangeMode) {
             this.updateExchangeButtonStates();
+        }
+    }
+
+    setupDynamicContent() {
+        // Set the gacha tooltip text dynamically
+        const tooltipTextEl = document.getElementById('gacha-tooltip-text');
+        if (tooltipTextEl) {
+            // Get base and effective probabilities
+            const baseProbs = this.GACHA_PROBABILITIES;
+            const effectiveProbs = this.getEffectiveConfig().gachaProbabilities;
+
+            let legendaryProbText = `${baseProbs.Legendary}%`;
+            // If the probability has been upgraded, format the text to show the change
+            if (effectiveProbs.Legendary > baseProbs.Legendary) {
+                legendaryProbText = `<span class="original-price">${baseProbs.Legendary}%</span>${effectiveProbs.Legendary}%`;
+            }
+
+            tooltipTextEl.innerHTML = `Epic probability is ${baseProbs.Epic}% and Legendary is ${legendaryProbText}
+Draw 10 guarantees one Epic or Legendary!`;
         }
     }
 
@@ -1924,6 +2077,10 @@ showScreen(screenId) {
     }
 
     renderExchangeUI() {
+        const effectiveConfig = this.getEffectiveConfig();
+        const baseRates = this.GACHA_EXCHANGE_RATES_SPECIFIED;
+        const effectiveRates = effectiveConfig.gachaExchangeRatesSpecified;
+
         const totalPoints = this.calculateExchangePoints();
         document.getElementById('exchange-total-points').textContent = totalPoints;
 
@@ -1953,28 +2110,41 @@ showScreen(screenId) {
 
         // --- Rarity exchange ---
         this.gachaPool
-            .sort((a, b) => this.GACHA_EXCHANGE_RATES_SPECIFIED[b.rarity] - this.GACHA_EXCHANGE_RATES_SPECIFIED[a.rarity] || a.name.localeCompare(b.name))
+            .sort((a, b) => baseRates[b.rarity] - baseRates[a.rarity] || a.name.localeCompare(b.name))
             .forEach(item => {
-                const cost = this.GACHA_EXCHANGE_RATES_SPECIFIED[item.rarity];
+                const baseCost = baseRates[item.rarity];
+                const effectiveCost = effectiveRates[item.rarity];
                 const option = document.createElement('option');
                 option.value = item.id;
-                option.dataset.cost = cost;
-                option.textContent = `${item.name} (${item.rarity}) - ${cost} pts`;
+                option.dataset.cost = effectiveCost;
+
+                let costText = `(${effectiveCost} pts)`;
+                if (baseCost > effectiveCost) {
+                    costText = `(${baseCost} -> ${effectiveCost} pts)`;
+                }
+                // Use textContent instead of innerHTML for options
+                option.textContent = `${item.name} ${costText}`;
                 select.appendChild(option);
             });
 
         // --- Diamond exchange ---
         const diamondOption1 = document.createElement('option');
         diamondOption1.value = 'diamond_1';
-        diamondOption1.dataset.cost = this.GACHA_EXCHANGE_RATES_SPECIFIED.diamond_1;
-        diamondOption1.textContent = `💎 1 Diamond - ${this.GACHA_EXCHANGE_RATES_SPECIFIED.diamond_1} pts`;
+        diamondOption1.dataset.cost = effectiveRates.diamond_1;
+        diamondOption1.textContent = `💎 1 Diamond (${effectiveRates.diamond_1} pts)`;
         diamondOption1.classList.add('diamond-exchange-option');
         select.appendChild(diamondOption1);
 
         const diamondOption10 = document.createElement('option');
         diamondOption10.value = 'diamond_10';
-        diamondOption10.dataset.cost = this.GACHA_EXCHANGE_RATES_SPECIFIED.diamond_10;
-        diamondOption10.textContent = `💎💎 10 Diamonds - ${this.GACHA_EXCHANGE_RATES_SPECIFIED.diamond_10} pts`;
+        const baseCost10 = baseRates.diamond_10;
+        const effectiveCost10 = effectiveRates.diamond_10;
+        diamondOption10.dataset.cost = effectiveCost10;
+        let costText10 = `(${effectiveCost10} pts)`;
+        if (baseCost10 > effectiveCost10) {
+            costText10 = `(${baseCost10} -> ${effectiveCost10} pts)`;
+        }
+        diamondOption10.textContent = `💎💎 10 Diamonds ${costText10}`;
         diamondOption10.classList.add('diamond-exchange-option');
         select.appendChild(diamondOption10);
 
@@ -2091,6 +2261,9 @@ showScreen(screenId) {
     }
 
     performSpecificExchange() {
+        const effectiveConfig = this.getEffectiveConfig();
+        const effectiveRates = effectiveConfig.gachaExchangeRatesSpecified;
+
         const select = document.getElementById('specific-item-select');
         const itemIdToBuy = select.value;
         const currentPoints = this.calculateExchangePoints();
@@ -2101,7 +2274,8 @@ showScreen(screenId) {
         if (itemIdToBuy === 'diamond_1' || itemIdToBuy === 'diamond_10') {
             const isTenDiamonds = itemIdToBuy === 'diamond_10';
             const diamondsToAdd = isTenDiamonds ? 10 : 1;
-            cost = this.GACHA_EXCHANGE_RATES_SPECIFIED[itemIdToBuy];
+            // --- CHANGE: Use the effective rate instead of the base rate ---
+            cost = effectiveRates[itemIdToBuy];
             itemName = `${diamondsToAdd} diamond(s)`;
 
             performAddition = () => { this.currentUser.diamonds += diamondsToAdd; };
@@ -2114,7 +2288,8 @@ showScreen(screenId) {
             const itemInfo = this.gachaPool.find(p => p.id === itemIdToBuy);
             if (!itemInfo) return; // Exit if item not found in pool
 
-            cost = this.GACHA_EXCHANGE_RATES_SPECIFIED[itemInfo.rarity];
+            // --- CHANGE: Use the effective rate instead of the base rate ---
+            cost = effectiveRates[itemInfo.rarity];
             itemName = `a specific item: [${itemInfo.name}]`;
 
             performAddition = () => { this.currentUser.collection[itemInfo.id] = (this.currentUser.collection[itemInfo.id] || 0) + 1; };
@@ -2264,9 +2439,16 @@ showScreen(screenId) {
 
             gameDiv.className = `mini-game-card ${isCompleted ? 'completed' : ''}`;
 
+             // --- Theme support ---
             const imageName = this.getMiniGameImage(game.type);
-            const bgImage = `minigame/${imageName}`;
-            gameDiv.style.backgroundImage = `url('${bgImage}')`;
+            const themePrefix = this.currentUser.activeTheme === 'default' ? '' : `${this.currentUser.activeTheme}/`;
+            const bgImage = `minigame/${themePrefix}${imageName}`;
+
+            // Check if themed image exists, fallback to default if not
+            const img = new Image();
+            img.src = bgImage;
+            img.onload = () => { gameDiv.style.backgroundImage = `url('${bgImage}')`; };
+            img.onerror = () => { gameDiv.style.backgroundImage = `url('minigame/${imageName}')`; };
 
             // --- Add theme display for pairing games ---
             let themeDisplay = '';
@@ -3220,25 +3402,16 @@ showScreen(screenId) {
     }
 
     getAllMatchesForTheme(theme, maxLevel) {
-        console.log("=== getAllMatchesForTheme DEBUG ===");
-        console.log("Theme:", theme, "Max Level:", maxLevel);
-
         const allMatches = [];
         const startLevel = Math.max(1, maxLevel - this.MINI_GAMES_LEVEL_RANGE);
         for (let level = startLevel; level <= maxLevel; level++) {
             const levelContent = this.getMiniGameContentForLevel(level);
-            console.log(`Level ${level} content:`, levelContent);
 
             if (levelContent && levelContent.matches && levelContent.matches[theme]) {
-                console.log(`Level ${level} matches for theme '${theme}':`, levelContent.matches[theme]);
                 allMatches.push(...levelContent.matches[theme]);
-            } else {
-                console.log(`Level ${level} has no matches for theme '${theme}'`);
             }
         }
 
-        console.log("Final combined matches:", allMatches);
-        console.log("=== END getAllMatchesForTheme DEBUG ===");
         return allMatches;
     }
 
@@ -3626,324 +3799,1596 @@ showScreen(screenId) {
     }
 
     // --- Drag and drop ---
-// Replace setupDragAndDrop entirely with this native approach
-setupDragAndDrop() {
-    // Clean up interact.js
-    if (typeof interact !== 'undefined') {
-        interact('.draggable').unset();
-        interact('.drop-zone, .group-drop-zone, .sentence-drop-zone').unset();
-    }
-
-    this.initNativeDragDrop();
-}
-
-initNativeDragDrop() {
-    const draggables = document.querySelectorAll('.draggable');
-    const dropZones = document.querySelectorAll('.drop-zone, .group-drop-zone, .sentence-drop-zone, .word-bank');
-
-    // Setup draggable items
-    draggables.forEach(item => {
-        item.draggable = true;
-
-        // Drag start
-        item.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', item.dataset.word);
-            e.dataTransfer.setData('text/element-id', item.id || '');
-            item.classList.add('is-dragging');
-            this.currentDragItem = item;
-            console.log('Drag started:', item.dataset.word);
-        });
-
-        // Drag end
-        item.addEventListener('dragend', (e) => {
-            item.classList.remove('is-dragging');
-            this.currentDragItem = null;
-            dropZones.forEach(zone => {
-                zone.classList.remove('drag-over', 'drop-target');
-            });
-        });
-
-        // Touch fallback for mobile
-        this.addTouchSupport(item);
-    });
-
-    // Setup drop zones
-    dropZones.forEach(zone => {
-        zone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            // Only add visual effects if it's NOT a word bank
-            if (!zone.classList.contains('word-bank')) {
-                zone.classList.add('drag-over');
-            }
-        });
-
-        zone.addEventListener('dragenter', (e) => {
-            e.preventDefault();
-            // Only add visual effects if it's NOT a word bank
-            if (!zone.classList.contains('word-bank')) {
-                zone.classList.add('drop-target');
-            }
-        });
-
-        zone.addEventListener('dragleave', (e) => {
-            zone.classList.remove('drag-over', 'drop-target');
-        });
-
-        zone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            zone.classList.remove('drag-over', 'drop-target');
-
-            const word = e.dataTransfer.getData('text/plain');
-            const draggedItem = document.querySelector(`[data-word="${word}"].is-dragging`) || this.currentDragItem;
-
-            if (draggedItem) {
-                this.handleNativeDrop(zone, draggedItem);
-            }
-        });
-    });
-}
-
-// Lightweight touch support
-addTouchSupport(item) {
-    let startPos = null;
-    let isDragging = false;
-    let dragClone = null;
-
-    item.addEventListener('touchstart', (e) => {
-        const touch = e.touches[0];
-        startPos = { x: touch.clientX, y: touch.clientY };
-
-        // Very short delay to distinguish from scroll
-        setTimeout(() => {
-            if (startPos) {
-                isDragging = true;
-                dragClone = this.createDragClone(item, touch);
-                item.style.opacity = '0.3';
-                this.currentDragItem = item;
-
-                // Prevent scrolling during drag
-                document.body.style.overflow = 'hidden';
-                e.preventDefault();
-            }
-        }, 100); // Reduced from 50ms for better responsiveness
-    }, { passive: false });
-
-    item.addEventListener('touchmove', (e) => {
-        if (!isDragging || !dragClone) return;
-
-        const touch = e.touches[0];
-
-        // Always update clone position - this is the key fix
-        this.updateDragClone(dragClone, touch);
-        this.highlightDropZoneUnderTouch(touch);
-
-        e.preventDefault();
-    }, { passive: false });
-
-    item.addEventListener('touchend', (e) => {
-        if (isDragging && dragClone) {
-            const touch = e.changedTouches[0];
-            this.handleTouchDrop(item, touch);
+    // Replace setupDragAndDrop entirely with this native approach
+    setupDragAndDrop() {
+        // Clean up interact.js
+        if (typeof interact !== 'undefined') {
+            interact('.draggable').unset();
+            interact('.drop-zone, .group-drop-zone, .sentence-drop-zone').unset();
         }
 
-        this.cleanupTouchDrag();
-        startPos = null;
-        isDragging = false;
-        dragClone = null;
+        this.initNativeDragDrop();
+    }
+
+    initNativeDragDrop() {
+        const draggables = document.querySelectorAll('.draggable');
+        const dropZones = document.querySelectorAll('.drop-zone, .group-drop-zone, .sentence-drop-zone, .word-bank');
+
+        // Setup draggable items
+        draggables.forEach(item => {
+            item.draggable = true;
+
+            // Drag start
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', item.dataset.word);
+                e.dataTransfer.setData('text/element-id', item.id || '');
+                item.classList.add('is-dragging');
+                this.currentDragItem = item;
+                console.log('Drag started:', item.dataset.word);
+            });
+
+            // Drag end
+            item.addEventListener('dragend', (e) => {
+                item.classList.remove('is-dragging');
+                this.currentDragItem = null;
+                dropZones.forEach(zone => {
+                    zone.classList.remove('drag-over', 'drop-target');
+                });
+            });
+
+            // Touch fallback for mobile
+            this.addTouchSupport(item);
+        });
+
+        // Setup drop zones
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                // Only add visual effects if it's NOT a word bank
+                if (!zone.classList.contains('word-bank')) {
+                    zone.classList.add('drag-over');
+                }
+            });
+
+            zone.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                // Only add visual effects if it's NOT a word bank
+                if (!zone.classList.contains('word-bank')) {
+                    zone.classList.add('drop-target');
+                }
+            });
+
+            zone.addEventListener('dragleave', (e) => {
+                zone.classList.remove('drag-over', 'drop-target');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over', 'drop-target');
+
+                const word = e.dataTransfer.getData('text/plain');
+                const draggedItem = document.querySelector(`[data-word="${word}"].is-dragging`) || this.currentDragItem;
+
+                if (draggedItem) {
+                    this.handleNativeDrop(zone, draggedItem);
+                }
+            });
+        });
+    }
+
+    // Lightweight touch support
+    addTouchSupport(item) {
+        let startPos = null;
+        let isDragging = false;
+        let dragClone = null;
+
+        item.addEventListener('touchstart', (e) => {
+            const touch = e.touches[0];
+            startPos = { x: touch.clientX, y: touch.clientY };
+
+            // Very short delay to distinguish from scroll
+            setTimeout(() => {
+                if (startPos) {
+                    isDragging = true;
+                    dragClone = this.createDragClone(item, touch);
+                    item.style.opacity = '0.3';
+                    this.currentDragItem = item;
+
+                    // Prevent scrolling during drag
+                    document.body.style.overflow = 'hidden';
+                    e.preventDefault();
+                }
+            }, 100); // Reduced from 50ms for better responsiveness
+        }, { passive: false });
+
+        item.addEventListener('touchmove', (e) => {
+            if (!isDragging || !dragClone) return;
+
+            const touch = e.touches[0];
+
+            // Always update clone position - this is the key fix
+            this.updateDragClone(dragClone, touch);
+            this.highlightDropZoneUnderTouch(touch);
+
+            e.preventDefault();
+        }, { passive: false });
+
+        item.addEventListener('touchend', (e) => {
+            if (isDragging && dragClone) {
+                const touch = e.changedTouches[0];
+                this.handleTouchDrop(item, touch);
+            }
+
+            this.cleanupTouchDrag();
+            startPos = null;
+            isDragging = false;
+            dragClone = null;
+
+            // Re-enable scrolling
+            document.body.style.overflow = '';
+        });
+    }
+
+    createDragClone(item, touch) {
+        const clone = item.cloneNode(true);
+        clone.id = 'touch-drag-clone';
+        clone.style.position = 'fixed';
+        clone.style.zIndex = '9999';
+        clone.style.pointerEvents = 'none';
+        clone.style.transform = 'scale(1.1)';
+        clone.style.opacity = '0.9';
+        clone.style.transition = 'none'; // Remove any transitions that might interfere
+        clone.style.left = (touch.clientX - 30) + 'px';
+        clone.style.top = (touch.clientY - 20) + 'px';
+        clone.style.background = '#fff';
+        clone.style.border = '2px solid #007bff';
+        clone.style.borderRadius = '8px';
+        clone.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.3)';
+
+        document.body.appendChild(clone);
+        return clone;
+    }
+
+    updateDragClone(clone, touch) {
+        if (!clone) return;
+
+        // Use requestAnimationFrame for smoother movement
+        requestAnimationFrame(() => {
+            clone.style.left = (touch.clientX - 30) + 'px';
+            clone.style.top = (touch.clientY - 20) + 'px';
+        });
+    }
+
+    highlightDropZoneUnderTouch(touch) {
+        // Clear previous highlights
+        document.querySelectorAll('.drop-zone, .group-drop-zone, .sentence-drop-zone, .word-bank').forEach(zone => {
+            zone.classList.remove('drop-target');
+        });
+
+        // Temporarily hide the clone to get element below
+        const clone = document.getElementById('touch-drag-clone');
+        if (clone) {
+            clone.style.display = 'none';
+        }
+
+        // Find element under touch point
+        const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+        const dropZone = elementBelow?.closest('.drop-zone, .group-drop-zone, .sentence-drop-zone, .word-bank');
+
+        // Restore clone
+        if (clone) {
+            clone.style.display = 'block';
+        }
+
+        if (dropZone) {
+            dropZone.classList.add('drop-target');
+        }
+    }
+
+    handleTouchDrop(item, touch) {
+        // Temporarily hide the clone to get accurate element below
+        const clone = document.getElementById('touch-drag-clone');
+        if (clone) {
+            clone.style.display = 'none';
+        }
+
+        const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+        const dropZone = elementBelow?.closest('.drop-zone, .group-drop-zone, .sentence-drop-zone');
+
+        // Restore clone for cleanup
+        if (clone) {
+            clone.style.display = 'block';
+        }
+
+        if (dropZone) {
+            this.handleNativeDrop(dropZone, item);
+        } else {
+            // Return to original position with animation
+            item.style.opacity = '';
+            console.log('Touch drop outside valid zone');
+        }
+    }
+
+    cleanupTouchDrag() {
+        const clone = document.getElementById('touch-drag-clone');
+        if (clone) {
+            // Animate clone disappearing
+            clone.style.transition = 'opacity 0.2s ease';
+            clone.style.opacity = '0';
+            setTimeout(() => clone.remove(), 200);
+        }
+
+        if (this.currentDragItem) {
+            this.currentDragItem.style.opacity = '';
+        }
+
+        // Clear all drop zone highlights
+        document.querySelectorAll('.drop-zone, .group-drop-zone, .sentence-drop-zone').forEach(zone => {
+            zone.classList.remove('drop-target', 'drag-over');
+        });
 
         // Re-enable scrolling
         document.body.style.overflow = '';
-    });
-}
-
-createDragClone(item, touch) {
-    const clone = item.cloneNode(true);
-    clone.id = 'touch-drag-clone';
-    clone.style.position = 'fixed';
-    clone.style.zIndex = '9999';
-    clone.style.pointerEvents = 'none';
-    clone.style.transform = 'scale(1.1)';
-    clone.style.opacity = '0.9';
-    clone.style.transition = 'none'; // Remove any transitions that might interfere
-    clone.style.left = (touch.clientX - 30) + 'px';
-    clone.style.top = (touch.clientY - 20) + 'px';
-    clone.style.background = '#fff';
-    clone.style.border = '2px solid #007bff';
-    clone.style.borderRadius = '8px';
-    clone.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.3)';
-
-    document.body.appendChild(clone);
-    return clone;
-}
-
-updateDragClone(clone, touch) {
-    if (!clone) return;
-
-    // Use requestAnimationFrame for smoother movement
-    requestAnimationFrame(() => {
-        clone.style.left = (touch.clientX - 30) + 'px';
-        clone.style.top = (touch.clientY - 20) + 'px';
-    });
-}
-
-highlightDropZoneUnderTouch(touch) {
-    // Clear previous highlights
-    document.querySelectorAll('.drop-zone, .group-drop-zone, .sentence-drop-zone, .word-bank').forEach(zone => {
-        zone.classList.remove('drop-target');
-    });
-
-    // Temporarily hide the clone to get element below
-    const clone = document.getElementById('touch-drag-clone');
-    if (clone) {
-        clone.style.display = 'none';
     }
 
-    // Find element under touch point
-    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-    const dropZone = elementBelow?.closest('.drop-zone, .group-drop-zone, .sentence-drop-zone, .word-bank');
+    handleNativeDrop(dropzone, draggable) {
+        console.log('Native drop:', draggable.dataset.word, 'into', dropzone.className);
 
-    // Restore clone
-    if (clone) {
-        clone.style.display = 'block';
-    }
+        // Validate the drop
+        if (!this.isValidDrop(dropzone, draggable)) {
+            this.returnToWordBank(draggable);
+            return;
+        }
 
-    if (dropZone) {
-        dropZone.classList.add('drop-target');
-    }
-}
+        // Special handling for word bank drops
+        if (dropzone.classList.contains('word-bank')) {
+            // Reset the draggable item styling when returning to word bank
+            draggable.style.display = '';
+            draggable.style.height = '';
+            draggable.style.lineHeight = '';
+            draggable.style.verticalAlign = '';
+            draggable.style.background = '';
+            draggable.style.border = '';
+            draggable.style.padding = '';
+            draggable.style.margin = '';
 
-handleTouchDrop(item, touch) {
-    // Temporarily hide the clone to get accurate element below
-    const clone = document.getElementById('touch-drag-clone');
-    if (clone) {
-        clone.style.display = 'none';
-    }
+            // Place item in word bank
+            dropzone.appendChild(draggable);
 
-    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-    const dropZone = elementBelow?.closest('.drop-zone, .group-drop-zone, .sentence-drop-zone');
+            // Success feedback
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+            return;
+        }
 
-    // Restore clone for cleanup
-    if (clone) {
-        clone.style.display = 'block';
-    }
+        // Handle single-item drop zones
+        if (dropzone.classList.contains('drop-zone') || dropzone.classList.contains('sentence-drop-zone')) {
+            const existingItem = dropzone.querySelector('.draggable');
+            if (existingItem && existingItem !== draggable) {
+                this.returnToWordBank(existingItem);
+            }
+        }
 
-    if (dropZone) {
-        this.handleNativeDrop(dropZone, item);
-    } else {
-        // Return to original position with animation
-        item.style.opacity = '';
-        console.log('Touch drop outside valid zone');
-    }
-}
-
-cleanupTouchDrag() {
-    const clone = document.getElementById('touch-drag-clone');
-    if (clone) {
-        // Animate clone disappearing
-        clone.style.transition = 'opacity 0.2s ease';
-        clone.style.opacity = '0';
-        setTimeout(() => clone.remove(), 200);
-    }
-
-    if (this.currentDragItem) {
-        this.currentDragItem.style.opacity = '';
-    }
-
-    // Clear all drop zone highlights
-    document.querySelectorAll('.drop-zone, .group-drop-zone, .sentence-drop-zone').forEach(zone => {
-        zone.classList.remove('drop-target', 'drag-over');
-    });
-
-    // Re-enable scrolling
-    document.body.style.overflow = '';
-}
-
-handleNativeDrop(dropzone, draggable) {
-    console.log('Native drop:', draggable.dataset.word, 'into', dropzone.className);
-
-    // Validate the drop
-    if (!this.isValidDrop(dropzone, draggable)) {
-        this.returnToWordBank(draggable);
-        return;
-    }
-
-    // Special handling for word bank drops
-    if (dropzone.classList.contains('word-bank')) {
-        // Reset the draggable item styling when returning to word bank
-        draggable.style.display = '';
-        draggable.style.height = '';
-        draggable.style.lineHeight = '';
-        draggable.style.verticalAlign = '';
-        draggable.style.background = '';
-        draggable.style.border = '';
-        draggable.style.padding = '';
-        draggable.style.margin = '';
-
-        // Place item in word bank
+        // Place the item
         dropzone.appendChild(draggable);
+
+        // Force inline styling for sentence games
+        if (dropzone.classList.contains('drop-zone') || dropzone.classList.contains('sentence-drop-zone')) {
+            draggable.style.display = 'inline';
+            draggable.style.height = 'auto';
+            draggable.style.lineHeight = '1';
+            draggable.style.verticalAlign = 'middle';
+        }
 
         // Success feedback
         if (navigator.vibrate) {
             navigator.vibrate(50);
         }
-        return;
     }
 
-    // Handle single-item drop zones
-    if (dropzone.classList.contains('drop-zone') || dropzone.classList.contains('sentence-drop-zone')) {
-        const existingItem = dropzone.querySelector('.draggable');
-        if (existingItem && existingItem !== draggable) {
-            this.returnToWordBank(existingItem);
+    isValidDrop(dropzone, draggable) {
+        // Word banks are always valid drop targets
+        if (dropzone.classList.contains('word-bank')) {
+            return true;
+        }
+
+        // Original validation for other drop zones
+        return !dropzone.classList.contains('word-bank');
+    }
+
+    returnToWordBank(item) {
+        const wordBanks = [
+            'grouping-word-bank',
+            'matching-word-bank',
+            'sentence-word-bank',
+            'forming-sentences-word-bank'
+        ];
+
+        let wordBank = null;
+        for (const bankId of wordBanks) {
+            wordBank = document.getElementById(bankId);
+            if (wordBank) break;
+        }
+
+        if (wordBank) {
+            wordBank.appendChild(item);
         }
     }
 
-    // Place the item
-    dropzone.appendChild(draggable);
+    // --- Social Studies Screen ---
+    showSocialStudies() {
+        this.showScreen('social-studies-screen');
+        this.currentSocialStudiesPage = 0; // Reset to first page
+        this.socialStudiesReviewMode = false; // Always exit review mode when first showing screen
 
-    // Force inline styling for sentence games
-    if (dropzone.classList.contains('drop-zone') || dropzone.classList.contains('sentence-drop-zone')) {
-        draggable.style.display = 'inline';
-        draggable.style.height = 'auto';
-        draggable.style.lineHeight = '1';
-        draggable.style.verticalAlign = 'baseline';
+        // Update cultural points display
+        document.getElementById('cultural-points-display').textContent = this.currentUser.culturalPoints || 0;
+
+        // Set the initial active tab and its corresponding level selector
+        const activeTab = document.querySelector('.social-studies-tab-button.active') || document.querySelector('.social-studies-tab-button');
+        const activeTabName = activeTab.dataset.tab;
+
+        document.querySelectorAll('.social-studies-tab-button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === activeTabName);
+        });
+        document.querySelectorAll('.social-studies-tab-content').forEach(content => {
+            content.classList.toggle('hidden', content.id !== `${activeTabName}-content`);
+        });
+        document.querySelectorAll('#ss-level-selectors-wrapper .tab-controls').forEach(control => {
+            control.classList.toggle('hidden', control.id !== `${activeTabName}-controls`);
+        });
+
+        this.populateSocialStudiesLevels();
+        this.renderSocialStudiesContent();
     }
 
-    // Success feedback
-    if (navigator.vibrate) {
-        navigator.vibrate(50);
+    populateSocialStudiesLevels() {
+        const dropdowns = document.querySelectorAll('.level-select-dropdown');
+        const progress = this.currentUser.socialStudiesProgress;
+        const content = this.socialStudiesContent;
+
+        if (!content) return;
+
+        dropdowns.forEach(select => {
+            const category = select.id.split('-')[0];
+
+            // Get all level numbers defined for this category in social.json
+            const definedLevels = content[category] ? Object.keys(content[category]).map(Number).sort((a, b) => a - b) : [];
+
+            if (definedLevels.length === 0) {
+                select.innerHTML = '<option value="1">Level 1</option>';
+                select.disabled = true;
+                return;
+            }
+
+            let highestUnlockedLevel = 1;
+
+            // Loop through the defined levels to see how far the user has unlocked
+            for (const levelNum of definedLevels) {
+                if (levelNum === 1) continue; // Level 1 is always unlocked
+
+                const prevLevelNum = levelNum - 1;
+                const prevLevelProgress = progress[category]?.[prevLevelNum];
+
+                // Check if the user has passed the *previous* level
+                if (prevLevelProgress?.finalScore) {
+                    const [score, total] = prevLevelProgress.finalScore.split('/').map(Number);
+                    const percentage = total > 0 ? (score / total) * 100 : 0;
+                    if (percentage >= this.SOCIAL_STUDIES_PASSING_SCORE) {
+                        // If they passed, this new level is now unlocked
+                        highestUnlockedLevel = Math.max(highestUnlockedLevel, levelNum);
+                    } else {
+                        // If they haven't passed the previous level, they can't access this one, so we stop.
+                        break;
+                    }
+                } else {
+                    // If there's no score for the previous level, they can't proceed.
+                    break;
+                }
+            }
+
+            // Clear existing options
+            select.innerHTML = '';
+
+            // Populate the dropdown only with the levels the user has access to
+            for (let i = 1; i <= highestUnlockedLevel; i++) {
+                // We only add an option if that level is actually defined in social.json
+                if (definedLevels.includes(i)) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `Level ${i}`;
+                    select.appendChild(option);
+                }
+            }
+
+            // Set the default selection to the highest available level
+            select.value = highestUnlockedLevel;
+            select.disabled = false;
+        });
     }
-}
 
-isValidDrop(dropzone, draggable) {
-    // Word banks are always valid drop targets
-    if (dropzone.classList.contains('word-bank')) {
-        return true;
+    handleSocialStudiesTabSwitch(event) {
+        const clickedTab = event.currentTarget;
+        const targetTabName = clickedTab.dataset.tab;
+
+        this.socialStudiesReviewMode = false; // Reset review mode on tab switch
+
+        // Update tab buttons
+        document.querySelectorAll('.social-studies-tab-button').forEach(button => {
+            button.classList.remove('active');
+        });
+        clickedTab.classList.add('active');
+
+        // Update content panes
+        document.querySelectorAll('.social-studies-tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        document.getElementById(`${targetTabName}-content`).classList.remove('hidden');
+
+        // Render content for the new tab
+        this.currentSocialStudiesPage = 0; // Reset to first page on tab switch
+        this.populateSocialStudiesLevels();
+        this.renderSocialStudiesContent();
     }
 
-    // Original validation for other drop zones
-    return !dropzone.classList.contains('word-bank');
-}
+    renderSocialStudiesContent() {
+        if (!this.socialStudiesContent) {
+            console.warn("Social Studies content not yet loaded.");
+            return;
+        }
 
-returnToWordBank(item) {
-    const wordBanks = [
-        'grouping-word-bank',
-        'matching-word-bank',
-        'sentence-word-bank',
-        'forming-sentences-word-bank'
-    ];
+        const activeTabButton = document.querySelector('.social-studies-tab-button.active');
+        if (!activeTabButton) return;
 
-    let wordBank = null;
-    for (const bankId of wordBanks) {
-        wordBank = document.getElementById(bankId);
-        if (wordBank) break;
+        const category = activeTabButton.dataset.tab;
+        const levelDropdown = document.getElementById(`${category}-level-select`);
+        if (!levelDropdown) return;
+        const level = levelDropdown.value;
+
+        // --- Step 1: Ensure progress data structure exists for the selected category/level ---
+        if (!this.currentUser.socialStudiesProgress[category]) {
+            this.currentUser.socialStudiesProgress[category] = {};
+        }
+        if (!this.currentUser.socialStudiesProgress[category][level]) {
+            this.currentUser.socialStudiesProgress[category][level] = {
+                pageData: [],
+                finalScore: null,
+                currentTotalScore: 0,
+                currentTotalPossible: 0,
+                culturalPointsAwarded: false // Explicitly initialize here
+            };
+        }
+        const levelProgress = this.currentUser.socialStudiesProgress[category][level];
+
+        // --- Step 2: Get references to the main UI containers ---
+        const contentContainer = document.querySelector('.social-studies-content-container');
+        const summaryScreen = contentContainer.querySelector('.level-complete-summary');
+        const quizWrapper = contentContainer.querySelector('.quiz-content-wrapper');
+
+        // --- Get a reference to the specific controls for the current category ---
+        const tabContent = document.getElementById(`${category}-content`);
+        const controlsContainer = tabContent.querySelector('.tab-controls');
+
+        // --- Step 3: Decide whether to show the "Level Complete" summary or the quiz ---
+        if (levelProgress.finalScore && !this.socialStudiesReviewMode) {
+            // State A: The level is already completed. Show the summary.
+            summaryScreen.classList.remove('hidden');
+            quizWrapper.classList.add('hidden');
+            summaryScreen.querySelector('.final-score-display').textContent = levelProgress.finalScore;
+
+            // --- Move the controls to the summary screen ---
+            const summaryControlsPlaceholder = summaryScreen.querySelector('.summary-controls-container');
+            if (summaryControlsPlaceholder && controlsContainer) {
+                // Clear the placeholder and add the controls
+                summaryControlsPlaceholder.innerHTML = '';
+                summaryControlsPlaceholder.appendChild(controlsContainer);
+            }
+        } else {
+            // State B: The level is in progress. Show the quiz wrapper.
+            summaryScreen.classList.add('hidden');
+            quizWrapper.classList.remove('hidden');
+
+            // --- Move controls back to the quiz header ---
+            const quizHeader = tabContent.querySelector('.quiz-header');
+            if (quizHeader && controlsContainer) {
+                quizHeader.prepend(controlsContainer);
+            }
+
+            const levelData = this.socialStudiesContent[category]?.[level];
+
+            // --- Step 4: Check if there is any content for this level ---
+            if (!levelData || !levelData.pages || levelData.pages.length === 0) {
+                // State C: No content defined in social.json. Show empty state.
+                this.renderEmptySocialStudiesPage(category);
+                return;
+            }
+
+            // --- Step 5: Render the specific quiz page ---
+            const pageIndex = this.currentSocialStudiesPage;
+            const pageData = levelData.pages[pageIndex];
+            const savedPageProgress = levelProgress.pageData[pageIndex] || null;
+
+            // Update UI elements: Page Status, Title, and Nav Buttons
+            const pageStatusEl = document.querySelector(`#${category}-content .quiz-page-status`);
+            const scoreText = savedPageProgress ? `(Score: ${savedPageProgress.score})` : '';
+            pageStatusEl.textContent = `Page ${pageIndex + 1} / ${levelData.pages.length} ${scoreText}`;
+
+            const titleEl = document.querySelector(`#${category}-content .quiz-title`);
+            titleEl.textContent = levelData.title || category;
+
+            // Determine the state of the "Next Page" button
+            const nextBtn = document.getElementById('next-ss-page-btn');
+            const isLastPage = (pageIndex === levelData.pages.length - 1);
+
+            if (this.socialStudiesReviewMode && isLastPage) {
+                // In review mode on the last page, make it an "Exit" button
+                nextBtn.textContent = 'Exit Review';
+                nextBtn.disabled = false;
+            } else {
+                // Otherwise, it's a normal "Next Page" button
+                nextBtn.textContent = 'Next Page';
+                nextBtn.disabled = isLastPage;
+            }
+            document.getElementById('prev-ss-page-btn').disabled = (pageIndex === 0);
+
+            // Use a switch to delegate rendering to the correct quiz type function
+            const displayContainer = document.querySelector(`#${category}-content .tab-display-content`);
+            switch (pageData.type) {
+                case 'pic_match':
+                    this.renderPicMatchQuiz(displayContainer, pageData, savedPageProgress);
+                    break;
+                case 'match':
+                    this.renderMatchQuiz(displayContainer, pageData, savedPageProgress);
+                    break;
+                case 'mchoice':
+                    this.renderMChoiceQuiz(displayContainer, pageData, savedPageProgress);
+                    break;
+                default:
+                    displayContainer.innerHTML = `<p>Quiz type "${pageData.type}" is coming soon!</p>`;
+            }
+
+            // --- Handle the Submit Button ---
+            const submitPlaceholder = document.getElementById('ss-submit-placeholder');
+            submitPlaceholder.innerHTML = ''; // Clear previous button
+
+            if ((pageData.type === 'pic_match' || pageData.type === 'match' || pageData.type === 'mchoice') && !savedPageProgress) {
+                const submitBtn = document.createElement('button');
+                submitBtn.id = 'submit-social-studies-btn';
+                submitBtn.className = 'game-action-btn';
+                submitBtn.textContent = 'Submit';
+
+                if (pageData.type === 'pic_match') {
+                    submitBtn.addEventListener('click', () => this.submitPicMatch());
+                } else if (pageData.type === 'match') {
+                    submitBtn.addEventListener('click', () => this.submitMatchQuiz());
+                } else if (pageData.type === 'mchoice') {
+                    submitBtn.addEventListener('click', () => this.submitMChoiceQuiz());
+                }
+
+                submitPlaceholder.appendChild(submitBtn);
+            }
+        }
     }
 
-    if (wordBank) {
-        wordBank.appendChild(item);
+    renderEmptySocialStudiesPage(category) {
+        const displayContainer = document.querySelector(`#${category}-content .tab-display-content`);
+        displayContainer.innerHTML = '<p>No activities available for this level yet.</p>';
+        // Clear title and status
+        document.querySelector(`#${category}-content .quiz-title`).textContent = '';
+        document.querySelector(`#${category}-content .quiz-page-status`).textContent = '';
+        // Disable nav buttons
+        document.getElementById('prev-ss-page-btn').disabled = true;
+        document.getElementById('next-ss-page-btn').disabled = true;
     }
-}
 
+    navigateSocialStudiesPage(direction) {
+        const activeTabButton = document.querySelector('.social-studies-tab-button.active');
+        const category = activeTabButton.dataset.tab;
+        const level = document.getElementById(`${category}-level-select`).value;
+        const totalPages = this.socialStudiesContent[category]?.[level]?.pages.length || 0;
 
+        // Special logic for the "Exit Review" button
+        const isLastPage = this.currentSocialStudiesPage === totalPages - 1;
+        if (direction === 1 && this.socialStudiesReviewMode && isLastPage) {
+            this.socialStudiesReviewMode = false; // Turn off review mode
+            this.renderSocialStudiesContent();    // Re-render to show the summary screen
+            return; // Stop here
+        }
+
+        const newPage = this.currentSocialStudiesPage + direction;
+
+        if (newPage >= 0 && newPage < totalPages) {
+            this.currentSocialStudiesPage = newPage;
+            this.renderSocialStudiesContent();
+        }
+    }
+
+    restartSocialStudiesLevel() {
+        const activeTabButton = document.querySelector('.social-studies-tab-button.active');
+        const category = activeTabButton.dataset.tab;
+        const level = document.getElementById(`${category}-level-select`).value;
+
+        // Get the specific progress object for the level
+        const levelProgress = this.currentUser.socialStudiesProgress[category][level];
+
+        // Ensure the object is in a valid state before resetting
+        if (levelProgress) {
+            levelProgress.pageData = [];
+            levelProgress.finalScore = null;
+            levelProgress.currentTotalScore = 0;
+            levelProgress.currentTotalPossible = 0;
+            // We DO NOT reset culturalPointsAwarded here
+        }
+
+        this.saveUserData();
+
+        // Rerender the content, which will now show the quiz instead of the summary
+        this.currentSocialStudiesPage = 0;
+        this.renderSocialStudiesContent();
+    }
+
+    reviewSocialStudiesLevel() {
+        // Set a flag to enter review mode and re-render
+        this.socialStudiesReviewMode = true;
+        this.currentSocialStudiesPage = 0; // Start review from the first page
+        this.renderSocialStudiesContent();
+    }
+
+    checkSocialStudiesLevelCompletion(category, level) {
+        console.log(`Entered`);
+        const levelData = this.socialStudiesContent[category]?.[level];
+        if (!levelData) return;
+
+        const levelProgress = this.currentUser.socialStudiesProgress[category][level];
+        const allPages = levelData.pages;
+        const savedPages = levelProgress.pageData;
+
+        // Check if all pages for this level are completed
+        if (allPages.length === savedPages.filter(p => p !== null && p !== undefined).length) {
+            const totalScore = levelProgress.currentTotalScore;
+            const totalPossible = levelProgress.currentTotalPossible;
+
+            levelProgress.finalScore = `${totalScore}/${totalPossible}`;
+            const percentage = totalPossible > 0 ? (totalScore / totalPossible) * 100 : 0;
+
+            // Create the log entry
+            const logName = `Social Studies`;
+            const logScore = `${category.charAt(0).toUpperCase() + category.slice(1)} Level ${level} ${totalScore}/${totalPossible}`;
+            this.logActivity(logName, logScore);
+
+            // Did the user pass the level?
+            if (percentage >= this.SOCIAL_STUDIES_PASSING_SCORE) {
+                let alertMessage = `Congratulations! You passed Level ${level}!`;
+
+                // If this is the first time passing, award points.
+                if (!levelProgress.culturalPointsAwarded) {
+                    const pointsEarned = this.SOCIAL_STUDIES_BASE_CULTURAL_POINTS_EARNED + (parseInt(level) - 1) * this.SOCIAL_STUDIES_CULTURAL_POINTS_INCREMENT;
+                    this.currentUser.culturalPoints = (this.currentUser.culturalPoints || 0) + pointsEarned;
+                    levelProgress.culturalPointsAwarded = true; // Mark as awarded
+
+                    // Add to the alert message
+                    alertMessage += `\n\nYou earned ${pointsEarned} cultural points 🎵 and unlocked the next level`;
+                    document.getElementById('cultural-points-display').textContent = this.currentUser.culturalPoints;
+                }
+
+                alert(alertMessage);
+
+                // This runs for any pass, ensuring the next level is always available.
+                this.populateSocialStudiesLevels();
+            }
+
+            this.saveUserData();
+        }
+    }
+
+    // --- Pic Match Quiz Implementation ---
+    renderPicMatchQuiz(container, pageData, savedProgress) {
+        // Shuffle items only if it's an active quiz, not a graded summary
+        const itemsToRender = savedProgress ? pageData.data.items : [...pageData.data.items].sort(() => 0.5 - Math.random());
+        const uniqueAnswers = [...new Set(pageData.data.items.map(item => item.text))];
+
+        let gridHTML = '<div class="pic-match-grid">';
+        itemsToRender.forEach(item => {
+            const userChoice = savedProgress?.answers?.[item.image] || '?';
+            const isGraded = !!savedProgress;
+            let correctnessClass = '';
+            if (isGraded) {
+                correctnessClass = userChoice === item.text ? 'correct' : 'wrong';
+            }
+            gridHTML += `
+                <div class="pic-match-item ${correctnessClass}" data-image-path="${item.image}" data-correct-answer="${item.text}">
+                    <img src="${item.image}" alt="Match item">
+                    <div class="pic-match-answer-box">${userChoice}</div>
+                </div>
+            `;
+        });
+        gridHTML += '</div>';
+
+        let answerBankHTML = '<div class="pic-match-answer-bank">';
+        uniqueAnswers.forEach(answer => {
+            answerBankHTML += `<button class="answer-bank-btn" data-answer-text="${answer}">${answer}</button>`;
+        });
+        answerBankHTML += '</div>';
+
+        // The submit button is now created in renderSocialStudiesContent
+        container.innerHTML = gridHTML + (savedProgress ? '' : answerBankHTML);
+
+        // Add event listeners only if the quiz is active
+        if (!savedProgress) {
+            this.setupPicMatchEvents();
+        }
+    }
+
+    setupPicMatchEvents() {
+        document.querySelectorAll('.answer-bank-btn').forEach(btn => {
+            btn.addEventListener('click', e => this.handlePicMatchAnswerSelect(e));
+        });
+        document.querySelectorAll('.pic-match-item').forEach(item => {
+            item.addEventListener('click', e => this.handlePicMatchImageClick(e));
+        });
+    }
+
+    handlePicMatchAnswerSelect(event) {
+        const selectedBtn = event.currentTarget;
+        this.currentSelectedAnswer = selectedBtn.dataset.answerText;
+
+        document.querySelectorAll('.answer-bank-btn').forEach(btn => btn.classList.remove('selected'));
+        selectedBtn.classList.add('selected');
+    }
+
+    handlePicMatchImageClick(event) {
+        if (!this.currentSelectedAnswer) return; // Do nothing if no answer is selected
+
+        const clickedItem = event.currentTarget;
+        const answerBox = clickedItem.querySelector('.pic-match-answer-box');
+
+        answerBox.textContent = this.currentSelectedAnswer;
+        answerBox.style.color = '#333'; // Make text visible
+
+        // Deselect the answer from the bank
+        document.querySelectorAll('.answer-bank-btn').forEach(btn => btn.classList.remove('selected'));
+        this.currentSelectedAnswer = null;
+    }
+
+    submitPicMatch() {
+        const activeTabButton = document.querySelector('.social-studies-tab-button.active');
+        const category = activeTabButton.dataset.tab;
+        const level = document.getElementById(`${category}-level-select`).value;
+        const pageIndex = this.currentSocialStudiesPage;
+
+        const quizItems = document.querySelectorAll('.pic-match-item');
+        let score = 0;
+        let total = quizItems.length;
+        const userAnswers = {};
+
+        quizItems.forEach(item => {
+            const imagePath = item.dataset.imagePath;
+            const correctAnswer = item.dataset.correctAnswer;
+            const userAnswer = item.querySelector('.pic-match-answer-box').textContent;
+            userAnswers[imagePath] = userAnswer;
+            if (userAnswer === correctAnswer) {
+                score++;
+            }
+        });
+
+        // Save progress for the page
+        const progressToSave = {
+            score: `${score}/${total}`,
+            answers: userAnswers
+        };
+
+        const levelProgress = this.currentUser.socialStudiesProgress[category][level];
+        levelProgress.pageData[pageIndex] = progressToSave;
+
+        // Add to the running total for the level
+        levelProgress.currentTotalScore = (levelProgress.currentTotalScore || 0) + score;
+        levelProgress.currentTotalPossible = (levelProgress.currentTotalPossible || 0) + total;
+
+        this.saveUserData();
+        alert(`Page submitted! Your score: ${score}/${total}`);
+
+        // Check for level completion
+        this.checkSocialStudiesLevelCompletion(category, level);
+
+        // Re-render the content to show the graded view
+        this.renderSocialStudiesContent();
+    }
+
+    // --- Match Quiz Implementation ---
+    renderMatchQuiz(container, pageData, savedProgress) {
+        // Add null checks for pageData structure
+        if (!pageData || !pageData.data || !pageData.data.pairs || !Array.isArray(pageData.data.pairs)) {
+            container.innerHTML = '<p>Error: Invalid quiz data structure.</p>';
+            return;
+        }
+
+        this.currentMatchSelection = null; // Reset selection
+        const pairs = pageData.data.pairs;
+
+        // Always show all items, but don't shuffle when showing graded results
+        const leftItems = savedProgress ? pairs.map(p => p[0]) : [...pairs.map(p => p[0])].sort(() => 0.5 - Math.random());
+        const rightItems = savedProgress ? pairs.map(p => p[1]) : [...pairs.map(p => p[1])].sort(() => 0.5 - Math.random());
+
+        let html = `
+            <div class="match-quiz-description">${pageData.data.description || ''}</div>
+            <div class="match-quiz-container">
+                <svg class="match-lines-canvas"></svg>
+                <div class="match-column" id="match-col-left">
+                    ${leftItems.map(item => {
+                        let itemClass = 'match-item';
+                        if (savedProgress) {
+                            // Check if this left item was matched correctly
+                            const userRightItem = savedProgress.answers[item];
+                            if (userRightItem) {
+                                const correctRightItem = pairs.find(p => p[0] === item)?.[1];
+                                itemClass += userRightItem === correctRightItem ? ' correct' : ' wrong';
+                            } else {
+                                itemClass += ' wrong'; // Not matched = wrong
+                            }
+                        }
+                        return `<button class="${itemClass}" data-item-text="${item}">${item}</button>`;
+                    }).join('')}
+                </div>
+                <div class="match-column" id="match-col-right">
+                    ${rightItems.map(item => {
+                        let itemClass = 'match-item';
+                        if (savedProgress) {
+                            // Check if this right item was matched correctly
+                            const correctLeftItem = pairs.find(p => p[1] === item)?.[0];
+                            const userRightItem = savedProgress.answers[correctLeftItem];
+                            if (userRightItem === item) {
+                                itemClass += ' correct';
+                            } else {
+                                itemClass += ' wrong';
+                            }
+                        }
+                        return `<button class="${itemClass}" data-item-text="${item}">${item}</button>`;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+        container.innerHTML = html;
+
+        if (savedProgress) {
+            this.drawAllMatchLines(true); // Draw graded lines
+        } else {
+            this.setupMatchQuizEvents();
+        }
+    }
+
+    setupMatchQuizEvents() {
+        this.matchSelections = {}; // Stores user's choices { left: right }
+        const leftItems = document.querySelectorAll('#match-col-left .match-item');
+        const rightItems = document.querySelectorAll('#match-col-right .match-item');
+
+        leftItems.forEach(item => {
+            item.addEventListener('click', () => this.handleMatchItemClick(item, 'left'));
+            item.addEventListener('mouseenter', () => this.highlightMatchLine(item.dataset.itemText, true));
+            item.addEventListener('mouseleave', () => this.highlightMatchLine(item.dataset.itemText, false));
+        });
+
+        rightItems.forEach(item => {
+            item.addEventListener('click', () => this.handleMatchItemClick(item, 'right'));
+            item.addEventListener('mouseenter', () => this.highlightMatchLine(item.dataset.itemText, true, true));
+            item.addEventListener('mouseleave', () => this.highlightMatchLine(item.dataset.itemText, false, true));
+        });
+    }
+
+    handleMatchItemClick(item, side) {
+        // --- Logic to un-pair a completed item ---
+        if (item.classList.contains('paired')) {
+            const leftText = side === 'left' ? item.dataset.itemText : Object.keys(this.matchSelections).find(key => this.matchSelections[key] === item.dataset.itemText);
+            const rightText = this.matchSelections[leftText];
+            delete this.matchSelections[leftText];
+
+            const leftEl = document.querySelector(`#match-col-left [data-item-text="${leftText}"]`);
+            const rightEl = document.querySelector(`#match-col-right [data-item-text="${rightText}"]`);
+            if(leftEl) leftEl.classList.remove('paired');
+            if(rightEl) rightEl.classList.remove('paired');
+
+            this.drawAllMatchLines();
+            return;
+        }
+
+        // --- Logic to handle a new selection ---
+        if (!this.currentMatchSelection) {
+            // No item is currently selected, so start a new selection.
+            this.currentMatchSelection = { element: item, side: side };
+            item.classList.add('selected');
+        } else {
+            // An item is already selected.
+            if (this.currentMatchSelection.element === item) {
+                // The user clicked the same item again to cancel.
+                item.classList.remove('selected');
+                this.currentMatchSelection = null;
+            } else if (this.currentMatchSelection.side !== side) {
+                // The user clicked an item on the opposite column to form a pair.
+                const leftItem = side === 'right' ? this.currentMatchSelection.element : item;
+                const rightItem = side === 'right' ? item : this.currentMatchSelection.element;
+
+                this.matchSelections[leftItem.dataset.itemText] = rightItem.dataset.itemText;
+
+                this.currentMatchSelection.element.classList.remove('selected');
+                leftItem.classList.add('paired');
+                rightItem.classList.add('paired');
+                this.currentMatchSelection = null;
+
+                this.drawAllMatchLines();
+            } else {
+                // The user clicked a different item on the same column. Switch selection.
+                this.currentMatchSelection.element.classList.remove('selected');
+                this.currentMatchSelection = { element: item, side: side };
+                item.classList.add('selected');
+            }
+        }
+    }
+
+    drawAllMatchLines(isGraded = false) {
+        const canvas = document.querySelector('.match-lines-canvas');
+        if (!canvas) return;
+
+    // Force browser to recalculate layout before we get element positions.
+        canvas.getBoundingClientRect();
+        canvas.innerHTML = ''; // Clear old lines
+
+        const activeTabButton = document.querySelector('.social-studies-tab-button.active');
+        const category = activeTabButton.dataset.tab;
+        const level = document.getElementById(`${category}-level-select`).value;
+        const pageIndex = this.currentSocialStudiesPage;
+        const savedProgress = this.currentUser.socialStudiesProgress[category]?.[level]?.pageData[pageIndex];
+
+        const pairsToDraw = isGraded ? savedProgress.answers : this.matchSelections;
+
+        for (const leftText in pairsToDraw) {
+            const rightText = pairsToDraw[leftText];
+            const leftEl = document.querySelector(`#match-col-left [data-item-text="${leftText}"]`);
+            const rightEl = document.querySelector(`#match-col-right [data-item-text="${rightText}"]`);
+
+            if (leftEl && rightEl) {
+                const line = this.createSVGLine(leftEl, rightEl);
+                line.dataset.left = leftText;
+                line.dataset.right = rightText;
+
+                if (isGraded) {
+                    const originalPairs = this.socialStudiesContent[category][level].pages[pageIndex].data.pairs;
+                    const isCorrect = originalPairs.some(p => p[0] === leftText && p[1] === rightText);
+                    line.classList.add(isCorrect ? 'correct' : 'wrong', 'graded');
+                }
+                canvas.appendChild(line);
+            }
+        }
+    }
+
+    createSVGLine(el1, el2) {
+        const canvasRect = el1.closest('.match-quiz-container').getBoundingClientRect();
+        const rect1 = el1.getBoundingClientRect();
+        const rect2 = el2.getBoundingClientRect();
+
+        const x1 = rect1.right - canvasRect.left;
+        const y1 = rect1.top + rect1.height / 2 - canvasRect.top;
+        const x2 = rect2.left - canvasRect.left;
+        const y2 = rect2.top + rect2.height / 2 - canvasRect.top;
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        return line;
+    }
+
+    highlightMatchLine(itemText, shouldHighlight, isRightColumn = false) {
+        let line;
+        if(isRightColumn) {
+            line = document.querySelector(`.match-lines-canvas line[data-right="${itemText}"]`);
+        } else {
+            line = document.querySelector(`.match-lines-canvas line[data-left="${itemText}"]`);
+        }
+
+        if (line) {
+            line.classList.toggle('highlighted', shouldHighlight);
+        }
+    }
+
+    submitMatchQuiz() {
+        const activeTabButton = document.querySelector('.social-studies-tab-button.active');
+        const category = activeTabButton.dataset.tab;
+        const level = document.getElementById(`${category}-level-select`).value;
+        const pageIndex = this.currentSocialStudiesPage;
+
+        const originalPairs = this.socialStudiesContent[category][level].pages[pageIndex].data.pairs;
+        const userSelections = this.matchSelections;
+        let score = 0;
+        const total = originalPairs.length;
+
+        // Check if the user's pairs are correct
+        const correctPairStrings = originalPairs.map(p => `${p[0]}---${p[1]}`);
+        for (const left in userSelections) {
+            const right = userSelections[left];
+            if (correctPairStrings.includes(`${left}---${right}`)) {
+                score++;
+            }
+        }
+
+        // Save progress for the page
+        const progressToSave = {
+            score: `${score}/${total}`,
+            answers: userSelections
+        };
+
+        const levelProgress = this.currentUser.socialStudiesProgress[category][level];
+        levelProgress.pageData[pageIndex] = progressToSave;
+
+        // Add to the running total for the level
+        levelProgress.currentTotalScore = (levelProgress.currentTotalScore || 0) + score;
+        levelProgress.currentTotalPossible = (levelProgress.currentTotalPossible || 0) + total;
+
+        this.saveUserData();
+        alert(`Page submitted! Your score: ${score}/${total}`);
+
+        // Check for level completion
+        this.checkSocialStudiesLevelCompletion(category, level);
+
+        // Re-render to show graded state
+        this.renderSocialStudiesContent();
+    }
+
+    // --- Multiple Choice (mchoice) Quiz Implementation ---
+    renderMChoiceQuiz(container, pageData, savedProgress) {
+        if (!pageData.data?.questions) {
+            container.innerHTML = "<p>Error: Invalid multiple choice quiz data.</p>";
+            return;
+        }
+
+        this.mChoiceSelections = savedProgress ? savedProgress.answers : {};
+        const questions = pageData.data.questions;
+
+        let html = `<div class="mchoice-list-container ${savedProgress ? 'graded' : ''}">`;
+
+        questions.forEach((q, index) => {
+            const questionNumber = index + 1;
+            const options = savedProgress ? q.options : [...q.options].sort(() => 0.5 - Math.random());
+            const userChoice = savedProgress?.answers?.[q.id];
+
+            html += `
+                <div class="mchoice-question-block" data-question-id="${q.id}">
+                    ${q.image ? `<img src="${q.image}" class="mchoice-image" alt="Question ${questionNumber}">` : ''}
+                    <p class="mchoice-question-text">${questionNumber}. ${q.question}</p>
+                    <div class="mchoice-options-container">
+            `;
+
+            options.forEach(option => {
+                const isChecked = userChoice === option;
+                const isCorrect = option === q.answer;
+                let gradedClass = '';
+                if (savedProgress && isChecked) {
+                    // Only apply a class if this is the answer the user selected.
+                    gradedClass = isCorrect ? 'correct-answer' : 'user-wrong-answer';
+                }
+
+                html += `
+                    <div class="mchoice-option ${gradedClass}">
+                        <input type="radio" id="q${q.id}_${option}" name="mchoice_${q.id}" value="${option}"
+                            ${isChecked ? 'checked' : ''} ${savedProgress ? 'disabled' : ''}>
+                        <label for="q${q.id}_${option}">${option}</label>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+        });
+
+        html += `</div>`;
+        container.innerHTML = html;
+
+        if (!savedProgress) {
+            this.setupMChoiceEvents();
+        }
+    }
+
+    setupMChoiceEvents() {
+        const containers = document.querySelectorAll('.mchoice-question-block');
+        containers.forEach(container => {
+            const questionId = container.dataset.questionId;
+            const radios = container.querySelectorAll(`input[name="mchoice_${questionId}"]`);
+            radios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    this.mChoiceSelections[questionId] = radio.value;
+                });
+            });
+        });
+    }
+
+    submitMChoiceQuiz() {
+        const activeTabButton = document.querySelector('.social-studies-tab-button.active');
+        const category = activeTabButton.dataset.tab;
+        const level = document.getElementById(`${category}-level-select`).value;
+        const pageIndex = this.currentSocialStudiesPage;
+
+        const questions = this.socialStudiesContent[category][level].pages[pageIndex].data.questions;
+        let score = 0;
+
+        for (const q of questions) {
+            if (this.mChoiceSelections[q.id] === q.answer) {
+                score++;
+            }
+        }
+
+        const progressToSave = {
+            score: `${score}/${questions.length}`,
+            answers: this.mChoiceSelections
+        };
+
+        const levelProgress = this.currentUser.socialStudiesProgress[category][level];
+        levelProgress.pageData[pageIndex] = progressToSave;
+
+        // Add to the running total
+        levelProgress.currentTotalScore = (levelProgress.currentTotalScore || 0) + score;
+        levelProgress.currentTotalPossible = (levelProgress.currentTotalPossible || 0) + questions.length;
+
+        this.saveUserData();
+        alert(`Page submitted! Your score: ${score}/${questions.length}`);
+
+        this.checkSocialStudiesLevelCompletion(category, level);
+
+        // Re-render to show graded state
+        this.renderSocialStudiesContent();
+    }
+
+    // --- Cultural Recognition Screen ---
+    definePerkDefinitions() {
+        const self = this;
+        return {
+            'legendary_prob_increase': {
+                id: 'legendary_prob_increase',
+                name: 'Legendary Probability Increase',
+                maxLevel: 5,
+                cost: (level) => 100 + (level - 1) * 20,
+                levels: [
+                    {
+                        description: "+1% Legendary",
+                        effects: [  { target: 'gachaProbabilities.Legendary', operation: 'add', value: 1 },
+                                    { target: 'gachaProbabilities.Common', operation: 'add', value: -1 } ]
+                    },
+                    {
+                        description: "+2% Legendary",
+                        effects: [  { target: 'gachaProbabilities.Legendary', operation: 'add', value: 2 },
+                                    { target: 'gachaProbabilities.Common', operation: 'add', value: -2 } ]
+                    },
+                    {
+                        description: "+2% Legendary",
+                        effects: [  { target: 'gachaProbabilities.Legendary', operation: 'add', value: 2 },
+                                    { target: 'gachaProbabilities.Common', operation: 'add', value: -2 } ]
+                    },
+                    {
+                        description: "+2% Legendary",
+                        effects: [  { target: 'gachaProbabilities.Legendary', operation: 'add', value: 2 },
+                                    { target: 'gachaProbabilities.Rare', operation: 'add', value: -2 } ]
+                    },
+                    {
+                        description: "+2% Legendary",
+                        effects: [  { target: 'gachaProbabilities.Legendary', operation: 'add', value: 2 },
+                                    { target: 'gachaProbabilities.Rare', operation: 'add', value: -2 } ]
+                    },
+                ],
+                implemented: true,
+                getBenefitDescription(currentLevel) {
+                    let currentBonus = 0;
+                    for (let i = 0; i < currentLevel; i++) {
+                        const effect = this.levels[i].effects.find(e => e.target === 'gachaProbabilities.Legendary');
+                        if (effect) currentBonus += effect.value;
+                    }
+                    const nextLevelEffect = this.levels[currentLevel].effects.find(e => e.target === 'gachaProbabilities.Legendary');
+                    const nextBonus = currentBonus + (nextLevelEffect ? nextLevelEffect.value : 0);
+                    const baseProb = self.GACHA_PROBABILITIES.Legendary;
+                    return `<p>${baseProb + currentBonus}% legendary -> ${baseProb + nextBonus}% legendary</p>`;
+                }
+            },
+            'draw_10_guarantee_increase': {
+                id: 'draw_10_guarantee_increase',
+                name: 'Draw 10 Guarantee Increase',
+                maxLevel: 5,
+                cost: (level) => 100 + (level - 1) * 20,
+                levels: [
+                    {
+                        description: "+1% 'Draw 10' Guaranteed Legendary Chance",
+                        effects: [  { target: 'drawTenGuaranteeLegendaryChance', operation: 'add', value: 1 } ]
+                    },
+                    {
+                        description: "+2% 'Draw 10' Guaranteed Legendary Chance",
+                        effects: [  { target: 'drawTenGuaranteeLegendaryChance', operation: 'add', value: 2 } ]
+                    },
+                    {
+                        description: "+2% 'Draw 10' Guaranteed Legendary Chance",
+                        effects: [  { target: 'drawTenGuaranteeLegendaryChance', operation: 'add', value: 2 } ]
+                    },
+                    {
+                        description: "+2% 'Draw 10' Guaranteed Legendary Chance",
+                        effects: [  { target: 'drawTenGuaranteeLegendaryChance', operation: 'add', value: 2 } ]
+                    },
+                    {
+                        description: "+2% 'Draw 10' Guaranteed Legendary Chance",
+                        effects: [   { target: 'drawTenGuaranteeLegendaryChance', operation: 'add', value: 2 } ]
+                    },
+                ],
+                implemented: true,
+                getBenefitDescription(currentLevel) {
+                    let currentBonus = 0;
+                    for (let i = 0; i < currentLevel; i++) {
+                        const effect = this.levels[i].effects.find(e => e.target === 'drawTenGuaranteeLegendaryChance');
+                        if (effect) currentBonus += effect.value;
+                    }
+                    const nextLevelEffect = this.levels[currentLevel].effects.find(e => e.target === 'drawTenGuaranteeLegendaryChance');
+                    const nextBonus = currentBonus + (nextLevelEffect ? nextLevelEffect.value : 0);
+                    return `<p>+${currentBonus}% guaranteed -> +${nextBonus}% guaranteed Legendary</p>`;
+                }
+            },
+            'draw_10_perks': {
+                id: 'draw_10_perks',
+                name: 'Draw 10 Extra Perks',
+                maxLevel: 8,
+                cost: (level) => 100 + (level - 1) * 10,
+                levels: [
+                    {
+                        description: "+2% chance for 10 Diamonds",
+                        effects: [  { target: 'drawTenBonusTable.diamonds', operation: 'add', value: 2 } ]
+                    },
+                    {
+                        description: "+2% chance for 1 Exchange Ticket",
+                        effects: [  { target: 'drawTenBonusTable.ticket', operation: 'add', value: 2 } ]
+                    },
+                    {
+                        description: "+2% chance for 10 Diamonds",
+                        effects: [  { target: 'drawTenBonusTable.diamonds', operation: 'add', value: 2 } ]
+                    },
+                    {
+                        description: "+2% chance for 1 Exchange Ticket",
+                        effects: [  { target: 'drawTenBonusTable.ticket', operation: 'add', value: 2 } ]
+                    },
+                    {
+                        description: "+2% chance for 10 Diamonds",
+                        effects: [  { target: 'drawTenBonusTable.diamonds', operation: 'add', value: 2 } ]
+                    },
+                    {
+                        description: "+2% chance for 1 Exchange Ticket",
+                        effects: [  { target: 'drawTenBonusTable.ticket', operation: 'add', value: 2 } ]
+                    },
+                    {
+                        description: "draw 10💎 -> draw 20💎",
+                        effects: [  { target: 'drawTenDiamondRewardAmount', operation: 'set', value: 20 } ]
+                    },
+                    {
+                        description: "+2% chance for 20 Diamonds",
+                        effects: [  { target: 'drawTenBonusTable.diamonds', operation: 'add', value: 2 } ]
+                    },
+                ],
+                implemented: true,
+                getBenefitDescription(currentLevel) {
+                    if (currentLevel === 6) { return `<p>${this.levels[currentLevel].description}</p>`; }
+                    let currentDiamondChance = 0, currentTicketChance = 0;
+                    for (let i = 0; i < currentLevel; i++) {
+                        const diamondEffect = this.levels[i].effects.find(e => e.target === 'drawTenBonusTable.diamonds');
+                        if (diamondEffect) currentDiamondChance += diamondEffect.value;
+                        const ticketEffect = this.levels[i].effects.find(e => e.target === 'drawTenBonusTable.ticket');
+                        if (ticketEffect) currentTicketChance += ticketEffect.value;
+                    }
+                    const nextLevelEffect = this.levels[currentLevel].effects[0];
+                    if (nextLevelEffect.target === 'drawTenBonusTable.diamonds') {
+                        const nextDiamondChance = currentDiamondChance + nextLevelEffect.value;
+                        const currentDesc = currentDiamondChance > 0 ? `${currentDiamondChance}% draw 💎` : 'No 💎';
+                        return `<p>${currentDesc} -> ${nextDiamondChance}% draw 💎</p>`;
+                    } else {
+                        const nextTicketChance = currentTicketChance + nextLevelEffect.value;
+                        const currentDesc = currentTicketChance > 0 ? `${currentTicketChance}% draw 🎟️` : 'No 🎟️';
+                        return `<p>${currentDesc} -> ${nextTicketChance}% draw 🎟️</p>`;
+                    }
+                }
+            },
+            'reduced_exchange_rate': {
+                id: 'reduced_exchange_rate',
+                name: 'Reduced Exchange Rate',
+                maxLevel: 2,
+                cost: () => 150,
+                levels: [
+                    {
+                        description: "Cost of specified Legendary in exchange mode -5",
+                        effects: [  { target: 'gachaExchangeRatesSpecified.Legendary', operation: 'add', value: -5 } ]
+                    },
+                    {
+                        description: "Cost of 10💎 in exchange mode -5",
+                        effects: [  { target: 'gachaExchangeRatesSpecified.diamond_10', operation: 'add', value: -5 } ]
+                    },
+                ],
+                implemented: true,
+                getBenefitDescription(currentLevel) {
+                    return `<p>${this.levels[currentLevel].description}</p>`;
+                }
+            },
+            'draw_10_discount': {
+                id: 'draw_10_discount',
+                name: 'Diamond Discount',
+                maxLevel: 1,
+                cost: () => 150,
+                levels: [
+                    {
+                        description: "Use 9💎 instead of 10💎 for 'Draw 10'",
+                        effects: [{ target: 'drawTenCost', operation: 'set', value: 9 }]
+                    },
+                ],
+                implemented: true,
+                getBenefitDescription(currentLevel) {
+                    return `<p>${this.levels[currentLevel].description}</p>`;
+                }
+            },
+            'monthly_budget': {
+                id: 'monthly_budget',
+                name: 'Budget for Collection Completion Reward + $5',
+                maxLevel: 1,
+                cost: () => 200,
+                levels: [
+                    { description: 'Unlock it for Villains collection. Will reset in next collection', effects: [] }
+                ],
+                implemented: true,
+                getBenefitDescription(currentLevel) {
+                    return `<p>${this.levels[currentLevel].description}</p>`;
+                }
+            },
+            'collection_redeem': {
+                id: 'collection_redeem',
+                name: 'Redeem Reward for Second Collection Completion',
+                maxLevel: 1,
+                cost: () => 200,
+                levels: [
+                    { description: 'Unlock it for Villains collection. Will reset in next collection', effects: [] }
+                ],
+                implemented: true,
+                getBenefitDescription(currentLevel) {
+                    return `<p>${this.levels[currentLevel].description}</p>`;
+                }
+            },
+            'unlock_halloween_theme': {
+                id: 'unlock_halloween_theme',
+                name: 'Seasonal Limited Theme',
+                maxLevel: 1,
+                cost: () => 100,
+                levels: [
+                    { description: 'Unlock access to exclusive, time-limited theme', effects: [] }
+                ],
+                implemented: true,
+                isThemeUnlock: true,
+                getBenefitDescription(currentLevel) {
+                    const theme = self.themeManifest.find(t => t.requiredPerk === this.id);
+                    return `
+                        <p>${this.levels[currentLevel].description}</p>
+                        <p><strong>Current Theme:</strong> ${theme.name}</p>
+                        <p><strong>Available until:</strong> ${new Date(theme.expiresOn).toLocaleDateString()}</p>
+                        </div>
+                    `;
+                }
+            },
+        };
+    }
+
+    showCulturalRecognitionPage() {
+        this.showScreen('cultural-recognition-screen');
+        document.getElementById('cultural-points-display-recognition').textContent = this.currentUser.culturalPoints || 0;
+        this.renderCulturalPerks();
+    }
+
+    handleUpgradePerk(perkId) {
+        const perkDef = this.perkDefinitions[perkId];
+        const currentLevel = this.currentUser.perkLevels[perkId] || 0;
+
+        if (currentLevel >= perkDef.maxLevel) {
+            alert("This perk is already at the maximum level.");
+            return;
+        }
+
+        const cost = perkDef.cost(currentLevel + 1);
+        if ((this.currentUser.culturalPoints || 0) < cost) {
+            alert("You don't have enough cultural points to upgrade this perk.");
+            return;
+        }
+
+        this.currentUser.culturalPoints -= cost;
+        this.currentUser.perkLevels[perkId] = currentLevel + 1;
+
+        this.saveUserData();
+
+        // Recalculate config after upgrading
+        this._recalculateEffectiveConfig();
+
+        // Refresh the UI
+        document.getElementById('cultural-points-display').textContent = this.currentUser.culturalPoints;
+        document.getElementById('cultural-points-display-recognition').textContent = this.currentUser.culturalPoints;
+        this.renderCulturalPerks();
+    }
+
+    getEffectiveConfig() {
+        if (!this.effectiveConfig) {
+            this._recalculateEffectiveConfig();
+        }
+        return this.effectiveConfig;
+    }
+
+    _recalculateEffectiveConfig() {
+        const baseConfig = {
+            gachaProbabilities: { ...this.GACHA_PROBABILITIES },
+            gachaExchangeRatesSpecified: { ...this.GACHA_EXCHANGE_RATES_SPECIFIED },
+            drawTenGuaranteeLegendaryChance: this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE,
+            drawTenCost: this.DRAW_TEN_COST,
+            drawTenDiamondRewardAmount: this.DRAW_TEN_DIAMOND_REWARD_AMOUNT,
+            drawTenBonusTable: { diamonds: 0, ticket: 0 } // Base chances are 0
+        };
+
+        const perkLevels = this.currentUser.perkLevels || {};
+
+        for (const perkId in perkLevels) {
+            const currentLevel = perkLevels[perkId];
+            const perkDef = this.perkDefinitions[perkId];
+
+            if (perkDef && perkDef.implemented) {
+                // Apply effects for all unlocked levels
+                for (let i = 0; i < currentLevel; i++) {
+                    const levelEffects = perkDef.levels[i].effects;
+                    levelEffects.forEach(effect => {
+                        const targetParts = effect.target.split('.');
+                        let targetObject = baseConfig;
+                        for (let j = 0; j < targetParts.length - 1; j++) {
+                            targetObject = targetObject[targetParts[j]];
+                        }
+                        const finalKey = targetParts[targetParts.length - 1];
+
+                        if (effect.operation === 'add') {
+                            targetObject[finalKey] += effect.value;
+                        } else if (effect.operation === 'set') {
+                            targetObject[finalKey] = effect.value;
+                        }
+                    });
+                }
+            }
+        }
+
+        // Finalize the bonus table by calculating the "nothing" chance
+        baseConfig.drawTenBonusTable.nothing = 100 - baseConfig.drawTenBonusTable.diamonds - baseConfig.drawTenBonusTable.ticket;
+
+        // Store the final calculated config in the class property
+        this.effectiveConfig = baseConfig;
+    }
+
+    // Perform collection-based reset for cultural recognition perks
+    _checkCollectionPerkReset() {
+        if (this.currentUser.lastPerkResetPool !== this.currentGachaPool) {
+            console.log(`New gacha pool detected. Resetting monthly perks. Last reset pool: ${this.currentUser.lastPerkResetPool}, Current pool: ${this.currentGachaPool}`);
+
+            // These perks are now available to be purchased again for this collection.
+            delete this.currentUser.perkLevels['monthly_budget'];
+            delete this.currentUser.perkLevels['collection_redeem'];
+
+            // Update the user's version marker to the current pool name
+            this.currentUser.lastPerkResetPool = this.currentGachaPool;
+
+            this.saveUserData();
+            // The recalculation will happen in initializeUserProperties after this runs.
+        }
+    }
+
+    defineThemeManifest() {
+        return [
+            { id: 'default', name: 'Default', requiredPerk: null },
+            { id: 'halloween', name: 'Halloween', requiredPerk: 'unlock_halloween_theme', expiresOn: '2025-11-01T23:59:59' },
+            // Example for a future theme:
+            // { id: 'winter', name: 'Winter', requiredPerk: 'unlock_winter_theme', expiresOn: '2026-01-31T23:59:59' },
+        ];
+    }
+
+    handleThemeChange(themeName) {
+        this.currentUser.activeTheme = themeName;
+        this.saveUserData();
+        this._applyTheme();
+        // You might want to re-render mini-games if images need to change instantly
+        if (document.getElementById('mini-game-screen').classList.contains('hidden') === false) {
+            this.renderMiniGames();
+        }
+    }
+
+    renderCulturalPerks() {
+        const grid = document.querySelector('#cultural-recognition-screen .recognition-grid');
+        grid.innerHTML = '';
+
+        const standardPerkOrder = [
+            'legendary_prob_increase', 'reduced_exchange_rate', 'monthly_budget', 'draw_10_perks',
+            'draw_10_guarantee_increase', 'draw_10_discount', 'collection_redeem',
+        ];
+
+        // 1. Render all the standard, non-theme perks
+        standardPerkOrder.forEach(perkId => {
+            this._renderSinglePerkBox(grid, perkId);
+        });
+
+        // 2. Find the current, active, unexpired seasonal theme
+        const now = new Date();
+        const activeSeasonalTheme = this.themeManifest.find(theme => {
+            if (!theme.requiredPerk) return false; // Skip default theme
+            const expiresOn = new Date(theme.expiresOn);
+            return now < expiresOn; // Find the first one that has not expired
+        });
+
+        if (activeSeasonalTheme) {
+            // If we found an active seasonal theme, render its box.
+            // _renderSinglePerkBox will handle the "locked" vs "unlocked" logic internally.
+            this._renderSinglePerkBox(grid, activeSeasonalTheme.requiredPerk);
+        } else {
+            // If no active seasonal themes are found, show the placeholder.
+            // This covers both "all expired" and "none defined yet".
+            const placeholder = document.createElement('div');
+            placeholder.className = 'recognition-box placeholder';
+            placeholder.innerHTML = `<h4>Seasonal Theme</h4><p>Check back later for new seasonal themes!</p>`;
+            grid.appendChild(placeholder);
+        }
+
+        // Re-attach all event listeners
+        grid.querySelectorAll('.upgrade-perk-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleUpgradePerk(e.currentTarget.dataset.perkId));
+        });
+        grid.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleThemeChange(e.currentTarget.dataset.theme));
+        });
+    }
+
+    _renderSinglePerkBox(grid, perkId) {
+        const perkDef = this.perkDefinitions[perkId];
+        if (!perkDef) return;
+
+        const perkBox = document.createElement('div');
+        perkBox.className = 'recognition-box';
+        let contentHTML = `<h4>${perkDef.name}</h4>`;
+        const currentLevel = this.currentUser.perkLevels[perkId] || 0;
+
+        if (currentLevel > 0 && perkDef.maxLevel !== 1) {
+            contentHTML += `<p class="current-level">Level: ${currentLevel}</p>`;
+        }
+
+        // Logic for displaying the upgrade/unlocked state
+        if (currentLevel < perkDef.maxLevel) {
+            const cost = perkDef.cost(currentLevel + 1);
+            const canAfford = (this.currentUser.culturalPoints || 0) >= cost;
+            const benefitDescription = perkDef.getBenefitDescription.call(perkDef, currentLevel); // Use .call to set 'this' correctly
+
+            contentHTML += `
+                <div class="upgrade-info">
+                    ${benefitDescription}
+                </div>
+                <p class="upgrade-cost">Cost: ${cost} 🎵</p>
+                <button class="upgrade-perk-btn" data-perk-id="${perkId}" ${!canAfford ? 'disabled' : ''}>
+                    ${perkDef.maxLevel === 1 ? 'Unlock' : 'Upgrade'}
+                </button>
+            `;
+        } else {
+            // MAX LEVEL or theme selector for unlocked themes
+            if (perkDef.isThemeUnlock) {
+                const unlockedTheme = this.themeManifest.find(t => t.requiredPerk === perkId);
+                contentHTML += `
+                    <div class="upgrade-info">
+                        <p>You have unlocked exclusive theme!&nbsp&nbsp&nbsp
+                            <button class="theme-btn active ${this.currentUser.activeTheme === unlockedTheme.id ? 'active' : ''}" data-theme="${unlockedTheme.id}">${unlockedTheme.name}</button>
+                        </p>
+                    </div>
+                    <div class="theme-tip">
+                        <p> 💡 All themes can be found and controlled in Developer Mode</p>
+                    </div>
+                `;
+            } else if (perkDef.maxLevel === 1) {
+                contentHTML += `<p class="upgrade-info">Unlocked</p>`;
+            } else {
+                contentHTML += `<p class="max-level-text">MAX LEVEL REACHED</p>`;
+            }
+        }
+
+        perkBox.innerHTML = contentHTML;
+        grid.appendChild(perkBox);
+    }
 }
 
 const app = new ChineseLearningApp();
