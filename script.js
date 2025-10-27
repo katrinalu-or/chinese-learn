@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.3.1';
+        this.APP_VERSION = '1.3.2';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.3.1';
-        this.LATEST_MINIGAME_VERSION = '1.3.1';
+        this.DEFAULT_WORDS_VERSION = '1.3.2';
+        this.LATEST_MINIGAME_VERSION = '1.3.2';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -88,9 +88,8 @@ class ChineseLearningApp {
         this.mChoiceSelections = {}; // For mchoice quiz
         this.socialStudiesReviewMode = false;
         this.perkDefinitions = this.definePerkDefinitions(); // Perks from cultural recognizition page
-        this.themeManifest = this.defineThemeManifest();
+        this.themeManifest = this.defineThemeManifest(); // Theme name definitions
         this.effectiveConfig = null; // Initialize the stored config
-        // renderCulturalPerks controls theme names, this.currentUser.activeTheme
 
         this.init();
     }
@@ -218,38 +217,6 @@ class ChineseLearningApp {
         // Collection migration and initialization
         this.migrateCollectionData();
 
-        // Migrate old wordProgress data (stop calculating mistakes and start tracking them directly)
-        if (this.currentUser.wordProgress) {
-            Object.keys(this.currentUser.wordProgress).forEach(word => {
-                const entry = this.currentUser.wordProgress[word];
-                if (entry && typeof entry.incorrect === 'undefined') {
-                    // Initialize 'incorrect' property if it doesn't exist.
-                    // We can't know past mistakes, so we start at 0.
-                    entry.incorrect = 0;
-                }
-            });
-        }
-
-        // Clean up old sentence writing words to only keep the current level's list
-        const currentLevel = this.currentUser.level;
-        if (this.currentUser.sentenceWritingWords) {
-            Object.keys(this.currentUser.sentenceWritingWords).forEach(levelKey => {
-                if (parseInt(levelKey) !== currentLevel) {
-                    delete this.currentUser.sentenceWritingWords[levelKey];
-                }
-            });
-        }
-
-        if (Array.isArray(this.currentUser.collection)) {
-            const newCollection = {};
-            this.currentUser.collection.forEach(id => {
-                newCollection[id] = (newCollection[id] || 0) + 1;
-            });
-            this.currentUser.collection = newCollection;
-        } else {
-            this.currentUser.collection = this.currentUser.collection || {};
-        }
-
         if ((!this.currentUser.listeningLowerLevelWords || this.currentUser.listeningLowerLevelWords.length === 0 || !this.currentUser.reviewLowerLevelWords || this.currentUser.reviewLowerLevelWords.length === 0) && this.currentUser.level > 1) {
             this.generatePracticeSubsets();
             this.saveUserData();
@@ -259,6 +226,15 @@ class ChineseLearningApp {
         if (!this.currentUser.sentenceWritingWords[this.currentUser.level]) {
             this.generateSentenceWritingWordList();
             this.saveUserData();
+        }
+
+        // Loop through all defined categories in social.json and initialize them.
+        if (this.socialStudiesContent) {
+            for (const category in this.socialStudiesContent) {
+                if (!this.currentUser.socialStudiesProgress[category]) {
+                    this.currentUser.socialStudiesProgress[category] = {};
+                }
+            }
         }
 
         // Calculate benefits earned from cultural reconginition page
@@ -454,6 +430,7 @@ class ChineseLearningApp {
             listeningLowerLevelWords: [],
             reviewLowerLevelWords: [],
             sentenceWritingCompleted: false,
+            sentenceWritingWords: {},
             testScores: [],
             activityLog: [],
             diamonds: 0,
@@ -464,6 +441,7 @@ class ChineseLearningApp {
         users[username] = newUser;
         localStorage.setItem('users', JSON.stringify(users));
         this.currentUser = newUser;
+        this.initializeUserProperties();
         localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
         this.showDashboard();
     }
@@ -1617,7 +1595,10 @@ class ChineseLearningApp {
     }
 
     generateSentenceWritingWords() {
-        const allWords = this.getAllWordsUpToLevel(this.currentUser.level);
+        // For Level 1, there are no previous levels, so we use Level 1 words as the source.
+        // For Level 2+, we use words from all preceding levels to reinforce learning.
+        const sourceLevel = this.currentUser.level > 1 ? this.currentUser.level - 1 : 1;
+        const allWords = this.getAllWordsUpToLevel(sourceLevel);
 
         const wordsByCrosses = allWords
             .map(word => ({
@@ -4152,6 +4133,10 @@ Draw 10 guarantees one Epic or Legendary!`;
 
         dropdowns.forEach(select => {
             const category = select.id.split('-')[0];
+
+            if (!progress[category]) {
+                progress[category] = {};
+            }
 
             // Get all level numbers defined for this category in social.json
             const definedLevels = content[category] ? Object.keys(content[category]).map(Number).sort((a, b) => a - b) : [];

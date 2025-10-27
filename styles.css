@@ -1728,9 +1728,9 @@ body.no-scroll {
     padding: 0.5rem;
     text-align: center;
     font-weight: 500;
-    background: #f8f9fa;
+    background: var(--c-bg-draggable);
     min-height: 38px;
-    color: var(--c-text-placeholder);
+    color: var(--c-text-primary) !important;
     transition: all 0.3s ease;
 }
 
