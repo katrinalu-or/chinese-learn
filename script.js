@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.3.2';
+        this.APP_VERSION = '1.3.3';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.3.2';
-        this.LATEST_MINIGAME_VERSION = '1.3.2';
+        this.DEFAULT_WORDS_VERSION = '1.3.3';
+        this.LATEST_MINIGAME_VERSION = '1.3.3';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -4297,7 +4297,15 @@ Draw 10 guarantees one Epic or Legendary!`;
             // Update UI elements: Page Status, Title, and Nav Buttons
             const pageStatusEl = document.querySelector(`#${category}-content .quiz-page-status`);
             const scoreText = savedPageProgress ? `(Score: ${savedPageProgress.score})` : '';
-            pageStatusEl.textContent = `Page ${pageIndex + 1} / ${levelData.pages.length} ${scoreText}`;
+            const hasCoverPage = levelData.pages[0]?.type === 'cover';
+
+            if (pageData.type === 'cover') {
+                pageStatusEl.textContent = '';
+            } else {
+                const totalQuizzes = hasCoverPage ? levelData.pages.length - 1 : levelData.pages.length;
+                const currentQuizNumber = hasCoverPage ? pageIndex : pageIndex + 1;
+                pageStatusEl.textContent = `Page ${pageIndex + 1} / ${levelData.pages.length} ${scoreText}`;
+            }
 
             const titleEl = document.querySelector(`#${category}-content .quiz-title`);
             titleEl.textContent = levelData.title || category;
@@ -4320,6 +4328,9 @@ Draw 10 guarantees one Epic or Legendary!`;
             // Use a switch to delegate rendering to the correct quiz type function
             const displayContainer = document.querySelector(`#${category}-content .tab-display-content`);
             switch (pageData.type) {
+                case 'cover':
+                    this.renderCoverPage(displayContainer, pageData, category, level);
+                    break;
                 case 'pic_match':
                     this.renderPicMatchQuiz(displayContainer, pageData, savedPageProgress);
                     break;
@@ -4429,8 +4440,12 @@ Draw 10 guarantees one Epic or Legendary!`;
         const allPages = levelData.pages;
         const savedPages = levelProgress.pageData;
 
+        // Count only actual quiz pages, excluding the cover page
+        const totalQuizzes = allPages.filter(page => page.type !== 'cover').length;
+        const completedQuizzes = savedPages.filter(p => p !== null && p !== undefined).length;
+
         // Check if all pages for this level are completed
-        if (allPages.length === savedPages.filter(p => p !== null && p !== undefined).length) {
+        if (totalQuizzes > 0 && totalQuizzes === completedQuizzes) {
             const totalScore = levelProgress.currentTotalScore;
             const totalPossible = levelProgress.currentTotalPossible;
 
@@ -4465,6 +4480,31 @@ Draw 10 guarantees one Epic or Legendary!`;
 
             this.saveUserData();
         }
+    }
+
+    // Cover Page
+    renderCoverPage(container, pageData, category, level) {
+        const levelData = this.socialStudiesContent[category]?.[level];
+        if (!levelData || !pageData.data) {
+            container.innerHTML = "<p>Cover page information is missing.</p>";
+            return;
+        }
+
+        // Calculate the points for this level
+        const pointsEarned = this.SOCIAL_STUDIES_BASE_CULTURAL_POINTS_EARNED + (parseInt(level) - 1) * this.SOCIAL_STUDIES_CULTURAL_POINTS_INCREMENT;
+
+        container.innerHTML = `
+            <div class="ss-cover-page">
+                <p class="cover-description">${pageData.data.description || ''}</p>
+                ${pageData.data.cover_image ? `<img src="${pageData.data.cover_image}" alt="${levelData.title} cover" class="cover-image">` : ''}
+                <div class="theme-tip">
+                    <p> 💡 Passing this level will earn you: ${pointsEarned} Cultural Points 🎵</p>
+                </div>
+            </div>
+        `;
+
+        // Since this is a cover page, we don't treat it as a submittable quiz.
+        // The user just clicks "Next Page" to continue.
     }
 
     // --- Pic Match Quiz Implementation ---

@@ -4,6 +4,13 @@
             "title": "節日",
             "pages": [
                 {
+                    "type": "cover",
+                    "data": {
+                        "cover_image": "social/cover_holidays.jpg",
+                        "description": "Learn Chinese major holidays, their meanings and what people do"
+                    }
+                },
+                {
                     "type": "pic_match",
                     "data": {
                         "items": [

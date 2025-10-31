@@ -1681,6 +1681,38 @@ body.no-scroll {
     min-height: 200px;
 }
 
+
+/* Social Studies Cover Page Styles */
+
+.ss-cover-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Horizontally center the content */
+    text-align: center;   /* Center the text within all elements */
+    padding: 20px;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+}
+
+.ss-cover-page .cover-image {
+    max-width: 80%;
+    max-height: 300px; /* Prevent image from being too tall */
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 25px;
+    object-fit: cover;
+}
+
+.ss-cover-page .cover-description {
+    font-size: 1rem;
+    line-height: 1.1;
+    color: var(--c-text-primary);
+    max-width: 600px; /* Constrain width for better readability */
+    margin-bottom: 30px;
+}
+
 /* --- Social Studies Quiz-Specific Styles --- */
 .quiz-header {
     display: flex;
