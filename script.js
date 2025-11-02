@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.3.3';
+        this.APP_VERSION = '1.3.5';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.3.3';
-        this.LATEST_MINIGAME_VERSION = '1.3.3';
+        this.DEFAULT_WORDS_VERSION = '1.3.5';
+        this.LATEST_MINIGAME_VERSION = '1.3.5';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -335,6 +335,8 @@ class ChineseLearningApp {
         });
         document.getElementById('restart-social-studies-level-btn').addEventListener('click', () => this.restartSocialStudiesLevel());
         document.getElementById('review-social-studies-btn').addEventListener('click', () => this.reviewSocialStudiesLevel());
+        document.getElementById('start-social-studies-btn').addEventListener('click', () => this.startSocialStudiesQuiz());
+
 
         // Dev Mode
         document.getElementById('backup-btn').addEventListener('click', () => this.exportUserData());
@@ -4231,7 +4233,7 @@ Draw 10 guarantees one Epic or Legendary!`;
         if (!levelDropdown) return;
         const level = levelDropdown.value;
 
-        // --- Step 1: Ensure progress data structure exists for the selected category/level ---
+        // --- Step 1: Ensure progress data structure exists ---
         if (!this.currentUser.socialStudiesProgress[category]) {
             this.currentUser.socialStudiesProgress[category] = {};
         }
@@ -4241,127 +4243,93 @@ Draw 10 guarantees one Epic or Legendary!`;
                 finalScore: null,
                 currentTotalScore: 0,
                 currentTotalPossible: 0,
-                culturalPointsAwarded: false // Explicitly initialize here
+                culturalPointsAwarded: false
             };
         }
         const levelProgress = this.currentUser.socialStudiesProgress[category][level];
+        const levelData = this.socialStudiesContent[category]?.[level];
+        const displayContainer = document.querySelector(`#${category}-content .tab-display-content`);
 
-        // --- Step 2: Get references to the main UI containers ---
-        const contentContainer = document.querySelector('.social-studies-content-container');
-        const summaryScreen = contentContainer.querySelector('.level-complete-summary');
-        const quizWrapper = contentContainer.querySelector('.quiz-content-wrapper');
+        // --- Step 2: Hide all navigation controls by default ---
+        document.getElementById('prev-ss-page-btn').classList.add('hidden');
+        document.getElementById('next-ss-page-btn').classList.add('hidden');
+        document.getElementById('ss-submit-placeholder').innerHTML = '';
+        document.getElementById('start-social-studies-btn').classList.add('hidden');
+        document.getElementById('review-social-studies-btn').classList.add('hidden');
+        document.getElementById('restart-social-studies-level-btn').classList.add('hidden');
 
-        // --- Get a reference to the specific controls for the current category ---
-        const tabContent = document.getElementById(`${category}-content`);
-        const controlsContainer = tabContent.querySelector('.tab-controls');
+        // --- Step 3: Handle empty or invalid level data ---
+        if (!levelData || !levelData.pages || levelData.pages.length === 0) {
+            this.renderEmptySocialStudiesPage(category);
+            return;
+        }
 
-        // --- Step 3: Decide whether to show the "Level Complete" summary or the quiz ---
-        if (levelProgress.finalScore && !this.socialStudiesReviewMode) {
-            // State A: The level is already completed. Show the summary.
-            summaryScreen.classList.remove('hidden');
-            quizWrapper.classList.add('hidden');
-            summaryScreen.querySelector('.final-score-display').textContent = levelProgress.finalScore;
+        const pageIndex = this.currentSocialStudiesPage;
+        const pageData = levelData.pages[pageIndex];
 
-            // --- Move the controls to the summary screen ---
-            const summaryControlsPlaceholder = summaryScreen.querySelector('.summary-controls-container');
-            if (summaryControlsPlaceholder && controlsContainer) {
-                // Clear the placeholder and add the controls
-                summaryControlsPlaceholder.innerHTML = '';
-                summaryControlsPlaceholder.appendChild(controlsContainer);
-            }
-        } else {
-            // State B: The level is in progress. Show the quiz wrapper.
-            summaryScreen.classList.add('hidden');
-            quizWrapper.classList.remove('hidden');
+        // --- Step 4: Main Rendering Logic ---
+        const pageStatusEl = document.querySelector(`#${category}-content .quiz-page-status`);
+        const titleEl = document.querySelector(`#${category}-content .quiz-title`);
+        titleEl.textContent = levelData.title || category;
 
-            // --- Move controls back to the quiz header ---
-            const quizHeader = tabContent.querySelector('.quiz-header');
-            if (quizHeader && controlsContainer) {
-                quizHeader.prepend(controlsContainer);
-            }
+        if (pageIndex === 0) { // --- Cover Page Logic ---
+            pageStatusEl.textContent = '';
+            this.renderCoverPage(displayContainer, pageData, category, level, levelProgress);
 
-            const levelData = this.socialStudiesContent[category]?.[level];
-
-            // --- Step 4: Check if there is any content for this level ---
-            if (!levelData || !levelData.pages || levelData.pages.length === 0) {
-                // State C: No content defined in social.json. Show empty state.
-                this.renderEmptySocialStudiesPage(category);
-                return;
-            }
-
-            // --- Step 5: Render the specific quiz page ---
-            const pageIndex = this.currentSocialStudiesPage;
-            const pageData = levelData.pages[pageIndex];
-            const savedPageProgress = levelProgress.pageData[pageIndex] || null;
-
-            // Update UI elements: Page Status, Title, and Nav Buttons
-            const pageStatusEl = document.querySelector(`#${category}-content .quiz-page-status`);
-            const scoreText = savedPageProgress ? `(Score: ${savedPageProgress.score})` : '';
-            const hasCoverPage = levelData.pages[0]?.type === 'cover';
-
-            if (pageData.type === 'cover') {
-                pageStatusEl.textContent = '';
+            // Show either "Start" or "Review/Restart"
+            if (levelProgress.finalScore) {
+                document.getElementById('review-social-studies-btn').classList.remove('hidden');
+                document.getElementById('restart-social-studies-level-btn').classList.remove('hidden');
             } else {
-                const totalQuizzes = hasCoverPage ? levelData.pages.length - 1 : levelData.pages.length;
-                const currentQuizNumber = hasCoverPage ? pageIndex : pageIndex + 1;
-                pageStatusEl.textContent = `Page ${pageIndex + 1} / ${levelData.pages.length} ${scoreText}`;
+                document.getElementById('start-social-studies-btn').classList.remove('hidden');
             }
 
-            const titleEl = document.querySelector(`#${category}-content .quiz-title`);
-            titleEl.textContent = levelData.title || category;
+        } else { // --- Quiz Page Logic ---
+            const hasCoverPage = levelData.pages[0]?.type === 'cover';
+            const totalQuizzes = hasCoverPage ? levelData.pages.length - 1 : levelData.pages.length;
+            const currentQuizNumber = hasCoverPage ? pageIndex : pageIndex + 1;
+            const savedPageProgress = levelProgress.pageData[pageIndex] || null;
+            const scoreText = savedPageProgress ? `(Score: ${savedPageProgress.score})` : '';
+            pageStatusEl.textContent = `Quiz ${currentQuizNumber}/${totalQuizzes} ${scoreText}`;
 
-            // Determine the state of the "Next Page" button
+            // Show and manage Next/Prev buttons
+            const prevBtn = document.getElementById('prev-ss-page-btn');
             const nextBtn = document.getElementById('next-ss-page-btn');
+            prevBtn.classList.remove('hidden');
+            nextBtn.classList.remove('hidden');
+
             const isLastPage = (pageIndex === levelData.pages.length - 1);
+            prevBtn.disabled = (hasCoverPage && pageIndex === 1) || (!hasCoverPage && pageIndex === 0); // Disable prev on the first quiz page
 
             if (this.socialStudiesReviewMode && isLastPage) {
-                // In review mode on the last page, make it an "Exit" button
                 nextBtn.textContent = 'Exit Review';
                 nextBtn.disabled = false;
             } else {
-                // Otherwise, it's a normal "Next Page" button
                 nextBtn.textContent = 'Next Page';
                 nextBtn.disabled = isLastPage;
             }
-            document.getElementById('prev-ss-page-btn').disabled = (pageIndex === 0);
 
-            // Use a switch to delegate rendering to the correct quiz type function
-            const displayContainer = document.querySelector(`#${category}-content .tab-display-content`);
+            // Render the specific quiz type
             switch (pageData.type) {
-                case 'cover':
-                    this.renderCoverPage(displayContainer, pageData, category, level);
-                    break;
-                case 'pic_match':
-                    this.renderPicMatchQuiz(displayContainer, pageData, savedPageProgress);
-                    break;
-                case 'match':
-                    this.renderMatchQuiz(displayContainer, pageData, savedPageProgress);
-                    break;
-                case 'mchoice':
-                    this.renderMChoiceQuiz(displayContainer, pageData, savedPageProgress);
-                    break;
-                default:
-                    displayContainer.innerHTML = `<p>Quiz type "${pageData.type}" is coming soon!</p>`;
+                case 'pic_match': this.renderPicMatchQuiz(displayContainer, pageData, savedPageProgress); break;
+                case 'match': this.renderMatchQuiz(displayContainer, pageData, savedPageProgress); break;
+                case 'mchoice': this.renderMChoiceQuiz(displayContainer, pageData, savedPageProgress); break;
+                case 'pic_label': this.renderPicLabelQuiz(displayContainer, pageData, savedPageProgress); break;
+                default: displayContainer.innerHTML = `<p>Quiz type "${pageData.type}" not found.</p>`;
             }
 
-            // --- Handle the Submit Button ---
-            const submitPlaceholder = document.getElementById('ss-submit-placeholder');
-            submitPlaceholder.innerHTML = ''; // Clear previous button
-
-            if ((pageData.type === 'pic_match' || pageData.type === 'match' || pageData.type === 'mchoice') && !savedPageProgress) {
+            // Render submit button if quiz is active
+            if ((pageData.type === 'pic_match' || pageData.type === 'match' || pageData.type === 'mchoice' || pageData.type === 'pic_label') && !savedPageProgress) {
+                const submitPlaceholder = document.getElementById('ss-submit-placeholder');
                 const submitBtn = document.createElement('button');
                 submitBtn.id = 'submit-social-studies-btn';
                 submitBtn.className = 'game-action-btn';
                 submitBtn.textContent = 'Submit';
-
-                if (pageData.type === 'pic_match') {
-                    submitBtn.addEventListener('click', () => this.submitPicMatch());
-                } else if (pageData.type === 'match') {
-                    submitBtn.addEventListener('click', () => this.submitMatchQuiz());
-                } else if (pageData.type === 'mchoice') {
-                    submitBtn.addEventListener('click', () => this.submitMChoiceQuiz());
-                }
-
+                // Attach correct submit handler
+                if (pageData.type === 'pic_match') submitBtn.addEventListener('click', () => this.submitPicMatch());
+                else if (pageData.type === 'pic_label') submitBtn.addEventListener('click', () => this.submitPicLabelQuiz());
+                else if (pageData.type === 'match') submitBtn.addEventListener('click', () => this.submitMatchQuiz());
+                else if (pageData.type === 'mchoice') submitBtn.addEventListener('click', () => this.submitMChoiceQuiz());
                 submitPlaceholder.appendChild(submitBtn);
             }
         }
@@ -4388,6 +4356,7 @@ Draw 10 guarantees one Epic or Legendary!`;
         const isLastPage = this.currentSocialStudiesPage === totalPages - 1;
         if (direction === 1 && this.socialStudiesReviewMode && isLastPage) {
             this.socialStudiesReviewMode = false; // Turn off review mode
+            this.currentSocialStudiesPage = 0;
             this.renderSocialStudiesContent();    // Re-render to show the summary screen
             return; // Stop here
         }
@@ -4420,14 +4389,21 @@ Draw 10 guarantees one Epic or Legendary!`;
         this.saveUserData();
 
         // Rerender the content, which will now show the quiz instead of the summary
-        this.currentSocialStudiesPage = 0;
+        const levelData = this.socialStudiesContent[category]?.[level];
+        const hasCoverPage = levelData?.pages?.[0]?.type === 'cover';
+        this.currentSocialStudiesPage = hasCoverPage ? 1 : 0;
         this.renderSocialStudiesContent();
     }
 
     reviewSocialStudiesLevel() {
-        // Set a flag to enter review mode and re-render
+        // Set a flag to enter review mode and jump to the first quiz page
         this.socialStudiesReviewMode = true;
-        this.currentSocialStudiesPage = 0; // Start review from the first page
+        this.currentSocialStudiesPage = 1; // Go to the first quiz page
+        this.renderSocialStudiesContent();
+    }
+
+    startSocialStudiesQuiz() {
+        this.currentSocialStudiesPage = 1; // Go to the first quiz page
         this.renderSocialStudiesContent();
     }
 
@@ -4479,11 +4455,12 @@ Draw 10 guarantees one Epic or Legendary!`;
             }
 
             this.saveUserData();
+            this.currentSocialStudiesPage = 0;
         }
     }
 
     // Cover Page
-    renderCoverPage(container, pageData, category, level) {
+    renderCoverPage(container, pageData, category, level, levelProgress) {
         const levelData = this.socialStudiesContent[category]?.[level];
         if (!levelData || !pageData.data) {
             container.innerHTML = "<p>Cover page information is missing.</p>";
@@ -4492,19 +4469,42 @@ Draw 10 guarantees one Epic or Legendary!`;
 
         // Calculate the points for this level
         const pointsEarned = this.SOCIAL_STUDIES_BASE_CULTURAL_POINTS_EARNED + (parseInt(level) - 1) * this.SOCIAL_STUDIES_CULTURAL_POINTS_INCREMENT;
+        const minScore = this.SOCIAL_STUDIES_PASSING_SCORE;
+
+        let pointsMessageHTML = '';
+        let scoreHTML = '';
+
+        if (levelProgress && levelProgress.finalScore) {
+            scoreHTML = `<div class="level-complete-summary"><h3>Score: ${levelProgress.finalScore}</h3></div>`;
+            if (levelProgress.culturalPointsAwarded) {
+                pointsMessageHTML = `
+                    <div class="theme-tip awarded">
+                        <p>✅ You've passed this level already and earned ${pointsEarned} Cultural Points 🎵</p>
+                    </div>
+                `;
+            } else {
+                 pointsMessageHTML = `
+                    <div class="theme-tip warning">
+                        <p>💡 You did not pass this level. Try again to earn ${pointsEarned} points!</p>
+                    </div>
+                `;
+            }
+        } else {
+            pointsMessageHTML = `
+                <div class="theme-tip">
+                    <p>💡 Passing this level with a score >= ${minScore}% will earn you: ${pointsEarned} Cultural Points 🎵</p>
+                </div>
+            `;
+        }
 
         container.innerHTML = `
             <div class="ss-cover-page">
                 <p class="cover-description">${pageData.data.description || ''}</p>
                 ${pageData.data.cover_image ? `<img src="${pageData.data.cover_image}" alt="${levelData.title} cover" class="cover-image">` : ''}
-                <div class="theme-tip">
-                    <p> 💡 Passing this level will earn you: ${pointsEarned} Cultural Points 🎵</p>
-                </div>
+                ${scoreHTML}
+                ${pointsMessageHTML}
             </div>
         `;
-
-        // Since this is a cover page, we don't treat it as a submittable quiz.
-        // The user just clicks "Next Page" to continue.
     }
 
     // --- Pic Match Quiz Implementation ---
@@ -4637,6 +4637,14 @@ Draw 10 guarantees one Epic or Legendary!`;
 
         let html = `
             <div class="match-quiz-description">${pageData.data.description || ''}</div>
+        `;
+
+        // --- Conditional image display ---
+        if (pageData.data.image) {
+            html += `<img src="${pageData.data.image}" alt="Quiz Image" class="match-quiz-image">`;
+        }
+
+        html += `
             <div class="match-quiz-container">
                 <svg class="match-lines-canvas"></svg>
                 <div class="match-column" id="match-col-left">
@@ -5414,6 +5422,116 @@ Draw 10 guarantees one Epic or Legendary!`;
         perkBox.innerHTML = contentHTML;
         grid.appendChild(perkBox);
     }
+
+    // --- Pic Label Quiz (Image Labeling) Implementation ---
+    renderPicLabelQuiz(container, pageData, savedProgress) {
+        let html = `
+            <div class="match-quiz-description">${pageData.data.description || ''}</div>
+            <div class="pic-label-container">
+                <img src="${pageData.data.image}" alt="Labeling quiz background">`;
+
+        pageData.data.hotspots.forEach(hotspot => {
+            const userAnswer = savedProgress?.answers?.[hotspot.id] || '?';
+            let correctnessClass = '';
+
+            if (savedProgress) {
+                correctnessClass = userAnswer === hotspot.label ? 'correct' : 'wrong';
+            }
+
+            html += `<div class="pic-label-hotspot ${correctnessClass}"
+                          style="left: ${hotspot.coords.x}%; top: ${hotspot.coords.y}%;"
+                          data-hotspot-id="${hotspot.id}">
+                       ${userAnswer}
+                     </div>`;
+        });
+        html += `</div>`;
+
+        // Render the word bank using the same style as pic_match
+        // It's only shown if the quiz is active (not graded)
+        if (!savedProgress) {
+            html += '<div class="pic-match-answer-bank">'; // Re-use class
+            const wordBank = [...pageData.data.wordBank].sort(() => 0.5 - Math.random());
+            wordBank.forEach(answer => {
+                html += `<button class="answer-bank-btn" data-answer-text="${answer}">${answer}</button>`;
+            });
+            html += '</div>';
+        }
+
+        container.innerHTML = html;
+
+        if (!savedProgress) {
+            this.setupPicLabelEvents();
+        }
+    }
+
+    setupPicLabelEvents() {
+        // This is the same selection logic as pic_match
+        document.querySelectorAll('.answer-bank-btn').forEach(btn => {
+            btn.addEventListener('click', e => this.handlePicMatchAnswerSelect(e));
+        });
+
+        // This is the placement logic
+        document.querySelectorAll('.pic-label-hotspot').forEach(hotspot => {
+            hotspot.addEventListener('click', (e) => this.handlePicLabelHotspotClick(e));
+        });
+    }
+
+    handlePicLabelHotspotClick(event) {
+        if (!this.currentSelectedAnswer) return; // Do nothing if no answer is selected
+
+        const clickedHotspot = event.currentTarget;
+        clickedHotspot.textContent = this.currentSelectedAnswer;
+        clickedHotspot.style.color = 'inherit'; // Use themed color
+
+        // Deselect the answer from the bank
+        document.querySelectorAll('.answer-bank-btn').forEach(btn => btn.classList.remove('selected'));
+        this.currentSelectedAnswer = null;
+    }
+
+    submitPicLabelQuiz() {
+        const activeTabButton = document.querySelector('.social-studies-tab-button.active');
+        const category = activeTabButton.dataset.tab;
+        const level = document.getElementById(`${category}-level-select`).value;
+        const pageIndex = this.currentSocialStudiesPage;
+        const pageData = this.socialStudiesContent[category][level].pages[pageIndex];
+
+        const quizHotspots = document.querySelectorAll('.pic-label-hotspot');
+        let score = 0;
+        const userAnswers = {};
+
+        quizHotspots.forEach(hotspotEl => {
+            const hotspotId = hotspotEl.dataset.hotspotId;
+            const userAnswer = hotspotEl.textContent.trim();
+            userAnswers[hotspotId] = userAnswer;
+
+            // Find the correct answer from the original data using the ID
+            const hotspotDef = pageData.data.hotspots.find(h => h.id === hotspotId);
+            if (hotspotDef && userAnswer === hotspotDef.label) {
+                score++;
+            }
+        });
+
+        const total = pageData.data.hotspots.length;
+
+        // Save progress
+        const progressToSave = {
+            score: `${score}/${total}`,
+            answers: userAnswers
+        };
+
+        const levelProgress = this.currentUser.socialStudiesProgress[category][level];
+        levelProgress.pageData[pageIndex] = progressToSave;
+
+        levelProgress.currentTotalScore = (levelProgress.currentTotalScore || 0) + score;
+        levelProgress.currentTotalPossible = (levelProgress.currentTotalPossible || 0) + total;
+
+        this.saveUserData();
+        alert(`Page submitted! Your score: ${score}/${total}`);
+
+        this.checkSocialStudiesLevelCompletion(category, level);
+        this.renderSocialStudiesContent();
+    }
+
 }
 
 const app = new ChineseLearningApp();

@@ -180,13 +180,6 @@
                 <button class="social-studies-tab-button" data-tab="culture">人文 Culture</button>
             </div>
             <div class="social-studies-content-container">
-                <!-- Level Complete screen, hidden by default -->
-                <div class="level-complete-summary hidden">
-                    <div class="summary-controls-container"></div>
-                    <h3>Your Score: <span class="final-score-display">0/0</span></h3>
-                    <button class="game-action-btn secondary" id="review-social-studies-btn">Review Quiz</button>
-                    <button class="game-action-btn" id="restart-social-studies-level-btn">Restart Quiz</button>
-                </div>
                 <!-- This wrapper will now contain the quiz content and be toggled -->
                 <div class="quiz-content-wrapper">
                     <!-- History Tab Content -->
@@ -262,9 +255,12 @@
 
                     <!-- Page Navigation -->
                     <div class="quiz-navigation-controls">
-                        <button class="game-action-btn secondary" id="prev-ss-page-btn">Previous Page</button>
+                        <button class="game-action-btn secondary hidden" id="prev-ss-page-btn">Previous Page</button>
                         <div id="ss-submit-placeholder"></div>
-                        <button class="game-action-btn secondary" id="next-ss-page-btn">Next Page</button>
+                        <button class="game-action-btn secondary hidden" id="next-ss-page-btn">Next Page</button>
+                        <button id="start-social-studies-btn" class="game-action-btn hidden">Start Quiz</button>
+                        <button id="review-social-studies-btn" class="game-action-btn hidden">Review Quiz</button>
+                        <button id="restart-social-studies-level-btn" class="game-action-btn hidden">Restart Quiz</button>
                     </div>
                 </div>
             </div>

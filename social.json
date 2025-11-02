@@ -225,5 +225,263 @@
         }
     },
     "geography": {
+        "1": {
+            "title": "台灣",
+            "pages": [
+                {
+                    "type": "cover",
+                    "data": {
+                        "cover_image": "social/cover_taiwan.jpg",
+                        "description": "Learn Taiwan cities, landmarks, transportations, and thier characteristics"
+                    }
+                },
+                {
+                    "type": "pic_label",
+                    "data": {
+                        "image": "social/taiwan_cities.png",
+                        "description": "Identify cities in Taiwan",
+                        "hotspots": [
+                            {
+                                "id": "taipei",
+                                "label": "台北",
+                                "coords": { "x": 75.0, "y": 9.8 }
+                            },
+                            {
+                                "id": "shinchu",
+                                "label": "新竹",
+                                "coords": { "x": 62.3, "y": 19.4 }
+                            },
+                            {
+                                "id": "miaoli",
+                                "label": "苗栗",
+                                "coords": { "x": 53.0, "y": 23.9 }
+                            },
+                            {
+                                "id": "nantou",
+                                "label": "南投",
+                                "coords": { "x": 57.7, "y": 45.5 }
+                            },
+                            {
+                                "id": "taichung",
+                                "label": "台中",
+                                "coords": { "x": 49.4, "y": 32.3 }
+                            },
+                            {
+                                "id": "tainan",
+                                "label": "台南",
+                                "coords": { "x": 36.1, "y": 61.7 }
+                            },
+                            {
+                                "id": "gaohsiung",
+                                "label": "高雄",
+                                "coords": { "x": 36.8, "y": 71.1 }
+                            },
+                            {
+                                "id": "yilan",
+                                "label": "宜蘭",
+                                "coords": { "x": 76.5, "y": 22.6 }
+                            }
+                        ],
+                        "wordBank": [
+                            "台北",
+                            "新竹",
+                            "苗栗",
+                            "南投",
+                            "台中",
+                            "台南",
+                            "高雄",
+                            "宜蘭"
+                        ]
+                    }
+                },
+                {
+                    "type": "pic_label",
+                    "data": {
+                        "image": "social/taiwan_landmark.png",
+                        "description": "Identify Taiwan landmarks and various local specialties",
+                        "hotspots": [
+                            {
+                                "id": "taipei101",
+                                "label": "台北101",
+                                "coords": { "x": 76.0, "y": 9.4 }
+                            },
+                            {
+                                "id": "science_park",
+                                "label": "新竹科學園區",
+                                "coords": { "x": 60.2, "y": 18.8 }
+                            },
+                            {
+                                "id": "airport",
+                                "label": "機場",
+                                "coords": { "x": 66.2, "y": 12.8 }
+                            },
+                            {
+                                "id": "mt",
+                                "label": "玉山",
+                                "coords": { "x": 63.8, "y": 50.1 }
+                            },
+                            {
+                                "id": "chicken",
+                                "label": "火雞肉飯",
+                                "coords": { "x": 49.8, "y": 53.8 }
+                            },
+                            {
+                                "id": "lake",
+                                "label": "日月潭",
+                                "coords": { "x": 60.7, "y": 44.3 }
+                            },
+                            {
+                                "id": "rice",
+                                "label": "米",
+                                "coords": { "x": 68.4, "y": 65.3 }
+                            }
+                        ],
+                        "wordBank": [
+                            "台北101",
+                            "機場",
+                            "新竹科學園區",
+                            "玉山",
+                            "火雞肉飯",
+                            "日月潭",
+                            "米"
+                        ]
+                    }
+                },
+                {
+                    "type": "match",
+                    "data": {
+                        "image": "social/taipei.png",
+                        "description": "Which station should you get off for these places in Taipei?",
+                        "pairs": [
+                            ["台北101", "R03"],
+                            ["阿公阿嬤家", "R04"],
+                            ["爺爺奶奶家", "G02"],
+                            ["台北車站", "R10"],
+                            ["乾媽家", "R06"],
+                            ["兒童新樂園", "R16"],
+                            ["動物園", "BR01"]
+                        ]
+                    }
+                },
+                {
+                    "type": "mchoice",
+                    "data": {
+                        "questions": [
+                            {
+                                "id": "q1",
+                                "question": "在台灣從最北邊開車開到最南邊要幾個小時？",
+                                "options": [
+                                    "5小時",
+                                    "24小時",
+                                    "2小時",
+                                    "10小時"
+                                ],
+                                "answer": "5小時"
+                            },
+                            {
+                                "id": "q2",
+                                "question": "台灣哪個城市人口密度最高？",
+                                "options": [
+                                    "台北",
+                                    "高雄",
+                                    "台東",
+                                    "台中"
+                                ],
+                                "answer": "台北"
+                            },
+                            {
+                                "id": "q3",
+                                "question": "下列哪個不是台灣北部地區主要發展？",
+                                "options": [
+                                    "商業 business",
+                                    "科技業 technology",
+                                    "農業 agriculture",
+                                    "旅遊業 tourism"
+                                ],
+                                "answer": "農業 agriculture"
+                            },
+                            {
+                                "id": "q4",
+                                "question": "台灣哪個區人口最少？",
+                                "options": [
+                                    "北部區",
+                                    "中部區",
+                                    "南部區",
+                                    "東部區"
+                                ],
+                                "answer": "東部區"
+                            },
+                            {
+                                "id": "q5",
+                                "question": "哪個城市是台灣唯一沒有靠海的城市？",
+                                "options": [
+                                    "台北",
+                                    "高雄",
+                                    "台東",
+                                    "南投"
+                                ],
+                                "answer": "南投"
+                            },
+                            {
+                                "id": "q6",
+                                "image": "social/taiwan_tallest_mt.gif",
+                                "question": "台灣最高的山是什麼山？",
+                                "options": [
+                                    "玉山",
+                                    "阿里山",
+                                    "雪山",
+                                    "陽明山"
+                                ],
+                                "answer": "玉山"
+                            },
+                            {
+                                "id": "q7",
+                                "image": "social/taiwan_lake.jpg",
+                                "question": "日月潭在哪裡？",
+                                "options": [
+                                    "台北",
+                                    "高雄",
+                                    "台東",
+                                    "南投"
+                                ],
+                                "answer": "南投"
+                            },
+                            {
+                                "id": "q8",
+                                "question": "台北捷運上可以吃東西嗎？",
+                                "options": [
+                                    "可以",
+                                    "不可以"
+                                ],
+                                "answer": "不可以"
+                            },
+                            {
+                                "id": "q9",
+                                "image": "social/taiwan_tallest_tree.jpg",
+                                "question": "台北有一棵很老的樹活了1900年。這棵樹在哪裡？",
+                                "options": [
+                                    "玉山",
+                                    "阿里山",
+                                    "雪山",
+                                    "陽明山"
+                                ],
+                                "answer": "阿里山"
+                            },
+                            {
+                                "id": "q10",
+                                "question": "從台北到台中坐什麼車最快？",
+                                "options": [
+                                    "計程車",
+                                    "高鐵",
+                                    "捷運",
+                                    "火車"
+                                ],
+                                "answer": "高鐵"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
     }
 }
