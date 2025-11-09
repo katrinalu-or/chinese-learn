@@ -4631,9 +4631,14 @@ Draw 10 guarantees one Epic or Legendary!`;
         this.currentMatchSelection = null; // Reset selection
         const pairs = pageData.data.pairs;
 
-        // Always show all items, but don't shuffle when showing graded results
-        const leftItems = savedProgress ? pairs.map(p => p[0]) : [...pairs.map(p => p[0])].sort(() => 0.5 - Math.random());
-        const rightItems = savedProgress ? pairs.map(p => p[1]) : [...pairs.map(p => p[1])].sort(() => 0.5 - Math.random());
+        // --- Create unique lists for BOTH columns ---
+        const allLeftItems = pairs.map(p => p[0]);
+        const uniqueLeftItems = [...new Set(allLeftItems)];
+        const leftItems = savedProgress ? uniqueLeftItems.sort((a,b) => a.localeCompare(b)) : uniqueLeftItems.sort(() => 0.5 - Math.random());
+
+        const allRightItems = pairs.map(p => p[1]);
+        const uniqueRightItems = [...new Set(allRightItems)];
+        const rightItems = savedProgress ? uniqueRightItems.sort((a,b) => a.localeCompare(b)) : uniqueRightItems.sort(() => 0.5 - Math.random());
 
         let html = `
             <div class="match-quiz-description">${pageData.data.description || ''}</div>
@@ -4651,13 +4656,13 @@ Draw 10 guarantees one Epic or Legendary!`;
                     ${leftItems.map(item => {
                         let itemClass = 'match-item';
                         if (savedProgress) {
-                            // Check if this left item was matched correctly
-                            const userRightItem = savedProgress.answers[item];
-                            if (userRightItem) {
-                                const correctRightItem = pairs.find(p => p[0] === item)?.[1];
-                                itemClass += userRightItem === correctRightItem ? ' correct' : ' wrong';
-                            } else {
-                                itemClass += ' wrong'; // Not matched = wrong
+                            // Check if this left-side item is the start of ANY correct match made by the user.
+                            const isUsedCorrectly = pairs.some(p =>
+                                p[0] === item && // Is this the right item for a pair?
+                                savedProgress.answers[p[0]] === p[1] // And did the user match it correctly to its target?
+                            );
+                            if (isUsedCorrectly) {
+                                itemClass += ' correct';
                             }
                         }
                         return `<button class="${itemClass}" data-item-text="${item}">${item}</button>`;
@@ -4667,13 +4672,14 @@ Draw 10 guarantees one Epic or Legendary!`;
                     ${rightItems.map(item => {
                         let itemClass = 'match-item';
                         if (savedProgress) {
-                            // Check if this right item was matched correctly
-                            const correctLeftItem = pairs.find(p => p[1] === item)?.[0];
-                            const userRightItem = savedProgress.answers[correctLeftItem];
-                            if (userRightItem === item) {
+                            // Check if this right-side item is the correct target for ANY of the user's answers.
+                            const isUsedCorrectly = pairs.some(p =>
+                                p[1] === item && // Is this the right item for a pair?
+                                savedProgress.answers[p[0]] === item // And did the user match it correctly?
+                            );
+                            // If it's part of any correct match, mark it as correct.
+                            if (isUsedCorrectly) {
                                 itemClass += ' correct';
-                            } else {
-                                itemClass += ' wrong';
                             }
                         }
                         return `<button class="${itemClass}" data-item-text="${item}">${item}</button>`;
@@ -4691,7 +4697,7 @@ Draw 10 guarantees one Epic or Legendary!`;
     }
 
     setupMatchQuizEvents() {
-        this.matchSelections = {}; // Stores user's choices { left: right }
+        this.matchSelections = []; // Stores array of pairs [ [left, right], ... ]
         const leftItems = document.querySelectorAll('#match-col-left .match-item');
         const rightItems = document.querySelectorAll('#match-col-right .match-item');
 
@@ -4709,51 +4715,52 @@ Draw 10 guarantees one Epic or Legendary!`;
     }
 
     handleMatchItemClick(item, side) {
-        // --- Logic to un-pair a completed item ---
-        if (item.classList.contains('paired')) {
-            const leftText = side === 'left' ? item.dataset.itemText : Object.keys(this.matchSelections).find(key => this.matchSelections[key] === item.dataset.itemText);
-            const rightText = this.matchSelections[leftText];
-            delete this.matchSelections[leftText];
-
-            const leftEl = document.querySelector(`#match-col-left [data-item-text="${leftText}"]`);
-            const rightEl = document.querySelector(`#match-col-right [data-item-text="${rightText}"]`);
-            if(leftEl) leftEl.classList.remove('paired');
-            if(rightEl) rightEl.classList.remove('paired');
-
-            this.drawAllMatchLines();
-            return;
-        }
-
-        // --- Logic to handle a new selection ---
-        if (!this.currentMatchSelection) {
-            // No item is currently selected, so start a new selection.
-            this.currentMatchSelection = { element: item, side: side };
-            item.classList.add('selected');
-        } else {
-            // An item is already selected.
+        // --- A. An item is already selected ---
+        if (this.currentMatchSelection) {
+            // A1. Clicked the same item again: Cancel selection
             if (this.currentMatchSelection.element === item) {
-                // The user clicked the same item again to cancel.
                 item.classList.remove('selected');
                 this.currentMatchSelection = null;
-            } else if (this.currentMatchSelection.side !== side) {
-                // The user clicked an item on the opposite column to form a pair.
+                return;
+            }
+
+            // A2. Clicked an item on the opposite side: Form or break a pair
+            if (this.currentMatchSelection.side !== side) {
                 const leftItem = side === 'right' ? this.currentMatchSelection.element : item;
                 const rightItem = side === 'right' ? item : this.currentMatchSelection.element;
+                const leftText = leftItem.dataset.itemText;
+                const rightText = rightItem.dataset.itemText;
 
-                this.matchSelections[leftItem.dataset.itemText] = rightItem.dataset.itemText;
+                const pairIndex = this.matchSelections.findIndex(p => p[0] === leftText && p[1] === rightText);
 
+                if (pairIndex > -1) {
+                    // Pair exists, ove it (un-pair)
+                    this.matchSelections.splice(pairIndex, 1);
+                } else {
+                    // Pair does not exist, so add it
+                    this.matchSelections.push([leftText, rightText]);
+                }
+
+                // Update 'paired' status for both items
+                const isLeftPaired = this.matchSelections.some(p => p[0] === leftText);
+                const isRightPaired = this.matchSelections.some(p => p[1] === rightText);
+                leftItem.classList.toggle('paired', isLeftPaired);
+                rightItem.classList.toggle('paired', isRightPaired);
+
+                // Reset selection and redraw
                 this.currentMatchSelection.element.classList.remove('selected');
-                leftItem.classList.add('paired');
-                rightItem.classList.add('paired');
                 this.currentMatchSelection = null;
-
                 this.drawAllMatchLines();
             } else {
-                // The user clicked a different item on the same column. Switch selection.
+                // A3. Clicked a different item on the same side: Switch selection
                 this.currentMatchSelection.element.classList.remove('selected');
                 this.currentMatchSelection = { element: item, side: side };
                 item.classList.add('selected');
             }
+        } else {
+            // --- B. No item is selected: Start a new selection ---
+            this.currentMatchSelection = { element: item, side: side };
+            item.classList.add('selected');
         }
     }
 
@@ -4761,20 +4768,26 @@ Draw 10 guarantees one Epic or Legendary!`;
         const canvas = document.querySelector('.match-lines-canvas');
         if (!canvas) return;
 
-    // Force browser to recalculate layout before we get element positions.
+        // Force browser to recalculate layout before we get element positions.
         canvas.getBoundingClientRect();
-        canvas.innerHTML = ''; // Clear old lines
+        canvas.innerHTML = '';
 
         const activeTabButton = document.querySelector('.social-studies-tab-button.active');
+        if (!activeTabButton) return;
         const category = activeTabButton.dataset.tab;
-        const level = document.getElementById(`${category}-level-select`).value;
+
+        const levelDropdown = document.getElementById(`${category}-level-select`);
+        if (!levelDropdown) return;
+        const level = levelDropdown.value;
+
         const pageIndex = this.currentSocialStudiesPage;
         const savedProgress = this.currentUser.socialStudiesProgress[category]?.[level]?.pageData[pageIndex];
 
-        const pairsToDraw = isGraded ? savedProgress.answers : this.matchSelections;
+        // The data to draw is now an array of pairs
+        const pairsToDraw = isGraded ? this.convertAnswersToPairs(savedProgress.answers) : this.matchSelections;
 
-        for (const leftText in pairsToDraw) {
-            const rightText = pairsToDraw[leftText];
+        for (const pair of pairsToDraw) {
+            const [leftText, rightText] = pair;
             const leftEl = document.querySelector(`#match-col-left [data-item-text="${leftText}"]`);
             const rightEl = document.querySelector(`#match-col-right [data-item-text="${rightText}"]`);
 
@@ -4791,6 +4804,13 @@ Draw 10 guarantees one Epic or Legendary!`;
                 canvas.appendChild(line);
             }
         }
+    }
+
+    // Helper to convert old saved data format if necessary
+    convertAnswersToPairs(answers) {
+        if (Array.isArray(answers)) return answers; // Already new format
+        // Convert old { left: right } object to [ [left, right] ] array
+        return Object.entries(answers).map(([left, right]) => [left, right]);
     }
 
     createSVGLine(el1, el2) {
@@ -4835,14 +4855,15 @@ Draw 10 guarantees one Epic or Legendary!`;
         let score = 0;
         const total = originalPairs.length;
 
-        // Check if the user's pairs are correct
-        const correctPairStrings = originalPairs.map(p => `${p[0]}---${p[1]}`);
-        for (const left in userSelections) {
-            const right = userSelections[left];
-            if (correctPairStrings.includes(`${left}---${right}`)) {
+        // Create a set of correct pairs for easy lookup
+        const correctPairStrings = new Set(originalPairs.map(p => `${p[0]}---${p[1]}`));
+
+        // Count how many of the user's selections are in the correct set
+        userSelections.forEach(userPair => {
+            if (correctPairStrings.has(`${userPair[0]}---${userPair[1]}`)) {
                 score++;
             }
-        }
+        });
 
         // Save progress for the page
         const progressToSave = {

@@ -67,7 +67,7 @@
     /* Social Studies Colors */
     --c-tab-history-bg: #a796c5;
     --c-tab-geography-bg: #f3d084;
-    --c-tab-idioms-bg: #f1b3a6;
+    --c-tab-news-bg: #f1b3a6;
     --c-tab-literature-bg: #a2d9ea;
     --c-tab-culture-bg: #a7d5c9;
     --c-icon-shadow: 1px 1px 2px rgba(0,0,0,0.3); /* Subtle dark shadow for light themes */
@@ -156,7 +156,7 @@ body.theme-halloween {
     /* Social Studies Colors */
     --c-tab-history-bg: #5a2a91;
     --c-tab-geography-bg: #e67e22;
-    --c-tab-idioms-bg: rgb(45, 174, 45);
+    --c-tab-news-bg: rgb(45, 174, 45);
     --c-tab-literature-bg: rgb(230, 55, 16);
     --c-tab-culture-bg: rgb(243, 186, 16);
     --c-icon-shadow: 0 0 5px rgba(255, 255, 255, 0.85); /* White glow for dark themes */
@@ -1631,7 +1631,7 @@ body.no-scroll {
 
 .social-studies-tab-button[data-tab="history"] { background-color: var(--c-tab-history-bg); }
 .social-studies-tab-button[data-tab="geography"] { background-color: var(--c-tab-geography-bg); }
-.social-studies-tab-button[data-tab="idioms"] { background-color: var(--c-tab-idioms-bg); }
+.social-studies-tab-button[data-tab="news"] { background-color: var(--c-tab-news-bg); }
 .social-studies-tab-button[data-tab="literature"] { background-color: var(--c-tab-literature-bg); }
 .social-studies-tab-button[data-tab="culture"] { background-color: var(--c-tab-culture-bg); }
 
@@ -1908,7 +1908,7 @@ body.no-scroll {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 6rem;
-    align-items: start;
+    align-items: center;
     padding: 0 1.5rem;
 }
 .match-quiz-image {
@@ -2158,6 +2158,8 @@ body.no-scroll {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transition: background-color 0.2s, border-color 0.2s, color 0.2s;
     background-color: var(--c-bg-draggable);
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
 }
 
 .pic-label-hotspot.correct {

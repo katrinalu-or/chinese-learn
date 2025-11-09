@@ -244,17 +244,17 @@
                             {
                                 "id": "taipei",
                                 "label": "台北",
-                                "coords": { "x": 75.0, "y": 9.8 }
+                                "coords": { "x": 77.0, "y": 10.5 }
                             },
                             {
                                 "id": "shinchu",
                                 "label": "新竹",
-                                "coords": { "x": 62.3, "y": 19.4 }
+                                "coords": { "x": 65.3, "y": 20.4 }
                             },
                             {
                                 "id": "miaoli",
                                 "label": "苗栗",
-                                "coords": { "x": 53.0, "y": 23.9 }
+                                "coords": { "x": 58.0, "y": 26.9 }
                             },
                             {
                                 "id": "nantou",
@@ -264,22 +264,22 @@
                             {
                                 "id": "taichung",
                                 "label": "台中",
-                                "coords": { "x": 49.4, "y": 32.3 }
+                                "coords": { "x": 52.4, "y": 35.3 }
                             },
                             {
                                 "id": "tainan",
                                 "label": "台南",
-                                "coords": { "x": 36.1, "y": 61.7 }
+                                "coords": { "x": 40.1, "y": 63.7 }
                             },
                             {
                                 "id": "gaohsiung",
                                 "label": "高雄",
-                                "coords": { "x": 36.8, "y": 71.1 }
+                                "coords": { "x": 40.7, "y": 74.1 }
                             },
                             {
                                 "id": "yilan",
                                 "label": "宜蘭",
-                                "coords": { "x": 76.5, "y": 22.6 }
+                                "coords": { "x": 79.5, "y": 25.6 }
                             }
                         ],
                         "wordBank": [
@@ -303,17 +303,17 @@
                             {
                                 "id": "taipei101",
                                 "label": "台北101",
-                                "coords": { "x": 76.0, "y": 9.4 }
+                                "coords": { "x": 79.0, "y": 11.0 }
                             },
                             {
                                 "id": "science_park",
                                 "label": "新竹科學園區",
-                                "coords": { "x": 60.2, "y": 18.8 }
+                                "coords": { "x": 64.2, "y": 18.8 }
                             },
                             {
                                 "id": "airport",
                                 "label": "機場",
-                                "coords": { "x": 66.2, "y": 12.8 }
+                                "coords": { "x": 67.2, "y": 13.8 }
                             },
                             {
                                 "id": "mt",
@@ -333,7 +333,7 @@
                             {
                                 "id": "rice",
                                 "label": "米",
-                                "coords": { "x": 68.4, "y": 65.3 }
+                                "coords": { "x": 68.4, "y": 67.3 }
                             }
                         ],
                         "wordBank": [
@@ -477,6 +477,202 @@
                                     "火車"
                                 ],
                                 "answer": "高鐵"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    "history": {
+        "1": {
+            "title": "中國歷史1",
+            "pages": [
+                {
+                    "type": "cover",
+                    "data": {
+                        "cover_image": "social/cover_chinese_history.png",
+                        "description": "Introduction to Chinese history and its first dynasty"
+                    }
+                },
+                {
+                    "type": "pic_label",
+                    "data": {
+                        "image": "social/dynasties1.png",
+                        "description": "Identify the first three time periods in Chinese history",
+                        "hotspots": [
+                            {
+                                "id": "d1",
+                                "label": "三黃五帝",
+                                "coords": { "x": 37, "y": 17.4 }
+                            },
+                            {
+                                "id": "d2",
+                                "label": "夏",
+                                "coords": { "x": 37, "y": 31.6 }
+                            },
+                            {
+                                "id": "d3",
+                                "label": "商",
+                                "coords": { "x": 37, "y": 47.8 }
+                            }
+                        ],
+                        "wordBank": [
+                            "三黃五帝",
+                            "夏",
+                            "商"
+                        ]
+                    }
+                },
+                {
+                    "type": "match",
+                    "data": {
+                        "description": "Which time periods are these people from?",
+                        "pairs": [
+                            ["堯", "三黃五帝"],
+                            ["順", "三黃五帝"],
+                            ["黃帝", "三黃五帝"],
+                            ["禹", "夏"],
+                            ["桀", "夏"],
+                            ["湯", "商"]
+                        ]
+                    }
+                },
+                {
+                    "type": "mchoice",
+                    "data": {
+                        "questions": [
+                            {
+                                "id": "q1",
+                                "question": "如果中國歷史從三皇五帝開始算起，中國歷史有多少年的時間?",
+                                "options": [
+                                    "1千年",
+                                    "2千年",
+                                    "5千年",
+                                    "1萬年"
+                                ],
+                                "answer": "5千年"
+                            },
+                            {
+                                "id": "q2",
+                                "question": "禪讓制是從誰開始，又是從誰結束？",
+                                "options": [
+                                    "黃帝開始，湯結束",
+                                    "堯開始，堯結束",
+                                    "禹開始，湯結束",
+                                    "堯開始，禹結束"
+                                ],
+                                "answer": "堯開始，禹結束"
+                            },
+                            {
+                                "id": "q3",
+                                "image": "social/flood.png",
+                                "question": "大禹是治水的方式是什麼?",
+                                "options": [
+                                    "疏導法",
+                                    "圍堵法",
+                                    "把水喝光"
+                                ],
+                                "answer": "疏導法"
+                            },
+                            {
+                                "id": "q4",
+                                "question": "中國第一個王朝是什麼？",
+                                "options": [
+                                    "三黃五帝",
+                                    "夏",
+                                    "商",
+                                    "周"
+                                ],
+                                "answer": "夏"
+                            },
+                            {
+                                "id": "q5",
+                                "question": "暴君是什麼意思？",
+                                "options": [
+                                    "不聽從他人意見的君王",
+                                    "把王位傳給自己兒子的君王",
+                                    "不專心管理國王的君王",
+                                    "用暴力欺壓百姓的君王"
+                                ],
+                                "answer": "用暴力欺壓百姓的君王"
+                            },
+                            {
+                                "id": "q6",
+                                "question": "三過家門而不入是在形容誰？",
+                                "options": [
+                                    "湯",
+                                    "堯",
+                                    "禹",
+                                    "順"
+                                ],
+                                "answer": "禹"
+                            },
+                            {
+                                "id": "q7",
+                                "question": "大禹治水花了多長時間？",
+                                "options": [
+                                    "1個月",
+                                    "10個月",
+                                    "7年",
+                                    "13年"
+                                ],
+                                "answer": "13年"
+                            },
+                            {
+                                "id": "q8",
+                                "question": "把王位傳給兄弟算不算世襲制？",
+                                "options": [
+                                    "算，傳給家人都算",
+                                    "不算，只有傳給兒子才算"
+                                ],
+                                "answer": "算，傳給家人都算"
+                            },
+                            {
+                                "id": "q9",
+                                "image": "social/shangmap.png",
+                                "question": "商朝的發源地是以什麼為中心？",
+                                "options": [
+                                    "黃河",
+                                    "長江",
+                                    "海邊",
+                                    "黑龍江"
+                                ],
+                                "answer": "黃河"
+                            },
+                            {
+                                "id": "q10",
+                                "question": "中國從什麼時候開始有文字？",
+                                "options": [
+                                    "三黃五帝",
+                                    "夏",
+                                    "商",
+                                    "周"
+                                ],
+                                "answer": "商"
+                            },
+                            {
+                                "id": "q11",
+                                "image": "social/oracle.png",
+                                "question": "這個中國最早文字叫什麼名字？",
+                                "options": [
+                                    "楔形文字 Cuniform",
+                                    "聖書體 Hieroglyphs",
+                                    "甲骨文 Oracle bone script"
+                                ],
+                                "answer": "甲骨文 Oracle bone script"
+                            },
+                            {
+                                "id": "q12",
+                                "image": "social/oldest_written_languages.jpg",
+                                "question": "所有的古文字都是從象形文字開始。只有哪一個現在還是象形文字？",
+                                "options": [
+                                    "Mesopotamia",
+                                    "India",
+                                    "China",
+                                    "Egypt"
+                                ],
+                                "answer": "China"
                             }
                         ]
                     }
