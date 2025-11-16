@@ -530,7 +530,7 @@
                         "description": "Which time periods are these people from?",
                         "pairs": [
                             ["堯", "三黃五帝"],
-                            ["順", "三黃五帝"],
+                            ["舜", "三黃五帝"],
                             ["黃帝", "三黃五帝"],
                             ["禹", "夏"],
                             ["桀", "夏"],
@@ -567,7 +567,7 @@
                             {
                                 "id": "q3",
                                 "image": "social/flood.png",
-                                "question": "大禹是治水的方式是什麼?",
+                                "question": "大禹的治水方式是什麼?",
                                 "options": [
                                     "疏導法",
                                     "圍堵法",
@@ -604,7 +604,7 @@
                                     "湯",
                                     "堯",
                                     "禹",
-                                    "順"
+                                    "舜"
                                 ],
                                 "answer": "禹"
                             },
@@ -654,7 +654,7 @@
                             {
                                 "id": "q11",
                                 "image": "social/oracle.png",
-                                "question": "這個中國最早文字叫什麼名字？",
+                                "question": "中國最早文字叫什麼名字？",
                                 "options": [
                                     "楔形文字 Cuniform",
                                     "聖書體 Hieroglyphs",
@@ -665,7 +665,7 @@
                             {
                                 "id": "q12",
                                 "image": "social/oldest_written_languages.jpg",
-                                "question": "所有的古文字都是從象形文字開始。只有哪一個現在還是象形文字？",
+                                "question": "所有的古文字都是從象形文字開始，但是只有哪一個現在還是象形文字？",
                                 "options": [
                                     "Mesopotamia",
                                     "India",
@@ -673,6 +673,185 @@
                                     "Egypt"
                                 ],
                                 "answer": "China"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "2": {
+            "title": "中國歷史2",
+            "pages": [
+                {
+                    "type": "cover",
+                    "data": {
+                        "cover_image": "social/cover_chinese_history.png",
+                        "description": "夏商周和春秋戰國"
+                    }
+                },
+                {
+                    "type": "pic_label",
+                    "data": {
+                        "image": "social/dynasties2.png",
+                        "description": "Identify the first three time periods in Chinese history",
+                        "hotspots": [
+                            {
+                                "id": "d1",
+                                "label": "三黃五帝",
+                                "coords": { "x": 37, "y": 17.4 }
+                            },
+                            {
+                                "id": "d2",
+                                "label": "夏",
+                                "coords": { "x": 37, "y": 31.6 }
+                            },
+                            {
+                                "id": "d3",
+                                "label": "商",
+                                "coords": { "x": 37, "y": 47.8 }
+                            },
+                            {
+                                "id": "d4",
+                                "label": "西周",
+                                "coords": { "x": 34, "y": 60 }
+                            },
+                            {
+                                "id": "d5",
+                                "label": "春秋",
+                                "coords": { "x": 30.6, "y": 66.5 }
+                            },
+                            {
+                                "id": "d6",
+                                "label": "戰國",
+                                "coords": { "x": 30.6, "y": 73 }
+                            },
+                            {
+                                "id": "d7",
+                                "label": "東周",
+                                "coords": { "x": 40.2, "y": 69.5 }
+                            },
+                            {
+                                "id": "d8",
+                                "label": "周",
+                                "coords": { "x": 46.7, "y": 66.5 }
+                            }
+                        ],
+                        "wordBank": [
+                            "三黃五帝",
+                            "夏",
+                            "商",
+                            "周",
+                            "東周",
+                            "西周",
+                            "春秋",
+                            "戰國"
+                        ]
+                    }
+                },
+                {
+                    "type": "match",
+                    "data": {
+                        "description": "Categorize them into good rulers and bad rulers",
+                        "pairs": [
+                            ["堯", "明君"],
+                            ["舜", "明君"],
+                            ["黃帝", "明君"],
+                            ["禹", "明君"],
+                            ["桀", "暴君"],
+                            ["湯", "明君"],
+                            ["紂王", "暴君"],
+                            ["周文王", "明君"],
+                            ["周幽王", "暴君"]
+                        ]
+                    }
+                },
+                {
+                    "type": "pic_match",
+                    "data": {
+                        "items": [
+                            { "image": "social/flood_walk_by.jpg", "text": "三過家門而不入" },
+                            { "image": "social/education.jpg", "text": "因材施教" },
+                            { "image": "social/zhou_fire.jpg", "text": "烽火戲諸侯" },
+                            { "image": "social/art_of_war.jpg", "text": "孫子兵法" },
+                            { "image": "social/oracle2.png", "text": "甲骨文" },
+                            { "image": "social/confucius.png", "text": "孔子" },
+                            { "image": "social/school_of_thoughts.jpg", "text": "百家爭鳴" },
+                            { "image": "social/dao.jpg", "text": "老子" }
+                        ]
+                    }
+                },
+                {
+                    "type": "match",
+                    "data": {
+                        "description": "Match the group and their philosophy",
+                        "pairs": [
+                            ["儒教", "仁愛"],
+                            ["道教", "無為不治"],
+                            ["墨家", "兼愛非攻"],
+                            ["法家", "以法治國"],
+                            ["兵家", "以戰略戰策為中心"]
+                        ]
+                    }
+                },
+                {
+                    "type": "mchoice",
+                    "data": {
+                        "questions": [
+                            {
+                                "id": "q1",
+                                "question": "在周朝封建制度裡，誰不是周朝分封的對象？",
+                                "options": [
+                                    "商族後人",
+                                    "功臣(幫忙滅商朝的人)",
+                                    "宗室(自己的親戚)",
+                                    "平民(路人)"
+                                ],
+                                "answer": "平民(路人)"
+                            },
+                            {
+                                "id": "q2",
+                                "image": "social/feudal1.jpg",
+                                "question": "在周朝宗法制度裡，周天子的兄弟會變成什麼？",
+                                "options": [
+                                    "天子",
+                                    "諸侯",
+                                    "士",
+                                    "平民"
+                                ],
+                                "answer": "諸侯"
+                            },
+                            {
+                                "id": "q3",
+                                "image": "social/feudal2.jpg",
+                                "question": "平民甲說的有可能是真的嗎？",
+                                "options": [
+                                    "可能",
+                                    "不可能"
+                                ],
+                                "answer": "可能"
+                            },
+                            {
+                                "id": "q4",
+                                "question": "教師節是誰的生日？",
+                                "options": [
+                                    "孔子",
+                                    "老子",
+                                    "孫子",
+                                    "鬼谷子"
+                                ],
+                                "answer": "孔子"
+                            },
+                            {
+                                "id": "q5",
+                                "image": "social/spring_autumn_map.png",
+                                "question": "春秋時期哪個諸侯國不是主要大國？",
+                                "options": [
+                                    "秦",
+                                    "齊",
+                                    "晉",
+                                    "魯"
+                                ],
+                                "answer": "魯"
                             }
                         ]
                     }
