@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.3.7';
+        this.APP_VERSION = '1.4.0';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.3.7';
-        this.LATEST_MINIGAME_VERSION = '1.3.7';
+        this.DEFAULT_WORDS_VERSION = '1.4.0';
+        this.LATEST_MINIGAME_VERSION = '1.4.0';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -72,7 +72,9 @@ class ChineseLearningApp {
         this.isExchangeMode = false;
         this.exchangeSelection = {}; // { id: count }
 
-        this.currentGachaPool = 'villains';
+        this.currentGachaPool = 'kpop';
+        this.archivedGachaPools = ['villains', 'greek'];
+        this.currentArchiveIndex = 0;
         this.gachaPool = this.defineGachaPool();
 
         // Social studies configuration
@@ -103,8 +105,28 @@ class ChineseLearningApp {
     }
 
     defineGachaPool() {
-        // Current active pool - Disney Villains
-        const villainsPool = [
+        // Current active pool - Kpop Demon Hunters
+        const kpopPool = [
+            { id: 'birthday', name: 'Birthday', rarity: 'Free', image: 'kpopdemon/birthday.jpg' },
+            { id: 'rumi', name: 'Rumi', rarity: 'Legendary', image: 'kpopdemon/rumi.jpg' },
+            { id: 'jinu', name: 'Jinu', rarity: 'Legendary', image: 'kpopdemon/jinu.jpg' },
+            { id: 'mira', name: 'Mira', rarity: 'Epic', image: 'kpopdemon/mira.jpg' },
+            { id: 'zoey', name: 'Zoey', rarity: 'Epic', image: 'kpopdemon/zoey.jpg' },
+            { id: 'mystery', name: 'Mystery', rarity: 'Rare', image: 'kpopdemon/mystery.jpg' },
+            { id: 'baby', name: 'Baby', rarity: 'Rare', image: 'kpopdemon/baby.jpg' },
+            { id: 'abby', name: 'Abby', rarity: 'Rare', image: 'kpopdemon/abby.jpg' },
+            { id: 'romance', name: 'Romance', rarity: 'Rare', image: 'kpopdemon/romance.jpg' },
+            { id: 'derpy', name: 'Derpy', rarity: 'Common', image: 'kpopdemon/derpy.jpg' },
+            { id: 'sussie', name: 'Sussie', rarity: 'Common', image: 'kpopdemon/sussie.jpg' },
+            { id: 'celine', name: 'Celine', rarity: 'Common', image: 'kpopdemon/celine.jpg' },
+            { id: 'demons', name: 'Demons', rarity: 'Common', image: 'kpopdemon/demons.png' },
+            { id: 'weapons', name: 'Weapons', rarity: 'Common', image: 'kpopdemon/weapons.jpg' }
+        ];
+        return kpopPool;
+    }
+
+    getVillainsPool() {
+        return [
             { id: 'maleficent', name: 'Maleficent', rarity: 'Legendary', image: 'villains/maleficent.png' },
             { id: 'ursula', name: 'Ursula', rarity: 'Legendary', image: 'villains/ursula.png' },
             { id: 'evil', name: 'Evil Queen', rarity: 'Epic', image: 'villains/evil_queen.png' },
@@ -120,8 +142,6 @@ class ChineseLearningApp {
             { id: 'magnifico', name: 'King Magnifico', rarity: 'Common', image: 'villains/magnifico.png' },
             { id: 'gothel', name: 'Mother Gothel', rarity: 'Common', image: 'villains/gothel.png' }
         ];
-
-        return villainsPool;
     }
 
     getGreekGodsPool() {
@@ -140,6 +160,24 @@ class ChineseLearningApp {
             { id: 'hermes', name: 'Hermes', rarity: 'Common', image: 'greek/hermes.png' },
             { id: 'aphrodite', name: 'Aphrodite', rarity: 'Common', image: 'greek/aphrodite.png' }
         ];
+    }
+
+    getPoolMetadata(poolName) {
+        switch (poolName) {
+            case 'greek': return { title: 'Greek Gods Collection', subtitle: 'Event: Sep 14 ~ Oct 15 2025 (Ended)' };
+            case 'villains': return { title: 'Disney Villains Collection', subtitle: 'Event: Oct 16 ~ Nov 16 2025 (Ended)' };
+            case 'kpop': return { title: 'K-pop Demon Hunters', subtitle: 'Event: Nov 17 ~ Dec 14 2025' };
+            default: return { title: 'Unknown Collection', subtitle: '(Archived)' };
+        }
+    }
+
+    getPoolDataByName(poolName) {
+        switch (poolName) {
+            case 'villains': return this.getVillainsPool();
+            case 'greek': return this.getGreekGodsPool();
+            case 'kpop': return this.defineGachaPool(); // Current pool
+            default: return [];
+        }
     }
 
     async initializeMiniGameContent() {
@@ -298,6 +336,8 @@ class ChineseLearningApp {
         // Collections History
         document.getElementById('collections-history-btn').addEventListener('click', () => this.showCollectionsHistory());
         document.getElementById('back-from-collections-history').addEventListener('click', () => this.showCollectionsPage());
+        document.getElementById('prev-collection-btn').addEventListener('click', () => this.navigateArchivedCollections(-1));
+        document.getElementById('next-collection-btn').addEventListener('click', () => this.navigateArchivedCollections(1));
 
 
         const tooltipIcon = document.querySelector('.tooltip-icon');
@@ -1701,8 +1741,9 @@ class ChineseLearningApp {
     }
 
     showCollectionsHistory() {
+        this.currentArchiveIndex = 0; // Always start at the newest archive
         this.showScreen('collections-history-screen');
-        this.renderGreekGodsCollection();
+        this.renderArchivedCollectionPage();
     }
 
     renderCollectionGrid() {
@@ -1733,33 +1774,52 @@ class ChineseLearningApp {
             const count = this.currentUser.collection[item.id] || 0;
             const isOwned = count > 0;
             const itemDiv = document.createElement('div');
-            itemDiv.className = `collection-item ${item.rarity} ${isOwned ? 'owned' : ''}`;
 
-            let countBadge = isOwned ? `<div class="item-count-badge">x${count}</div>` : '';
-            let exchangeControlsHTML = '';
-
-            if (this.isExchangeMode && isOwned) {
-                const selectedCount = this.exchangeSelection[item.id] || 0;
-                exchangeControlsHTML = `
-                    <div class="exchange-item-controls">
-                        <button class="exchange-btn minus" data-item-id="${item.id}">-</button>
-                        <span class="exchange-count">${selectedCount}</span>
-                        <button class="exchange-btn plus" data-item-id="${item.id}">+</button>
-                    </div>
-                `;
-                if (selectedCount > 0) {
-                    itemDiv.classList.add('selected-for-exchange');
+            // REMOVE LATER
+            if (item.rarity === 'Free') {
+                itemDiv.className = `collection-item ${item.rarity} ${isOwned ? 'owned' : 'unowned-promo'}`;
+                if (isOwned) {
+                    // If owned, only show the image. No badges, no names.
+                    itemDiv.innerHTML = `<img src="${item.image}" alt="${item.name}" class="collection-item-image">`;
+                } else {
+                    // If not owned, show the promotional text.
+                    itemDiv.innerHTML = `
+                        <div class="free-item-promo-text">
+                            Draw 10 before<br>end of Nov 17, 2025<br>to get it for FREE!
+                        </div>
+                    `;
                 }
-            }
+            } else {
+                // This is the original logic for all other items.
+                itemDiv.className = `collection-item ${item.rarity} ${isOwned ? 'owned' : ''}`;
 
-            itemDiv.innerHTML = `
-                ${countBadge}
-                <img src="${item.image}" alt="${item.name}" class="collection-item-image">
-                <span class="collection-item-name">${item.name}</span>
-                ${exchangeControlsHTML}
-            `;
+                let countBadge = isOwned ? `<div class="item-count-badge">x${count}</div>` : '';
+                let exchangeControlsHTML = '';
+
+                if (this.isExchangeMode && isOwned) {
+                    const selectedCount = this.exchangeSelection[item.id] || 0;
+                    exchangeControlsHTML = `
+                        <div class="exchange-item-controls">
+                            <button class="exchange-btn minus" data-item-id="${item.id}">-</button>
+                            <span class="exchange-count">${selectedCount}</span>
+                      <button class="exchange-btn plus" data-item-id="${item.id}">+</button>
+                        </div>
+                    `;
+                    if (selectedCount > 0) {
+                        itemDiv.classList.add('selected-for-exchange');
+                    }
+                }
+
+                itemDiv.innerHTML = `
+                    ${countBadge}
+                    <img src="${item.image}" alt="${item.name}" class="collection-item-image">
+                    <span class="collection-item-name">${item.name}</span>
+                    ${exchangeControlsHTML}
+                `;
+            }
             grid.appendChild(itemDiv);
         });
+
 
         // Update exchange ticket display when rendering collections
         this.updateExchangeTicketDisplay();
@@ -1769,27 +1829,64 @@ class ChineseLearningApp {
         }
     }
 
-    renderGreekGodsCollection() {
-        const grid = document.getElementById('greek-collection-grid');
-        const greekPool = this.getGreekGodsPool();
-        const greekCollection = this.currentUser.collectionsByPool?.greek || {};
+    renderArchivedCollectionPage() {
+        const archiveContainer = document.getElementById('archive-display-area');
+        if (!archiveContainer) return;
 
-        grid.innerHTML = '';
-        greekPool.forEach(item => {
-            const count = greekCollection[item.id] || 0;
+        const poolName = this.archivedGachaPools[this.currentArchiveIndex];
+        if (!poolName) {
+            archiveContainer.innerHTML = `<p>No archive found for this page.</p>`;
+            return;
+        }
+
+        const poolData = this.getPoolDataByName(poolName);
+        const userPoolCollection = this.currentUser.collectionsByPool?.[poolName] || {};
+        const { title, subtitle } = this.getPoolMetadata(poolName);
+
+        let gridHTML = '';
+        poolData.forEach(item => {
+            const count = userPoolCollection[item.id] || 0;
             const isOwned = count > 0;
-            const itemDiv = document.createElement('div');
-            itemDiv.className = `collection-item ${item.rarity} ${isOwned ? 'owned' : ''}`;
-
-            let countBadge = isOwned ? `<div class="item-count-badge">x${count}</div>` : '';
-
-            itemDiv.innerHTML = `
-                ${countBadge}
-                <img src="${item.image}" alt="${item.name}" class="collection-item-image">
-                <span class="collection-item-name">${item.name}</span>
+            const countBadge = isOwned ? `<div class="item-count-badge">x${count}</div>` : '';
+            gridHTML += `
+                <div class="collection-item ${item.rarity} ${isOwned ? 'owned' : ''}">
+                    ${countBadge}
+                    <img src="${item.image}" alt="${item.name}" class="collection-item-image">
+                    <span class="collection-item-name">${item.name}</span>
+                </div>
             `;
-            grid.appendChild(itemDiv);
         });
+
+        archiveContainer.innerHTML = `
+            <h3>${title}</h3>
+            <p class="collection-subtitle archived">${subtitle}</p>
+            <div class="collection-grid">${gridHTML}</div>
+        `;
+
+        // This calculates the columns needed for a two-row layout.
+        const grid = archiveContainer.querySelector('.collection-grid');
+        if (grid) {
+            const itemCount = grid.children.length;
+            if (itemCount > 0) {
+                // To create exactly two rows, we need half the number of items as columns (rounding up).
+                const columnCount = Math.ceil(itemCount / 2);
+                grid.style.gridTemplateColumns = `repeat(${columnCount}, 1fr)`;
+            }
+        }
+
+        // Manage navigation button visibility
+        const prevBtn = document.getElementById('prev-collection-btn');
+        const nextBtn = document.getElementById('next-collection-btn');
+        prevBtn.classList.toggle('hidden', this.currentArchiveIndex === 0);
+        nextBtn.classList.toggle('hidden', this.currentArchiveIndex >= this.archivedGachaPools.length - 1);
+    }
+
+    navigateArchivedCollections(direction) {
+        const newIndex = this.currentArchiveIndex + direction;
+        if (newIndex >= 0 && newIndex < this.archivedGachaPools.length) {
+            this.currentArchiveIndex = newIndex;
+            this.renderArchivedCollectionPage();
+        }
     }
 
     _performSingleDraw(effectiveConfig) {
@@ -1871,6 +1968,16 @@ class ChineseLearningApp {
         }
         // If it falls into "nothing", bonusReward remains null.
 
+        // REMOVE LATER - birthday item
+        const freebieDeadline = new Date('2025-11-18T00:00:00');
+        if (new Date() < freebieDeadline && !this.currentUser.collection['birthday']) {
+            this.currentUser.collection['birthday'] = 1;
+            const birthdayItem = this.gachaPool.find(item => item.id === 'birthday');
+            if (birthdayItem) { // Safety check
+                results.push(birthdayItem); // Add to the results to be shown in the modal
+            }
+        }
+
         this.saveUserData();
         this.showMultiGachaResult(results, bonusReward);
         this.renderCollectionGrid();
@@ -1907,7 +2014,7 @@ class ChineseLearningApp {
                 const itemData = items[index];
                 // Add classes to trigger the reveal and rarity flash animation
                 itemEl.classList.add('is-revealed', `${itemData.rarity}-reveal`);
-            }, index * 800 + 400); // Slower reveal: 350ms delay between each item
+            }, index * 800 + 350); // Slower reveal: 350ms delay between each item
         });
 
         // --- Add Bonus Reward Display ---
@@ -1978,53 +2085,55 @@ Draw 10 guarantees one Epic or Legendary!`;
     }
 
     migrateCollectionData() {
-        // Handle backward compatibility for existing users
+        // Handle backward compatibility for existing users who have an array
         if (Array.isArray(this.currentUser.collection)) {
             const newCollection = {};
             this.currentUser.collection.forEach(id => {
                 newCollection[id] = (newCollection[id] || 0) + 1;
             });
             this.currentUser.collection = newCollection;
-        } else {
-            this.currentUser.collection = this.currentUser.collection || {};
         }
 
-        // Initialize collections by pool
+        // Initialize the main pool container if it doesn't exist
         if (!this.currentUser.collectionsByPool) {
             this.currentUser.collectionsByPool = {
-                greek: {},
-                villains: {}
+                kpop: {},
+                villains: {},
+                greek: {}
             };
 
-            // Handle the Hades migration FIRST (before other migrations)
-            if (this.currentUser.collection['hades']) {
-                // Move old 'hades' to Greek collection as 'hades_greek'
-                this.currentUser.collectionsByPool.greek['hades_greek'] = this.currentUser.collection['hades'];
-                delete this.currentUser.collection['hades'];
-                console.log(`Migrated ${this.currentUser.collectionsByPool.greek['hades_greek']} Hades items to Greek collection`);
+            // This block handles the OLDEST users (pre-pools) and migrates them
+            const originalCollection = this.currentUser.collection || {};
+
+            // Handle the specific 'hades' name collision
+            if (originalCollection['hades']) {
+                this.currentUser.collectionsByPool.greek['hades_greek'] = originalCollection['hades'];
+                delete originalCollection['hades'];
             }
 
-            // Migrate other existing collection items to Greek pool
+            // Distribute items from the old flat collection into the correct pools
             const greekIds = this.getGreekGodsPool().map(item => item.id);
-            Object.keys(this.currentUser.collection).forEach(itemId => {
+            const villainIds = this.getVillainsPool().map(item => item.id);
+
+            Object.keys(originalCollection).forEach(itemId => {
+                const itemCount = originalCollection[itemId];
                 if (greekIds.includes(itemId)) {
-                    this.currentUser.collectionsByPool.greek[itemId] = this.currentUser.collection[itemId];
-                    delete this.currentUser.collection[itemId];
-                    console.log(`Migrated ${itemId} to Greek collection`);
+                    this.currentUser.collectionsByPool.greek[itemId] = itemCount;
+                } else if (villainIds.includes(itemId)) {
+                    // This handles users from the villains era who haven't been migrated yet
+                    this.currentUser.collectionsByPool.villains[itemId] = itemCount;
                 }
             });
-
-            // Current collection now points to villains (should be empty for new pool)
-            this.currentUser.collectionsByPool.villains = {};
-            this.currentUser.collection = this.currentUser.collectionsByPool.villains;
-
-            // Save the migration
-            this.saveUserData();
-
-        } else {
-            // Ensure current collection points to active pool
-            this.currentUser.collection = this.currentUser.collectionsByPool[this.currentGachaPool] || {};
         }
+
+        // Ensure all modern pools exist for any returning user ---
+        // This is a safety net for users from the Villains era.
+        if (!this.currentUser.collectionsByPool.kpop) {
+            this.currentUser.collectionsByPool.kpop = {};
+        }
+
+        // ALWAYS point the active collection to the current pool defined in the constructor
+        this.currentUser.collection = this.currentUser.collectionsByPool[this.currentGachaPool];
     }
 
     // --- Exchange Mode Functions ---
@@ -2093,6 +2202,7 @@ Draw 10 guarantees one Epic or Legendary!`;
 
         // --- Rarity exchange ---
         this.gachaPool
+            .filter(item => item.rarity !== 'Free')
             .sort((a, b) => baseRates[b.rarity] - baseRates[a.rarity] || a.name.localeCompare(b.name))
             .forEach(item => {
                 const baseCost = baseRates[item.rarity];

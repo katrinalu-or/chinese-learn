@@ -27,6 +27,7 @@
     --c-bg-exchange: #fffaf0;
     --c-bg-collection-history-item: rgba(255, 255, 255, 0.2);
     --c-bg-recognition-box: rgb(238, 238, 236);
+    --c-bg-box-shadow: rgba(0, 0, 0, 1.0);
 
     /* Border Colors */
     --c-border-subtle: #e9ecef;
@@ -116,6 +117,7 @@ body.theme-halloween {
     --c-bg-exchange: rgba(43, 30, 0, 0.8);
     --c-bg-collection-history-item: rgba(0, 0, 0, 0.3);
     --c-bg-recognition-box: var(--c-bg-card);
+    --c-bg-box-shadow: rgba(255, 255, 255, 0.3);
 
     /* Border Colors */
     --c-border-subtle: rgba(196, 189, 189, 0.3);
@@ -3115,7 +3117,7 @@ body.no-scroll {
 
 .collection-item:not(.owned) .collection-item-name::before {
     content: '???';
-    color: var(--c-text-placeholder); /* THEME FIX */
+    color: var(--c-text-placeholder);
     font-size: 3rem;
     font-weight: bold;
     text-align: center;
@@ -3138,10 +3140,39 @@ body.no-scroll {
     line-height: 1.2;
 }
 
+/* these doesn't work for now */
 .collection-item.Common { border-color: #adb5bd; }
 .collection-item.Rare { border-color: #4B89DA; }
 .collection-item.Epic { border-color: #8A4EDA; }
 .collection-item.Legendary { border-color: #F5A623; }
+
+
+/* REMOVE LATER - Birthday item */
+#collections-screen .collection-grid .collection-item.Free {
+    border: 1px transparent var(--c-text-placeholder);
+    box-shadow: 0 8px 15px var(--c-bg-box-shadow);
+    transform: scale(1.02) translateY(-5px);
+}
+#collections-screen .collection-grid .collection-item.unowned-promo .collection-item-name::before,
+#collections-screen .collection-grid .collection-item.unowned-promo:not(.owned)::before {
+    color: var(--c-text-secondary);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+#collections-screen .collection-grid .collection-item.unowned-promo {
+    background: var(--grad-gacha-single) !important;
+    border: 1px solid #daa520;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* minimal shadow */
+    transform: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem;
+    color: var(--c-text-primary);
+    text-align: center;
+    font-weight: 500;
+    font-size: 1.0rem;
+}
 
 .collection-item .exchange-actions-wrapper {
     position: absolute;
@@ -3403,10 +3434,14 @@ body.no-scroll {
 .collection-archive-grid-container {
     background: transparent;
     backdrop-filter: none;
-    padding: 2rem;
+    padding: 0.5rem 2rem;
     border-radius: 0;
     box-shadow: none;
     border: none;
+
+    display: flex;
+    flex-direction: column; /* Stack children (h3, subtitle, grid) vertically */
+    align-items: center;
 }
 
 .collection-archive-grid-container h3,
@@ -3414,6 +3449,9 @@ body.no-scroll {
     color: white; /* This should be fine on a dark static background */
     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
     text-align: center;
+}
+.collection-archive-grid-container .collection-subtitle {
+    margin-bottom: 3rem;
 }
 
 .collections-history-btn {
@@ -3442,12 +3480,14 @@ body.no-scroll {
 }
 
 .collections-history-container .collection-grid {
-    grid-template-columns: repeat(6, 1fr);
-    gap: 1.5rem 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr; /* Override the property from its parent: .collection-grid */
+    width: 100%;
+    gap: 1.5rem 1rem;
 }
 
 .collections-history-container .collection-item {
-    background: var(--c-bg-collection-history-item); /* THEME FIX */
+    background: var(--c-bg-collection-history-item);
     backdrop-filter: blur(5px);
     padding: 0;
     margin: 0;
@@ -3462,20 +3502,21 @@ body.no-scroll {
 }
 
 .collections-history-container .collection-item-image {
-    flex: 0.9;
+    flex: 0.92;
     width: 100%;
     object-fit: contain;
     display: flex;
     align-items: center;
+    margin-top: 1px;
     margin-bottom: 0;
 }
 
 .collections-history-container .collection-item-name {
-    flex-grow: 0.15;
+    flex-grow: 0.05;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--c-text-primary); /* THEME FIX */
+    color: var(--c-text-primary);
 }
 
 .collections-history-container .item-count-badge {
@@ -3496,6 +3537,44 @@ body.no-scroll {
     background-color: #ef9d1a;
 }
 
+/* Collections History Arrow Navigation */
+.collection-nav-arrow {
+    position: fixed; /* Position relative to the viewport */
+    top: 50%;
+    transform: translateY(-50%); /* This vertically centers the button */
+
+    background-color: rgba(0, 0, 0, 0.3);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 100;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.collection-nav-arrow:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.collection-nav-arrow.left {
+    left: 5vw;
+}
+
+.collection-nav-arrow.right {
+    right: 5vw;
+}
+
+/* Ensure the arrows are hidden when they have the .hidden class */
+.collection-nav-arrow.hidden {
+    display: none;
+}
 
 /* Responsive breakpoints */
 @media (max-width: 1200px) {
@@ -3524,7 +3603,7 @@ body.no-scroll {
         font-size: 1.4rem;
     }
     .collection-subtitle {
-        margin-bottom: 0.8rem;
+        margin-bottom: 0.5rem;
         font-size: 0.9rem;
         font-weight: 500;
     }
@@ -3533,10 +3612,18 @@ body.no-scroll {
         font-size: 1.2rem;
         font-weight: 600;
     }
+    .collections-history-container {
+        padding: clamp(4rem, 8vh, 8rem) clamp(5rem, 8vw, 20rem);
+    }
     .collections-history-container .collection-grid {
         gap: 1.5rem 0.5rem;
     }
-
+    .collection-archive-grid-container .collection-subtitle {
+        margin-bottom: 2rem;
+    }
+    .collections-history-container .collection-item-name {
+        font-size: 0.9em;
+    }
 }
 
 @media (max-width: 768px) {
