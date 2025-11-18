@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.4.0';
+        this.APP_VERSION = '1.4.1';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.4.0';
-        this.LATEST_MINIGAME_VERSION = '1.4.0';
+        this.DEFAULT_WORDS_VERSION = '1.4.1';
+        this.LATEST_MINIGAME_VERSION = '1.4.1';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -312,7 +312,6 @@ class ChineseLearningApp {
         document.getElementById('back-to-dashboard').addEventListener('click', () => this.showDashboard());
         document.getElementById('check-btn').addEventListener('click', () => this.handleWordResponse(true));
         document.getElementById('cross-btn').addEventListener('click', () => this.handleWordResponse(false));
-        document.getElementById('review-audio-btn').addEventListener('click', () => this.speak(this.currentActivity.words[this.currentActivity.currentIndex]));
         document.getElementById('back-from-writing').addEventListener('click', () => this.showDashboard());
         document.getElementById('replay-audio-btn').addEventListener('click', () => this.speak(this.currentActivity.currentAnswer));
         document.getElementById('show-answer-btn').addEventListener('click', () => this.showWritingAnswer());
