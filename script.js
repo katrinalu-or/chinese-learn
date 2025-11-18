@@ -18,7 +18,7 @@ class ChineseLearningApp {
 
         this.LEVEL_UP_DIAMOND_BONUS = 2;
 
-        // Listening Activity Config
+        // Listening (Word Writing) Activity Config
         this.LISTENING_WORDS_PER_SESSION = 12;
         this.LISTENING_CURRENT_LEVEL_COMPLETIONS = 1;
         this.LISTENING_LOWER_LEVEL_COMPLETIONS = 1;
@@ -49,11 +49,18 @@ class ChineseLearningApp {
             Common: 58
         };
 
-        this.GACHA_EXCHANGE_RATES_DRAW = {
+        this.GACHA_EXCHANGE_RATES_SELL = {
             Legendary: 30,
             Epic: 10,
             Rare: 3,
             Common: 1
+        };
+
+        this.GACHA_EXCHANGE_RATES_DRAW = {
+            Legendary: 32,
+            Epic: 12,
+            Rare: 5,
+            Common: 2
         };
 
         this.GACHA_EXCHANGE_RATES_SPECIFIED = {
@@ -164,8 +171,8 @@ class ChineseLearningApp {
 
     getPoolMetadata(poolName) {
         switch (poolName) {
-            case 'greek': return { title: 'Greek Gods Collection', subtitle: 'Event: Sep 14 ~ Oct 15 2025 (Ended)' };
-            case 'villains': return { title: 'Disney Villains Collection', subtitle: 'Event: Oct 16 ~ Nov 16 2025 (Ended)' };
+            case 'greek': return { title: 'Greek Gods Collection', subtitle: 'Event: Sep 14 ~ Oct 15 2025' };
+            case 'villains': return { title: 'Disney Villains Collection', subtitle: 'Event: Oct 16 ~ Nov 16 2025' };
             case 'kpop': return { title: 'K-pop Demon Hunters', subtitle: 'Event: Nov 17 ~ Dec 14 2025' };
             default: return { title: 'Unknown Collection', subtitle: '(Archived)' };
         }
@@ -251,6 +258,7 @@ class ChineseLearningApp {
         this.currentUser.activityLog = this.currentUser.activityLog || [];
         this.currentUser.miniGameDataForLevel = this.currentUser.miniGameDataForLevel || {};
         this.currentUser.socialStudiesProgress = this.currentUser.socialStudiesProgress || {};
+        this.currentUser.forceCheckAnswerMode = this.currentUser.forceCheckAnswerMode ?? true;
 
         // Collection migration and initialization
         this.migrateCollectionData();
@@ -357,6 +365,25 @@ class ChineseLearningApp {
                 openTooltip.style.opacity = '0';
             }
         });
+
+        // Word Review and Word Listening Force Check Answer Mode toggle
+        document.getElementById('review-audio-btn').addEventListener('click', () => {
+            this.speak(this.currentActivity.words[this.currentActivity.currentIndex]);
+            // --- Enable buttons if mode is on ---
+            if (this.currentUser.forceCheckAnswerMode) {
+                document.getElementById('check-btn').disabled = false;
+                document.getElementById('cross-btn').disabled = false;
+            }
+        });
+
+        const forceCheckToggle = document.getElementById('force-check-mode-toggle');
+        if (forceCheckToggle) {
+            forceCheckToggle.addEventListener('change', (e) => {
+                this.currentUser.forceCheckAnswerMode = e.target.checked;
+                this.saveUserData();
+                alert(`Force Check Answer Mode is now ${e.target.checked ? 'ON' : 'OFF'}.`);
+            });
+        }
 
         // Social Studies Tabs
         document.querySelectorAll('.social-studies-tab-button').forEach(button => {
@@ -489,9 +516,11 @@ class ChineseLearningApp {
     }
 
     handleLogout() {
-        this.currentUser = null;
-        localStorage.removeItem('currentUser');
-        this.showScreen('auth-screen');
+        if (confirm("Are you sure you want to log out?")) {
+            this.currentUser = null;
+            localStorage.removeItem('currentUser');
+            this.showScreen('auth-screen');
+        }
     }
 
     showScreen(screenId) {
@@ -741,6 +770,17 @@ class ChineseLearningApp {
         document.getElementById('chinese-word').textContent = word;
         document.getElementById('current-score').textContent = activity.score;
         document.getElementById('word-counter').textContent = `${activity.currentIndex + 1}/${activity.words.length}`;
+
+        // --- Force Check Answer Mode Logic ---
+        const checkBtn = document.getElementById('check-btn');
+        const crossBtn = document.getElementById('cross-btn');
+        if (this.currentUser.forceCheckAnswerMode) {
+            checkBtn.disabled = true;
+            crossBtn.disabled = true;
+        } else {
+            checkBtn.disabled = false;
+            crossBtn.disabled = false;
+        }
     }
 
     handleWordResponse(isCorrect) {
@@ -1096,6 +1136,12 @@ class ChineseLearningApp {
                 this.showDeveloperMode();
             });
         });
+
+        // --- Force Check Mode switch state ---
+        const forceCheckToggle = document.getElementById('force-check-mode-toggle');
+        if (forceCheckToggle) {
+            forceCheckToggle.checked = this.currentUser.forceCheckAnswerMode ?? true;
+        }
     }
 
     resetToLevel() {
@@ -1522,6 +1568,17 @@ class ChineseLearningApp {
         document.getElementById('writing-current-score').textContent = activity.score;
         document.getElementById('writing-total-score').textContent = activity.words.length;
 
+        // --- Force Check Answer Mode Logic ---
+        const checkBtn = document.getElementById('writing-check-btn');
+        const crossBtn = document.getElementById('writing-cross-btn');
+        if (this.currentUser.forceCheckAnswerMode) {
+            checkBtn.disabled = true;
+            crossBtn.disabled = true;
+        } else {
+            checkBtn.disabled = false;
+            crossBtn.disabled = false;
+        }
+
         setTimeout(() => this.speak(word), 300);
     }
 
@@ -1530,6 +1587,12 @@ class ChineseLearningApp {
             const wordEl = document.getElementById('writing-chinese-word');
             wordEl.textContent = this.currentActivity.currentAnswer;
             wordEl.classList.remove('answer-hidden');
+
+            // --- Enable buttons if mode is on ---
+            if (this.currentUser.forceCheckAnswerMode) {
+                document.getElementById('writing-check-btn').disabled = false;
+                document.getElementById('writing-cross-btn').disabled = false;
+            }
         }
     }
 
@@ -2259,7 +2322,7 @@ Draw 10 guarantees one Epic or Legendary!`;
             const count = this.exchangeSelection[itemId];
             const itemInfo = this.gachaPool.find(p => p.id === itemId);
             if (itemInfo) {
-                totalPoints += count * this.GACHA_EXCHANGE_RATES_DRAW[itemInfo.rarity];
+                totalPoints += count * this.GACHA_EXCHANGE_RATES_SELL[itemInfo.rarity];
             }
         }
         return totalPoints;
@@ -5291,7 +5354,7 @@ Draw 10 guarantees one Epic or Legendary!`;
                 maxLevel: 1,
                 cost: () => 200,
                 levels: [
-                    { description: 'Unlock it for Villains collection. Will reset in next collection', effects: [] }
+                    { description: 'Unlock it for Kpop Demon Hunter collection. Will reset in next collection', effects: [] }
                 ],
                 implemented: true,
                 getBenefitDescription(currentLevel) {
@@ -5304,7 +5367,7 @@ Draw 10 guarantees one Epic or Legendary!`;
                 maxLevel: 1,
                 cost: () => 200,
                 levels: [
-                    { description: 'Unlock it for Villains collection. Will reset in next collection', effects: [] }
+                    { description: 'Unlock it for Kpop Demon Hunter collection. Will reset in next collection', effects: [] }
                 ],
                 implemented: true,
                 getBenefitDescription(currentLevel) {

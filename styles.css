@@ -556,7 +556,7 @@ body.no-scroll {
     padding: 4rem;
     border-radius: 25px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.1);
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     border: 1px solid rgba(255,255,255,0.3);
     animation: wordSlideIn 0.5s ease-out;
     position: relative;
@@ -631,13 +631,13 @@ body.no-scroll {
 .action-buttons {
     display: flex;
     gap: 3rem;
-    margin-bottom: 2rem;
+    margin-top: 1.5rem;
     touch-action: manipulation;
 }
 
 .action-btn {
-    width: 100px;
-    height: 100px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     border: none;
     font-size: 3rem;
@@ -646,43 +646,30 @@ body.no-scroll {
     color: var(--c-text-on-accent);
     font-weight: bold;
     box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-    position: relative;
-    overflow: hidden;
 }
-
-.action-btn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.3);
-    transition: all 0.3s;
-}
-
-.action-btn:hover::before {
-    width: 100px;
-    height: 100px;
-}
-
 .action-btn.cross {
     background: var(--grad-error);
 }
-
 .action-btn.check {
     background: var(--grad-success);
 }
-
 .action-btn:hover {
     transform: scale(1.1);
     box-shadow: 0 12px 35px rgba(0,0,0,0.3);
 }
-
 .action-btn:active {
     transform: scale(0.95);
+}
+
+.action-btn.cross:disabled,
+.action-btn.cross:disabled:hover,
+.action-btn.check:disabled,
+.action-btn.check:disabled:hover {
+    background: var(--c-accent-neutral);
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 .score-display, .progress-info {
@@ -2632,6 +2619,56 @@ body.no-scroll {
     display: flex;
     border-top: 1px solid rgba(231, 76, 60, 0.3);
     padding-top: 1.5rem;
+}
+
+.switch-container {
+    margin-top: 1rem;
+}
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+input:checked + .slider {
+    background-color: var(--c-accent-success);
+}
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--c-accent-success);
+}
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+.slider.round {
+    border-radius: 34px;
+}
+.slider.round:before {
+    border-radius: 50%;
 }
 
 /* Collections & Gacha */
