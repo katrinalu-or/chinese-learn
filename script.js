@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.4.6';
+        this.APP_VERSION = '1.4.7';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.4.6';
-        this.LATEST_MINIGAME_VERSION = '1.4.6';
+        this.DEFAULT_WORDS_VERSION = '1.4.7';
+        this.LATEST_MINIGAME_VERSION = '1.4.7';
         this.LEVEL_UP_DIAMOND_BONUS = 2;
 
         // Word Reivew Activity Configuration
@@ -4663,7 +4663,7 @@ Draw 10 guarantees one Epic or Legendary!`;
             scoreHTML = `<div class="level-complete-summary"><h3>Score: ${levelProgress.finalScore}</h3></div>`;
             pointsMessageHTML = `
                 <div class="theme-tip awarded">
-                    <p>✅ You've passed this level already and earned ${pointsEarned} Cultural Points</p>;
+                    <p>✅ You've passed this level already and earned ${pointsEarned} Cultural Points</p>
                 </div>
             `;
         } else {

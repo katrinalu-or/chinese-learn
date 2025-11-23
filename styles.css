@@ -2671,6 +2671,7 @@ body.no-scroll {
     /*border: 1px solid rgba(231, 76, 60, 0.5); */
     border: 1px solid var(--c-border-dark);
     background: var(--c-dropdown-bg);
+    color: var(--c-text-primary);
     font-size: 1rem;
     min-width: 120px;
 }
