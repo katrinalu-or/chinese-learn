@@ -6,7 +6,7 @@
                 {
                     "type": "cover",
                     "data": {
-                        "cover_image": "social/cover_holidays.jpg",
+                        "cover_image": "social/culture1/cover_holidays.jpg",
                         "description": "Learn Chinese major holidays, their meanings and what people do"
                     }
                 },
@@ -14,17 +14,17 @@
                     "type": "pic_match",
                     "data": {
                         "items": [
-                            { "image": "social/dragon_boat.jpeg", "text": "端午節" },
-                            { "image": "social/dragon_dance.jpg", "text": "新年" },
-                            { "image": "social/dumpling.jpg", "text": "元宵節" },
-                            { "image": "social/fire_cracker.jpg", "text": "新年" },
-                            { "image": "social/lady_to_moon.jpg", "text": "中秋節" },
-                            { "image": "social/lantern_festival.jpg", "text": "元宵節" },
-                            { "image": "social/moon_cake.jpg", "text": "中秋節" },
-                            { "image": "social/rabbit_moon.jpg", "text": "中秋節" },
-                            { "image": "social/red_envelop.jpg", "text": "新年" },
-                            { "image": "social/worship.png", "text": "清明節" },
-                            { "image": "social/zongzi.jpg", "text": "端午節" }
+                            { "image": "social/culture1/dragon_boat.jpeg", "text": "端午節" },
+                            { "image": "social/culture1/dragon_dance.jpg", "text": "新年" },
+                            { "image": "social/culture1/dumpling.jpg", "text": "元宵節" },
+                            { "image": "social/culture1/fire_cracker.jpg", "text": "新年" },
+                            { "image": "social/culture1/lady_to_moon.jpg", "text": "中秋節" },
+                            { "image": "social/culture1/lantern_festival.jpg", "text": "元宵節" },
+                            { "image": "social/culture1/moon_cake.jpg", "text": "中秋節" },
+                            { "image": "social/culture1/rabbit_moon.jpg", "text": "中秋節" },
+                            { "image": "social/culture1/red_envelop.jpg", "text": "新年" },
+                            { "image": "social/culture1/worship.png", "text": "清明節" },
+                            { "image": "social/culture1/zongzi.jpg", "text": "端午節" }
                         ]
                     }
                 },
@@ -159,7 +159,7 @@
                             },
                             {
                                 "id": "q11",
-                                "image": "social/north_south_zongzi.jpg",
+                                "image": "social/culture1/north_south_zongzi.jpg",
                                 "question": "小軒和舅媽愛吃的是...",
                                 "options": [
                                     "北部粽",
@@ -178,7 +178,7 @@
                             },
                             {
                                 "id": "q13",
-                                "image": "social/pomelo.jpg",
+                                "image": "social/culture1/pomelo.jpg",
                                 "question": "這個水果是哪個節日吃?",
                                 "options": [
                                     "中秋節",
@@ -231,14 +231,14 @@
                 {
                     "type": "cover",
                     "data": {
-                        "cover_image": "social/cover_taiwan.jpg",
+                        "cover_image": "social/geography1/cover_taiwan.jpg",
                         "description": "Learn Taiwan cities, landmarks, transportations, and thier characteristics"
                     }
                 },
                 {
                     "type": "pic_label",
                     "data": {
-                        "image": "social/taiwan_cities.png",
+                        "image": "social/geography1/taiwan_cities.png",
                         "description": "Identify cities in Taiwan",
                         "hotspots": [
                             {
@@ -297,7 +297,7 @@
                 {
                     "type": "pic_label",
                     "data": {
-                        "image": "social/taiwan_landmark.png",
+                        "image": "social/geography1/taiwan_landmark.png",
                         "description": "Identify Taiwan landmarks and various local specialties",
                         "hotspots": [
                             {
@@ -350,7 +350,7 @@
                 {
                     "type": "match",
                     "data": {
-                        "image": "social/taipei.png",
+                        "image": "social/geography1/taipei.png",
                         "description": "Which station should you get off for these places in Taipei?",
                         "pairs": [
                             ["台北101", "R03"],
@@ -424,7 +424,7 @@
                             },
                             {
                                 "id": "q6",
-                                "image": "social/taiwan_tallest_mt.gif",
+                                "image": "social/geography1/taiwan_tallest_mt.gif",
                                 "question": "台灣最高的山是什麼山？",
                                 "options": [
                                     "玉山",
@@ -436,7 +436,7 @@
                             },
                             {
                                 "id": "q7",
-                                "image": "social/taiwan_lake.jpg",
+                                "image": "social/geography1/taiwan_lake.jpg",
                                 "question": "日月潭在哪裡？",
                                 "options": [
                                     "台北",
@@ -457,7 +457,7 @@
                             },
                             {
                                 "id": "q9",
-                                "image": "social/taiwan_tallest_tree.jpg",
+                                "image": "social/geography1/taiwan_tallest_tree.jpg",
                                 "question": "台北有一棵很老的樹活了1900年。這棵樹在哪裡？",
                                 "options": [
                                     "玉山",
@@ -491,14 +491,14 @@
                 {
                     "type": "cover",
                     "data": {
-                        "cover_image": "social/cover_chinese_history.png",
+                        "cover_image": "social/history1/cover_chinese_history.png",
                         "description": "Introduction to Chinese history and its first dynasty"
                     }
                 },
                 {
                     "type": "pic_label",
                     "data": {
-                        "image": "social/dynasties1.png",
+                        "image": "social/history1/dynasties1.png",
                         "description": "Identify the first three time periods in Chinese history",
                         "hotspots": [
                             {
@@ -566,7 +566,7 @@
                             },
                             {
                                 "id": "q3",
-                                "image": "social/flood.png",
+                                "image": "social/history1/flood.png",
                                 "question": "大禹的治水方式是什麼?",
                                 "options": [
                                     "疏導法",
@@ -630,7 +630,7 @@
                             },
                             {
                                 "id": "q9",
-                                "image": "social/shangmap.png",
+                                "image": "social/history1/shangmap.png",
                                 "question": "商朝的發源地是以什麼為中心？",
                                 "options": [
                                     "黃河",
@@ -653,7 +653,7 @@
                             },
                             {
                                 "id": "q11",
-                                "image": "social/oracle.png",
+                                "image": "social/history1/oracle.png",
                                 "question": "中國最早文字叫什麼名字？",
                                 "options": [
                                     "楔形文字 Cuniform",
@@ -664,7 +664,7 @@
                             },
                             {
                                 "id": "q12",
-                                "image": "social/oldest_written_languages.jpg",
+                                "image": "social/history1/oldest_written_languages.jpg",
                                 "question": "所有的古文字都是從象形文字開始，但是只有哪一個現在還是象形文字？",
                                 "options": [
                                     "Mesopotamia",
@@ -685,14 +685,14 @@
                 {
                     "type": "cover",
                     "data": {
-                        "cover_image": "social/cover_chinese_history.png",
+                        "cover_image": "social/history2/cover_chinese_history.png",
                         "description": "夏商周和春秋戰國"
                     }
                 },
                 {
                     "type": "pic_label",
                     "data": {
-                        "image": "social/dynasties2.png",
+                        "image": "social/history2/dynasties2.png",
                         "description": "Identify the first three time periods in Chinese history",
                         "hotspots": [
                             {
@@ -769,14 +769,14 @@
                     "type": "pic_match",
                     "data": {
                         "items": [
-                            { "image": "social/flood_walk_by.jpg", "text": "三過家門而不入" },
-                            { "image": "social/education.jpg", "text": "因材施教" },
-                            { "image": "social/zhou_fire.jpg", "text": "烽火戲諸侯" },
-                            { "image": "social/art_of_war.jpg", "text": "孫子兵法" },
-                            { "image": "social/oracle2.png", "text": "甲骨文" },
-                            { "image": "social/confucius.png", "text": "孔子" },
-                            { "image": "social/school_of_thoughts.jpg", "text": "百家爭鳴" },
-                            { "image": "social/dao.jpg", "text": "老子" }
+                            { "image": "social/history2/flood_walk_by.jpg", "text": "三過家門而不入" },
+                            { "image": "social/history2/education.jpg", "text": "因材施教" },
+                            { "image": "social/history2/zhou_fire.jpg", "text": "烽火戲諸侯" },
+                            { "image": "social/history2/art_of_war.jpg", "text": "孫子兵法" },
+                            { "image": "social/history2/oracle2.png", "text": "甲骨文" },
+                            { "image": "social/history2/confucius.png", "text": "孔子" },
+                            { "image": "social/history2/school_of_thoughts.jpg", "text": "百家爭鳴" },
+                            { "image": "social/history2/dao.jpg", "text": "老子" }
                         ]
                     }
                 },
@@ -810,7 +810,7 @@
                             },
                             {
                                 "id": "q2",
-                                "image": "social/feudal1.jpg",
+                                "image": "social/history2/feudal1.jpg",
                                 "question": "在周朝宗法制度裡，周天子的兄弟會變成什麼？",
                                 "options": [
                                     "天子",
@@ -822,7 +822,7 @@
                             },
                             {
                                 "id": "q3",
-                                "image": "social/feudal2.jpg",
+                                "image": "social/history2/feudal2.jpg",
                                 "question": "平民甲說的有可能是真的嗎？",
                                 "options": [
                                     "可能",
@@ -843,7 +843,7 @@
                             },
                             {
                                 "id": "q5",
-                                "image": "social/spring_autumn_map.jpg",
+                                "image": "social/history2/spring_autumn_map.jpg",
                                 "question": "春秋時期哪個諸侯國不是主要大國？",
                                 "options": [
                                     "秦",
@@ -852,6 +852,129 @@
                                     "魯"
                                 ],
                                 "answer": "魯"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    },
+    "news": {
+        "1": {
+            "title": "新聞 Oct/Nov 2025",
+            "pages": [
+                {
+                    "type": "cover",
+                    "data": {
+                        "cover_image": "social/news1/cover_news1.jpg",
+                        "description": "Watch various news in Oct/Nov 2025"
+                    }
+                },
+                {
+                    "type": "mchoice",
+                    "data": {
+                        "questions": [
+                            {
+                                "id": "q1",
+                                "image": "social/news1/young_forty.png",
+                                "question": "Young Forty是在形容誰？",
+                                "options": [
+                                    "20歲男生",
+                                    "30歲男生",
+                                    "40歲男生",
+                                    "Teenagers"
+                                ],
+                                "answer": "40歲男生"
+                            },
+                            {
+                                "id": "q2",
+                                "question": "Young Forty是什麼意思？",
+                                "options": [
+                                    "中年人裝年經",
+                                    "40歲其實還很年經",
+                                    "年輕人想要快點40歲",
+                                    "40個年輕人的故事"
+                                ],
+                                "answer": "中年人裝年經"
+                            },
+                            {
+                                "id": "q3",
+                                "question": "Young Forty是哪裡的新聞？",
+                                "options": [
+                                    "美國",
+                                    "台灣",
+                                    "韓國",
+                                    "日本"
+                                ],
+                                "answer": "韓國"
+                            },
+                            {
+                                "id": "q4",
+                                "question": "下面哪個不是日本2025年流行語？",
+                                "options": [
+                                    "古古古米",
+                                    "二季",
+                                    "chappie",
+                                    "珍珠奶茶"
+                                ],
+                                "answer": "珍珠奶茶"
+                            },
+                            {
+                                "id": "q5",
+                                "image": "social/news1/Sanae_Takaichi_20251021.jpg",
+                                "question": "高市早苗是誰？",
+                                "options": [
+                                    "日本首相",
+                                    "日本歌手",
+                                    "東京市長",
+                                    "日本演員"
+                                ],
+                                "answer": "日本首相"
+                            },
+                            {
+                                "id": "q6",
+                                "question": "今年日本遇到什麼動物問題？",
+                                "options": [
+                                    "熊出沒城市",
+                                    "沒有貓熊",
+                                    "貓狗太多",
+                                    "動物園沒有賺錢"
+                                ],
+                                "answer": "熊出沒城市"
+                            },
+                            {
+                                "id": "q7",
+                                "question": "羅浮宮10月19日被偷走，什麼不是羅浮宮容易被偷的原因？",
+                                "options": [
+                                    "展示廳沒有裝新的監視器",
+                                    "參觀人數變少沒有錢裝監視器",
+                                    "窗戶面對街上",
+                                    "人手不足"
+                                ],
+                                "answer": "參觀人數變少沒有錢裝監視器"
+                            },
+                            {
+                                "id": "q8",
+                                "question": "大埃及博物館(GEM)準備了多久？",
+                                "options": [
+                                    "2年",
+                                    "5年",
+                                    "10年",
+                                    "20年"
+                                ],
+                                "answer": "20年"
+                            },
+                            {
+                                "id": "q9",
+                                "image": "social/news1/tutankhamun.jpg",
+                                "question": "這個必看的展物是什麼？",
+                                "options": [
+                                    "The golden burial mask of Tutankhamun",
+                                    "Khufu ship",
+                                    "Statue of Pharaoh Ramesses II",
+                                    "The grown of Nefertiti"
+                                ],
+                                "answer": "The golden burial mask of Tutankhamun"
                             }
                         ]
                     }
