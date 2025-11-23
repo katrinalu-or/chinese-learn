@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.4.4';
+        this.APP_VERSION = '1.4.5';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.4.4';
-        this.LATEST_MINIGAME_VERSION = '1.4.4';
+        this.DEFAULT_WORDS_VERSION = '1.4.5';
+        this.LATEST_MINIGAME_VERSION = '1.4.5';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -279,6 +279,22 @@ class ChineseLearningApp {
             for (const category in this.socialStudiesContent) {
                 if (!this.currentUser.socialStudiesProgress[category]) {
                     this.currentUser.socialStudiesProgress[category] = {};
+                }
+            }
+        }
+
+        // --- Migration for Social Studies hasPassed flag ---
+        const progress = this.currentUser.socialStudiesProgress;
+        for (const category in progress) {
+            for (const level in progress[category]) {
+                const levelProgress = progress[category][level];
+                // Only run migration if hasPassed is not already set and a score exists.
+                if (levelProgress && typeof levelProgress.hasPassed === 'undefined' && levelProgress.finalScore) {
+                    const [score, total] = levelProgress.finalScore.split('/').map(Number);
+                    const percentage = total > 0 ? (score / total) * 100 : 0;
+                    if (percentage >= this.SOCIAL_STUDIES_PASSING_SCORE) {
+                        levelProgress.hasPassed = true;
+                    }
                 }
             }
         }
@@ -4644,27 +4660,32 @@ Draw 10 guarantees one Epic or Legendary!`;
         let pointsMessageHTML = '';
         let scoreHTML = '';
 
-        if (levelProgress && levelProgress.finalScore) {
+        if (levelProgress?.hasPassed) {
+            // If the level has been passed, always show the score and a success message.
             scoreHTML = `<div class="level-complete-summary"><h3>Score: ${levelProgress.finalScore}</h3></div>`;
-            if (levelProgress.culturalPointsAwarded) {
+            pointsMessageHTML = `
+                <div class="theme-tip awarded">
+                    <p>✅ You've passed this level already and earned ${pointsEarned} Cultural Points</p>;
+                </div>
+            `;
+        } else {
+            // If the level has never been passed.
+            if (levelProgress?.finalScore) {
+                // It has a score, but it's a failing one.
+                scoreHTML = `<div class="level-complete-summary"><h3>Last Score: ${levelProgress.finalScore}</h3></div>`;
                 pointsMessageHTML = `
-                    <div class="theme-tip awarded">
-                        <p>✅ You've passed this level already and earned ${pointsEarned} Cultural Points 🎵</p>
-                    </div>
-                `;
-            } else {
-                 pointsMessageHTML = `
                     <div class="theme-tip warning">
                         <p>💡 You did not pass this level. Try again to earn ${pointsEarned} points!</p>
                     </div>
                 `;
+            } else {
+                // No score exists yet, this is a fresh attempt.
+                pointsMessageHTML = `
+                    <div class="theme-tip">
+                        <p>💡 Passing this level with a score >= ${minScore}% will earn you: ${pointsEarned} Cultural Points 🎵</p>
+                    </div>
+                `;
             }
-        } else {
-            pointsMessageHTML = `
-                <div class="theme-tip">
-                    <p>💡 Passing this level with a score >= ${minScore}% will earn you: ${pointsEarned} Cultural Points 🎵</p>
-                </div>
-            `;
         }
 
         container.innerHTML = `

@@ -1762,6 +1762,10 @@ body.no-scroll {
     background: var(--c-dropdown-bg);
     color: var(--c-text-primary);
 }
+.level-select-dropdown:focus {
+  outline: none;
+  border-color: var(--c-border-dark); /* to overwrite system default color blue */
+}
 
 .tab-display-content {
     padding: 1rem;
@@ -1772,7 +1776,6 @@ body.no-scroll {
 
 
 /* Social Studies Cover Page Styles */
-
 .ss-cover-page {
     display: flex;
     flex-direction: column;
@@ -2665,10 +2668,15 @@ body.no-scroll {
 .reset-input select {
     padding: 0.8rem;
     border-radius: 8px;
-    border: 1px solid rgba(231, 76, 60, 0.5);
+    /*border: 1px solid rgba(231, 76, 60, 0.5); */
+    border: 1px solid var(--c-border-dark);
     background: var(--c-dropdown-bg);
     font-size: 1rem;
     min-width: 120px;
+}
+.reset-input select:focus {
+  outline: none;
+  border-color: var(--c-border-dark); /* to overwrite system default color blue */
 }
 
 .reset-btn {
