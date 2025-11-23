@@ -5,27 +5,26 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.4.5';
+        this.APP_VERSION = '1.4.6';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.4.5';
-        this.LATEST_MINIGAME_VERSION = '1.4.5';
-
-        this.REVIEW_WORDS_PER_SESSION = 20;
-        this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
-        this.REVIEW_LOWER_LEVEL_COMPLETIONS = 1; // For Word Review
-        this.REVIEW_LOWER_LEVEL_PERCENTAGE = 30; // 30% for Word Review
-        this.REVIEW_LOWER_LEVEL_MAX_WORDS = 25;
-
+        this.DEFAULT_WORDS_VERSION = '1.4.6';
+        this.LATEST_MINIGAME_VERSION = '1.4.6';
         this.LEVEL_UP_DIAMOND_BONUS = 2;
 
-        // Listening (Word Writing) Activity Config
+        // Word Reivew Activity Configuration
+        this.REVIEW_WORDS_PER_SESSION = 20;
+        this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1; // Number of times the current level words tested
+        this.REVIEW_LOWER_LEVEL_COMPLETIONS = 1; // Number of times the lower level words tested
+        this.REVIEW_LOWER_LEVEL_MAX_WORDS = 26;
+        this.REVIEW_LOWER_LEVEL_RANGE = 8;       // Used for all 3 activities
+
+        // Listening (Word Writing) Activity Configuration
         this.LISTENING_WORDS_PER_SESSION = 12;
         this.LISTENING_CURRENT_LEVEL_COMPLETIONS = 1;
         this.LISTENING_LOWER_LEVEL_COMPLETIONS = 1;
-        this.LISTENING_LOWER_LEVEL_PERCENTAGE = 30;
-        this.LISTENING_LOWER_LEVEL_MAX_WORDS = 25;
+        this.LISTENING_LOWER_LEVEL_MAX_WORDS = 26;
 
-        // Sentence Writing Config
+        // Sentence Writing Configuration
         this.SENTENCE_WORDS_PER_SESSION = 12;
 
         // Mini Game Configuration
@@ -727,11 +726,11 @@ class ChineseLearningApp {
         return availableWords;
     }
 
-    getAllWordsUpToLevel(level) {
+    getAllWordsInRange(startLevel, endLevel) {
         const defaultWords = JSON.parse(localStorage.getItem('defaultWords'));
         const userWords = JSON.parse(localStorage.getItem(`words_${this.currentUser.username}`) || '{}');
         let allWords = [];
-        for (let i = 1; i <= level; i++) {
+        for (let i = startLevel; i <= endLevel; i++) {
             const levelWords = userWords[i] || defaultWords[i] || [];
             allWords = allWords.concat(levelWords);
         }
@@ -890,7 +889,11 @@ class ChineseLearningApp {
     }
 
     generatePracticeSubsets() {
-        const lowerLevelWords = this.getAllWordsUpToLevel(this.currentUser.level - 1);
+        const currentLevel = this.currentUser.level;
+        const startLevel = Math.max(1, currentLevel - this.REVIEW_LOWER_LEVEL_RANGE);
+        const endLevel = currentLevel - 1;
+        const lowerLevelWords = this.getAllWordsInRange(startLevel, endLevel);
+
         if (lowerLevelWords.length === 0) {
             this.currentUser.reviewLowerLevelWords = [];
             this.currentUser.listeningLowerLevelWords = [];
@@ -898,19 +901,13 @@ class ChineseLearningApp {
         }
 
         const shuffled = [...lowerLevelWords].sort(() => 0.5 - Math.random());
-
-        // --- Calculate the count based on percentage ---
-        let listenCount = Math.ceil(shuffled.length * (this.LISTENING_LOWER_LEVEL_PERCENTAGE / 100));
-        let reviewCount = Math.ceil(shuffled.length * (this.REVIEW_LOWER_LEVEL_PERCENTAGE / 100));
-
-        // --- Apply the new MAX_WORDS upper bound ---
-        listenCount = Math.min(listenCount, this.LISTENING_LOWER_LEVEL_MAX_WORDS);
-        reviewCount = Math.min(reviewCount, this.REVIEW_LOWER_LEVEL_MAX_WORDS);
+        const listenCount = this.LISTENING_LOWER_LEVEL_MAX_WORDS;
+        const reviewCount = this.REVIEW_LOWER_LEVEL_MAX_WORDS;
 
         if (listenCount + reviewCount > shuffled.length) {
-            console.warn("Percentages for subsets add up to more than 100% or were capped. Overlap may occur.");
+            console.warn("MAX_WORDS for subsets add up to more than 100% or were capped. Overlap may occur.");
             this.currentUser.listeningLowerLevelWords = shuffled.slice(0, listenCount);
-            this.currentUser.reviewLowerLevelWords = shuffled.slice(0, reviewCount);
+            this.currentUser.reviewLowerLevelWords = shuffled.slice(-reviewCount);
         } else {
             this.currentUser.listeningLowerLevelWords = shuffled.slice(0, listenCount);
             this.currentUser.reviewLowerLevelWords = shuffled.slice(listenCount, listenCount + reviewCount);
@@ -1192,22 +1189,21 @@ class ChineseLearningApp {
         // The lifecycle manager will regenerate it for the new level.
         this.currentUser.miniGameDataForLevel = {};
 
-        // 3. Generate new practice subsets for the new target level
-        this.generatePracticeSubsets();
+        // 3. Re-run the full initialization logic on the modified user object.
+        // This will correctly generate new practice subsets and handle any other derived data.
+        this.initializeUserProperties();
 
-        // 4. Generate the sentence writing word list for the new target level
-        this.generateSentenceWritingWordList();
-
-        // 5. Save the reset user data
+        // 4. Save the reset user data
         this.saveUserData();
 
-        // 6. Run the lifecycle manager to create a fresh set of mini-games for the new level
+        // 5. Run the lifecycle manager to create a fresh set of mini-games for the new level
         this.manageMiniGameDataLifecycle();
 
         alert(`✅ Successfully reset to Level ${targetLevel}!`);
 
-        // Force a full re-initialization of the user state, then show the dashboard.
-        this.checkLoggedInUser();
+        // 6. Apply theme and re-render the developer mode screen to reflect the changes.
+        this._applyTheme();
+        this.showDeveloperMode();
     }
 
     resetAllMiniGames() {
@@ -1717,8 +1713,10 @@ class ChineseLearningApp {
     generateSentenceWritingWords() {
         // For Level 1, there are no previous levels, so we use Level 1 words as the source.
         // For Level 2+, we use words from all preceding levels to reinforce learning.
-        const sourceLevel = this.currentUser.level > 1 ? this.currentUser.level - 1 : 1;
-        const allWords = this.getAllWordsUpToLevel(sourceLevel);
+        const currentLevel = this.currentUser.level;
+        const endLevel = currentLevel > 1 ? currentLevel - 1 : 1;
+        const startLevel = Math.max(1, currentLevel - this.REVIEW_LOWER_LEVEL_RANGE);
+        const allWords = this.getAllWordsInRange(startLevel, endLevel);
 
         const wordsByCrosses = allWords
             .map(word => ({
