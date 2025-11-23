@@ -3,24 +3,33 @@
 
     /* --- Default Theme Variables --- */
 
+    /* Accent Colors */
+    --c-accent-success: #27ae60;
+    --c-accent-error: #e74c3c;
+    --c-accent-neutral: #636b72;
+    --c-accent-selected: #007bff;
+    --c-accent-selected-border: #5a6fd8;
+    --c-accent-general: var(--c-accent-selected);
+    --c-accent-reset: var(--c-accent-neutral);
+    --c-accent-exchange: #dca519;
+
     /* Text Colors */
+    --c-text-header: #333;
     --c-text-primary: #333;
     --c-text-secondary: #555;
     --c-text-tertiary: #666;
     --c-text-on-accent: #fff;
-    --c-text-link: #007bff;
-    --c-text-link-hover: #0056b3;
     --c-text-hover: #667eea;
     --c-text-placeholder: #adb5bd;
+    --c-text-label: var(--c-text-secondary);
 
     /* Background Colors */
     --c-bg-page: #f0f2f5;
     --c-bg-card: rgba(255, 255, 255, 0.95);
     --c-bg-header: rgba(255, 255, 255, 0.75);
-    --c-bg-input: rgba(255,255,255,0.8);
     --c-bg-button: rgba(0,0,0,0.05);
     --c-bg-button-hover: rgba(0,0,0,0.1);
-    --c-bg-tab-inactive: #e9ecef;
+    --c-bg-button-theme: #499fb9;
     --c-bg-tab-active: #fff;
     --c-bg-draggable: #f8f9fa;
     --c-bg-warning-section: #fff5f5;
@@ -34,13 +43,6 @@
     --c-border-dark: #dee2e6;
     --c-border-warning: #fcc2c3;
 
-    /* Accent Colors */
-    --c-accent-success: #27ae60;
-    --c-accent-error: #e74c3c;
-    --c-accent-neutral: #636b72;
-    --c-accent-neutral-hover: #535960;
-    --c-accent-selected-border: #5a6fd8;
-
     /* Gradients */
     --grad-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --grad-success: linear-gradient(135deg, #27ae60, #229954);
@@ -51,10 +53,11 @@
     --grad-exchange-draw: linear-gradient(135deg, #4169E1, #0047AB);
     --grad-exchange-specific: var(--grad-gacha-multi);
 
+    /* Progress Page */
     --c-progress-bar-bg: rgba(0,0,0,0.15);
-    --c-completed-item-bg: #e6f9f0;
-    --c-completed-item-text: #2dce89;
-    --c-completed-item-border: #2dce89;
+    --c-completed-item-bg: #f0f8f4;
+    --c-completed-item-text: #218838;
+    --c-completed-item-border: #218838;
 
     /* Calendar Colors */
     --grad-calendar-header: var(--grad-primary);
@@ -72,13 +75,12 @@
     --c-tab-literature-bg: #a2d9ea;
     --c-tab-culture-bg: #a7d5c9;
     --c-icon-shadow: 1px 1px 2px rgba(0,0,0,0.3); /* Subtle dark shadow for light themes */
-    --c-ss-action-bg: #499fb9;
+    --c-ss-action-bg: var(--c-bg-button-theme);
     --c-dropdown-bg: #f8f9fa;
     --c-answer-bank-selected-bg: #5480af;
     --c-answer-bank-paired-bg: #8298ac;
     --c-answer-bank-correct-bg: #7ca66a;
     --c-answer-bank-wrong-bg: #d17a7e;
-    --c-text-neutral: #2b2f33;
     --c-upgrade-btn-bg: rgb(174, 169, 158);
     --c-upgrade-btn-hover-bg: rgba(111, 106, 97, 1);
     --c-upgrade-btn-disabled-bg: rgba(111, 106, 97, 0.2);
@@ -86,50 +88,51 @@
     --c-pic-match-wrong-bg: #c06e73;
 
     /* Images */
-    --img-wallpaper: url('background.png');
-    --img-collection-history-bg: url('collections.jpg');
+    --img-wallpaper: url('background/background.png');
+    --img-collection-history-bg: url('background/collections.jpg');
 }
 
 body.theme-halloween {
     /* --- Halloween Theme Overrides --- */
 
+    /* Accent Colors */
+    --c-accent-success: #28a745;
+    --c-accent-error: #ff4757;
+    --c-accent-neutral: #4a4a68;
+    --c-accent-selected: #ff8c00;
+    --c-accent-selected-border: #9d3f25;
+    --c-accent-general: var(--c-accent-selected);
+    --c-accent-reset: var(--c-accent-neutral);
+
     /* Text Colors */
+    --c-text-header: #f0f2f5;
     --c-text-primary: #f0f2f5;
     --c-text-secondary: #c5ced6;
     --c-text-tertiary: #999;
     --c-text-on-accent: #fff;
-    --c-text-link: #ff8c00;
-    --c-text-link-hover: #7c4604;
     --c-text-hover: #9370DB;
     --c-text-placeholder: #777;
+    --c-text-label: var(--c-accent-selected);
 
     /* Background Colors */
     --c-bg-page: #121212;
     --c-bg-card: rgba(26, 26, 46, 0.9);
     --c-bg-header: rgba(18, 18, 18, 0.75);
-    --c-bg-input: rgba(40, 40, 55, 0.8);
     --c-bg-button: rgba(255,255,255,0.1);
     --c-bg-button-hover: rgba(255,255,255,0.2);
-    --c-bg-tab-inactive: #2c2c3e;
+    --c-bg-button-theme: #e67e22;
     --c-bg-draggable: #2c2c3e;
     --c-bg-tab-active: var(--c-bg-card);
-    --c-bg-warning-section: rgba(87, 20, 20, 0.9);
+    --c-bg-warning-section: rgba(84, 24, 24, 0.8);
     --c-bg-exchange: rgba(43, 30, 0, 0.8);
     --c-bg-collection-history-item: rgba(0, 0, 0, 0.3);
     --c-bg-recognition-box: var(--c-bg-card);
     --c-bg-box-shadow: rgba(255, 255, 255, 0.3);
 
     /* Border Colors */
-    --c-border-subtle: rgba(196, 189, 189, 0.3);
+    --c-border-subtle: rgba(231, 224, 224, 0.5);
     --c-border-dark: #444;
     --c-border-warning: #8b0000;
-
-    /* Accent Colors */
-    --c-accent-success: #28a745;
-    --c-accent-error: #ff4757;
-    --c-accent-neutral: #4a4a68;
-    --c-accent-neutral-hover: #5f5f82;
-    --c-accent-selected-border: #9d3f25;
 
     /* Gradients */
     --grad-primary: linear-gradient(135deg, #ff8c00 0%, #e8491d 100%);
@@ -148,12 +151,10 @@ body.theme-halloween {
 
     /* Calendar Colors */
     --grad-calendar-header: var(--grad-primary);
-    --c-calendar-month-title: var(--c-text-link);
+    --c-calendar-month-title: var(--c-accent-selected);
     --c-calendar-day-header: var(--c-text-secondary);
     --c-calendar-event-day: #d35400;
     --c-calendar-special-day: #8e44ad;
-    --c-calendar-tooltip-bg: var(--c-bg-card);
-    --c-calendar-tooltip-text: var(--c-text-primary);
 
     /* Social Studies Colors */
     --c-tab-history-bg: #5a2a91;
@@ -162,13 +163,12 @@ body.theme-halloween {
     --c-tab-literature-bg: rgb(230, 55, 16);
     --c-tab-culture-bg: rgb(243, 186, 16);
     --c-icon-shadow: 0 0 5px rgba(255, 255, 255, 0.85); /* White glow for dark themes */
-    --c-ss-action-bg: #e67e22;
-    --c-dropdown-bg: var(--c-bg-input);
+    --c-ss-action-bg: var(--c-bg-button-theme);
+    --c-dropdown-bg: var(--c-bg-card);
     --c-answer-bank-selected-bg: #8e44ad;
     --c-answer-bank-paired-bg: #886996;
     --c-answer-bank-correct-bg: var(--c-accent-success);
     --c-answer-bank-wrong-bg: var(--c-accent-error);
-    --c-text-neutral: var(--c-text-link);
     --c-upgrade-btn-bg: var(--grad-error);
     --c-upgrade-btn-hover-bg: var(--grad-error);
     --c-upgrade-btn-disabled-bg: var(--c-accent-neutral);
@@ -176,8 +176,103 @@ body.theme-halloween {
     --c-pic-match-wrong-bg: var(--c-accent-error);
 
     /* Images */
-    --img-wallpaper: url('background-halloween.png');
-    --img-collection-history-bg: url('background-halloween.png');
+    --img-wallpaper: url('background/background-halloween.png');
+    --img-collection-history-bg: url('background/background-halloween.png');
+}
+
+body.theme-xmas {
+    /* --- Christmas Theme Overrides --- */
+
+    /* Accent Colors */
+    --c-accent-success: #154f33; /* Green */
+    --c-accent-error: #7d1d1d; /* Red */
+    --c-accent-neutral: #74797d;
+    --c-accent-selected: #5d6369;
+    --c-accent-selected-border: rgba(255, 255, 255, 0.35);
+    --c-accent-general: #273988;
+    --c-accent-reset: linear-gradient(135deg, #b57575 0%, #3C0A0A 100%);
+
+    /* Text Colors */
+    --c-text-header: #f0f2f5;
+    --c-text-primary: #4E3524;
+    --c-text-secondary: #71665d;
+    --c-text-tertiary: #999;
+    --c-text-on-accent: #fff;
+    --c-text-hover: #3C0A0A;
+    --c-text-placeholder: #8a8383;
+    --c-text-label: rgb(13, 100, 59, 0.9);
+
+    /* Background Colors */
+    --c-bg-page: rgba(196, 196, 196, 0.5);
+    --c-bg-card:  rgba(255, 255, 255, 0.5);
+    --c-bg-header: rgba(10, 46, 29, 0.75); /* Dark Green tint */
+    --c-bg-button: rgba(255,255,255,0.1);
+    --c-bg-button-hover: rgba(196, 196, 196, 0.5);
+    --c-bg-button-theme: #ab1c2b;
+    --c-bg-draggable: rgb(202, 200, 194, 0.5);
+    --c-bg-tab-active: var(--c-bg-card);
+    --c-bg-warning-section: rgba(87, 25, 25, 0.75);
+    --c-bg-exchange: var(--c-bg-card);
+    --c-bg-collection-history-item: var(--c-bg-card);
+    --c-bg-recognition-box: var(--c-bg-card);
+
+
+    /* Border Colors */
+    --c-border-subtle: rgba(193, 183, 183, 0.4);
+    --c-border-dark: #b7b5b5;
+    --c-border-warning: #8b0000;
+
+    /* Gradients */
+    /*--grad-primary: linear-gradient(135deg, #218838 0%, #0A2E1D 100%); */ /* green grad */
+    /*--grad-primary: linear-gradient(135deg, #b57575 0%, #3C0A0A 100%); */ /* red grad */
+    --grad-primary: linear-gradient(135deg, #a8947b 0%, #3c281b 100%);  /* brown grad */
+    --grad-success: linear-gradient(135deg, #218838 0%, #0A2E1D 100%);
+    --grad-error: linear-gradient(135deg, #CD1C36 0%, #3C0A0A 100%);
+    --grad-gacha-single: linear-gradient(135deg, #218838, #395A32);
+    --grad-gacha-multi: linear-gradient(135deg, #c82333, #721c24);
+    --grad-progress-bar-fill: var(--grad-gacha-multi);
+    --grad-exchange-draw: var(--grad-gacha-single);
+    --grad-exchange-specific: var(--grad-gacha-multi);
+
+    /* Progress Page */
+    --c-progress-bar-bg: rgba(0,0,0,0.15);
+    --c-completed-item-bg: #6b8973;
+    --c-completed-item-text: var(--c-text-header);
+    --c-completed-item-border: #6b8973;
+
+    /* Calendar Colors */
+    --grad-calendar-header: var(--c-bg-header);
+    --c-calendar-month-title: var(--c-text-primary);
+    --c-calendar-day-header: #888;
+    --c-calendar-event-day: #218838;
+    --c-calendar-special-day: #c82333;
+
+    /* Social Studies Colors */
+    --c-tab-history-bg: #870020;
+    --c-tab-geography-bg: #CD1C36;
+    --c-tab-news-bg: #bcab97;
+    --c-tab-literature-bg: #395A32;
+    --c-tab-culture-bg: #193E1A;
+
+/*    --c-tab-history-bg: #870020;
+    --c-tab-geography-bg: #A86454;
+    --c-tab-news-bg: #bcab97;
+    --c-tab-literature-bg: #7A99A2;
+    --c-tab-culture-bg:  #395A32;*/
+
+    --c-icon-shadow: 0 0 5px rgba(255, 255, 255, 0.85); /* White glow for dark themes */
+    --c-ss-action-bg: var(--c-text-label);
+    --c-dropdown-bg: var(--c-bg-card);
+    --c-answer-bank-selected-bg: rgba(111, 106, 97, 1);
+    --c-answer-bank-paired-bg: rgba(111, 106, 97, 1);
+    --c-answer-bank-correct-bg: var(--c-accent-success);
+    --c-answer-bank-wrong-bg: var(--c-accent-error);
+    --c-pic-match-correct-bg: var(--c-accent-success);
+    --c-pic-match-wrong-bg: var(--c-accent-error);
+
+    /* Images */
+    --img-wallpaper: url('background/background-xmas.png');
+    --img-collection-history-bg: url('background/background-xmas2.png');
 }
 
 * {
@@ -277,12 +372,12 @@ body.no-scroll {
 
 .auth-form input {
     padding: 1.2rem;
-    border: 2px solid var(--c-border-dark); /* THEME FIX */
+    border: 2px solid var(--c-border-dark);
     border-radius: 12px;
     font-size: 1rem;
     transition: all 0.3s ease;
-    background: var(--c-bg-input);
-    color: var(--c-text-primary); /* THEME FIX */
+    background: var(--c-bg-card);
+    color: var(--c-text-primary);
 }
 
 .auth-form input:focus {
@@ -317,7 +412,7 @@ body.no-scroll {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: var(--c-text-primary);
+    color: var(--c-text-header);
     border-bottom: 1px solid var(--c-border-subtle);
 }
 
@@ -370,7 +465,7 @@ body.no-scroll {
     font-size: 12px;
     padding: 0.7rem 1.5rem;
     background: var(--c-bg-button);
-    color: var(--c-text-primary);
+    color: var(--c-text-header);
     border: 1px solid rgba(0,0,0,0.1); /* This can stay for a subtle effect */
     border-radius: 25px;
     cursor: pointer;
@@ -378,9 +473,18 @@ body.no-scroll {
     font-weight: 500;
 }
 
+.dev-btn {
+    background: var(--c-bg-button);
+    color: var(--c-text-primary);
+}
+
 .user-info button:hover,
 .header.page-header button:hover,
-.header button:hover,
+.header button:hover {
+    background: var(--c-bg-button-hover);
+    transform: translateY(-1px);
+}
+
 .dev-btn:hover {
     background: var(--c-bg-button-hover);
     transform: translateY(-1px);
@@ -597,6 +701,7 @@ body.no-scroll {
     font-size: 5rem;
     font-weight: bold;
     text-align: center;
+    color: black;
     background: var(--grad-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -673,11 +778,14 @@ body.no-scroll {
 }
 
 .score-display, .progress-info {
-    color: var(--c-text-secondary);
+    color: var(--c-text-header);
     font-size: 1.3rem;
     font-weight: 600;
     text-shadow: 0 1px 3px rgba(0,0,0,0.1);
     margin-bottom: 1.2rem;
+}
+.progress-info {
+    color: var(--c-text-primary);
 }
 
 .score-display {
@@ -732,11 +840,11 @@ body.no-scroll {
     cursor: pointer;
     transition: all 0.3s ease;
     user-select: none;
-    color: var(--c-text-primary); /* THEME FIX */
+    color: var(--c-text-primary);
 }
 
 .sentence-word-item:hover {
-    background: var(--c-bg-button-hover); /* THEME FIX */
+    background: var(--c-bg-button-hover);
     transform: scale(1.02);
     border-color: #adb5bd;
 }
@@ -784,11 +892,11 @@ body.no-scroll {
     background-color: var(--c-bg-card);
     backdrop-filter: blur(10px);
     border-radius: 15px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    border: 2px solid transparent;
+    border: 2px thin transparent;
     position: relative;
     background-size: cover;
     background-position: center;
@@ -903,10 +1011,10 @@ body.no-scroll {
 }
 
 .game-action-btn {
-    padding: 1rem 2rem;
+    padding: 0.8rem 1.5rem;
     border: none;
     border-radius: 10px;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -921,15 +1029,9 @@ body.no-scroll {
 }
 
 .game-action-btn.secondary {
-    background: var(--c-accent-neutral);
+    background: var(--c-accent-reset);
     box-shadow: 0 4px 15px rgba(102, 110, 118, 0.4);
 }
-
-.game-action-btn.secondary:hover {
-    background: var(--c-accent-neutral-hover);
-    box-shadow: 0 6px 20px rgba(108, 117, 125, 0.6);
-}
-
 .game-action-btn:active {
     transform: translateY(0) scale(0.95);
     transition: all 0.1s ease;
@@ -991,7 +1093,7 @@ body.no-scroll {
 }
 
 .pairing-word.selected {
-    background: var(--c-text-link);
+    background: var(--c-accent-selected);
     color: var(--c-text-on-accent);
     border-color: var(--c-accent-selected-border);
     transform: translateY(-2px) scale(1.05);
@@ -1001,7 +1103,7 @@ body.no-scroll {
 .pairing-word.found {
     background: var(--c-accent-success);
     color: var(--c-text-on-accent);
-    border-color: #228e3b;
+    border-color: rgba(34, 142, 59, 0.25);
     cursor: default;
     transform: none;
 }
@@ -1245,7 +1347,7 @@ body.no-scroll {
 .upgrade-cost {
     font-weight: bold;
     margin-top: 0.5rem;
-    color: var(--c-text-neutral) !important;
+    color: var(--c-text-label) !important;
 }
 
 .theme-tip p {
@@ -1319,10 +1421,9 @@ body.no-scroll {
 }
 
 .theme-btn.active {
-    background: var(--c-ss-action-bg);
+    background: var(--c-bg-button-theme);
     color: var(--c-text-on-accent);
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    transform: scale(1.05);
 }
 
 .theme-btn:disabled {
@@ -1452,8 +1553,8 @@ body.no-scroll {
 }
 
 .nav-btn {
-    padding: 0.5rem 1rem;
-    background: var(--c-text-link);
+    padding: 0.6rem 1.1rem;
+    background: var(--c-accent-general);
     color: var(--c-text-on-accent);
     border: none;
     border-radius: 6px;
@@ -1464,8 +1565,7 @@ body.no-scroll {
 }
 
 .nav-btn:hover:not(:disabled) {
-    background: var(--c-text-link-hover);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
 }
 
 .nav-btn:disabled {
@@ -1611,11 +1711,11 @@ body.no-scroll {
     cursor: pointer;
     border: 1px solid #ccc;
     border-bottom: none;
-    background-color: var(--c-bg-tab-inactive);
+    background-color: var(--c-bg-page); /* not used anyway */
     border-radius: 10px 10px 0 0;
     margin-right: 2px;
     transition: background-color 0.3s ease;
-    color: var(--c-text-primary);
+    color: var(--c-text-header);
 }
 
 .social-studies-tab-button[data-tab="history"] { background-color: var(--c-tab-history-bg); }
@@ -1755,17 +1855,19 @@ body.no-scroll {
 
 .pic-match-item.correct {
     border-color: var(--c-pic-match-correct-bg);
+    color: var(--c-text-header);
 }
 .pic-match-item.correct .pic-match-answer-box {
     background: var(--c-pic-match-correct-bg);
-    color: var(--c-text-on-accent);
+    color: var(--c-text-header) !important;
 }
 .pic-match-item.wrong {
     border-color: var(--c-pic-match-wrong-bg);
+    color: var(--c-text-header);
 }
 .pic-match-item.wrong .pic-match-answer-box {
     background: var(--c-pic-match-wrong-bg);
-    color: var(--c-text-on-accent);
+    color: var(--c-text-header) !important;
 }
 
 .pic-match-answer-bank {
@@ -1781,7 +1883,7 @@ body.no-scroll {
 .answer-bank-btn {
     padding: 0.8rem 1.2rem;
     font-size: 1.1rem;
-    border: 1px solid #6c757d;
+    border: 1px solid #767f86;
     background: var(--c-bg-draggable);
     color: var(--c-text-on-primary);
     border-radius: 10px;
@@ -1794,7 +1896,7 @@ body.no-scroll {
     color: var(--c-text-on-accent);
     border-color: var(--c-answer-bank-selected-bg);
     transform: scale(1.1);
-    box-shadow: 0 4px 10px rgba(0,123,255,0.3);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 .answer-bank-btn:hover {
     transform: scale(1.1);
@@ -2079,8 +2181,8 @@ body.no-scroll {
 }
 
 .mchoice-option input[type="radio"]:checked + label::before {
-    background: #5480af;
-    border-color: #5480af;
+    background: var(--c-answer-bank-selected-bg);
+    border-color: var(--c-answer-bank-selected-bg);
 }
 .mchoice-option input[type="radio"]:checked + label::after {
     transform: translateY(-50%) scale(1);
@@ -2309,7 +2411,7 @@ body.no-scroll {
     font-size: 1.3rem;
     text-align: center;
     color: var(--c-text-primary);
-    border-bottom: 2px solid #eee;
+    border-bottom: 2px solid var(--c-text-secondary);
     padding-bottom: 1rem;
 }
 
@@ -2519,7 +2621,7 @@ body.no-scroll {
 }
 
 .reset-section h3 {
-    color: var(--c-accent-error);
+    color: var(--c-text-header);
     margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
@@ -2539,7 +2641,7 @@ body.no-scroll {
 
 .reset-info p {
     margin: 0.5rem 0;
-    color: var(--c-text-primary); /* THEME FIX */
+    color: var(--c-text-header);
 }
 
 .reset-info strong {
@@ -2555,7 +2657,7 @@ body.no-scroll {
 }
 
 .reset-input label {
-    color: var(--c-text-primary);
+    color: var(--c-text-header);
     font-weight: 600;
     min-width: 120px;
 }
@@ -2564,7 +2666,7 @@ body.no-scroll {
     padding: 0.8rem;
     border-radius: 8px;
     border: 1px solid rgba(231, 76, 60, 0.5);
-    background: rgba(255,255,255,0.9);
+    background: var(--c-dropdown-bg);
     font-size: 1rem;
     min-width: 120px;
 }
@@ -2597,7 +2699,7 @@ body.no-scroll {
 }
 
 .minigame-reset-section h3 {
-    color: var(--c-accent-error);
+    color: var(--c-text-header);
     margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
@@ -2611,7 +2713,7 @@ body.no-scroll {
 
 .minigame-reset-info p {
     margin: 0.5rem 0;
-    color: var(--c-text-primary); /* THEME FIX */
+    color: var(--c-text-header);
 }
 
 .minigame-reset-actions {
@@ -2698,7 +2800,7 @@ input:checked + .slider:before {
     gap: 0.5rem;
     font-size: 1.4rem;
     font-weight: bold;
-    color: var(--c-text-primary);
+    color: var(--c-text-header);
 }
 
 .diamond-icon {
@@ -2720,7 +2822,7 @@ input:checked + .slider:before {
 #cultural-points-display-recognition {
     font-size: 1.2rem;
     font-weight: bold;
-    color: var(--c-text-primary);
+    color: var(--c-text-header);
 }
 
 #cultural-recognition-btn {
@@ -2764,23 +2866,23 @@ input:checked + .slider:before {
 }
 
 #exchange-ticket-wrapper.exchange-active {
-    background: #daa520 !important;
+    background: var(--c-accent-exchange) !important;
     color: white;
-    box-shadow: 0 0 10px rgba(218, 165, 32, 0.7);
+    /*box-shadow: 0 0 10px rgba(218, 165, 32, 0.7); */
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
     border-color: transparent !important;
 }
 
-
 .exchange-ui-container {
-    background: var(--c-bg-exchange); /* THEME FIX */
-    border: 2px solid #daa520;
+    background: var(--c-bg-exchange);
+    border: 2px solid var(--c-accent-exchange);
     padding: 1rem;
     border-radius: 15px;
     margin-bottom: 2rem;
     text-align: center;
 }
 .exchange-status h2 {
-    color: #dca519;
+    color: var(--c-accent-exchange);
     margin-bottom: 0.5rem;
     text-shadow: 2px 2px 8px rgba(0,0,0,0.1);
 }
@@ -2808,7 +2910,7 @@ input:checked + .slider:before {
     flex-wrap: wrap;
 }
 .exchange-buy-btn {
-    padding: 0.6rem 1.0rem;
+    padding: 0.6rem 0.8rem;
     font-size: 1rem;
     font-weight: 600;
     background: var(--grad-exchange-draw);
@@ -2823,7 +2925,7 @@ input:checked + .slider:before {
 }
 .exchange-buy-btn:disabled,
 .exchange-buy-btn.specific:disabled {
-    background: #95a5a6;
+    background: rgba(166, 170, 171, 0.85);
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
@@ -2853,10 +2955,11 @@ input:checked + .slider:before {
 .specific-exchange-wrapper select {
     padding: 0.8rem;
     border-radius: 8px;
-    border: 1px solid var(--c-border-dark); /* THEME FIX */
+    border: 1px solid var(--c-border-dark);
     font-size: 1rem;
     width: 400px;
     transition: all 0.3s ease;
+    background: var(--c-dropdown-bg);
 }
 
 .ticket-icon {
@@ -2880,12 +2983,12 @@ input:checked + .slider:before {
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(245, 166, 35, 0.4);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
 }
 
 .gacha-draw-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(245, 166, 35, 0.6);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.7);
 }
 
 .gacha-draw-wrapper {
@@ -2958,15 +3061,15 @@ input:checked + .slider:before {
 .gacha-draw-btn.multi-draw {
     background: var(--grad-gacha-multi);
     color: var(--c-text-on-accent);
-    box-shadow: 0 4px 15px rgba(121, 40, 202, 0.4);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
 }
 
 .gacha-draw-btn.multi-draw:hover {
-    box-shadow: 0 6px 20px rgba(121, 40, 202, 0.6);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.7);
 }
 
 .collection-grid-container {
-    background: var(--c-bg-card); /* THEME FIX */
+    background: var(--c-bg-card);
     padding: 1rem 2rem 2rem;
     border-radius: 15px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.05);
@@ -2994,11 +3097,11 @@ input:checked + .slider:before {
 
 /* Villain collection specific styles - full image with invisible names */
 #collections-screen .collection-grid .collection-item {
-    background: #f8f9fa !important;
+    /*background: #f8f9fa !important;*/ /* this is needed if image doesn't fill up entire box */
     border-radius: 12px;
     padding: 0 !important;
     text-align: center;
-    border: 2px solid var(--c-border-subtle); /* THEME FIX */
+    border: 2px solid var(--c-border-subtle);
     transition: all 0.3s ease;
     position: relative;
     min-height: 220px;
@@ -3110,7 +3213,7 @@ input:checked + .slider:before {
 }
 
 #collections-screen .collection-grid .collection-item.selected-for-exchange {
-    box-shadow: 0 0 15px 5px #ffd700 !important;
+    box-shadow: 0 0 12px 1px #ffd700 !important;
     transform: scale(1.05) !important;
 }
 
@@ -3261,8 +3364,8 @@ input:checked + .slider:before {
     z-index: 5;
 }
 .exchange-btn {
-    width: 24px;
-    height: 24px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     border: none;
     font-size: 1.2rem;

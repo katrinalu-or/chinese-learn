@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.4.1';
+        this.APP_VERSION = '1.4.2';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.4.1';
-        this.LATEST_MINIGAME_VERSION = '1.4.1';
+        this.DEFAULT_WORDS_VERSION = '1.4.2';
+        this.LATEST_MINIGAME_VERSION = '1.4.2';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -5393,6 +5393,26 @@ Draw 10 guarantees one Epic or Legendary!`;
                     `;
                 }
             },
+            'unlock_xmas_theme': {
+                id: 'unlock_xmas_theme',
+                name: 'Seasonal Limited Theme',
+                maxLevel: 1,
+                cost: () => 100,
+                levels: [
+                    { description: 'Unlock access to exclusive, time-limited theme', effects: [] }
+                ],
+                implemented: true,
+                isThemeUnlock: true,
+                getBenefitDescription(currentLevel) {
+                    const theme = self.themeManifest.find(t => t.requiredPerk === this.id);
+                    return `
+                        <p>${this.levels[currentLevel].description}</p>
+                        <p><strong>Current Theme:</strong> ${theme.name}</p>
+                        <p><strong>Available until:</strong> ${new Date(theme.expiresOn).toLocaleDateString()}</p>
+                        </div>
+                    `;
+                }
+            },
         };
     }
 
@@ -5504,6 +5524,7 @@ Draw 10 guarantees one Epic or Legendary!`;
         return [
             { id: 'default', name: 'Default', requiredPerk: null },
             { id: 'halloween', name: 'Halloween', requiredPerk: 'unlock_halloween_theme', expiresOn: '2025-11-01T23:59:59' },
+            { id: 'xmas', name: 'Christmas', requiredPerk: 'unlock_xmas_theme', expiresOn: '2025-12-25T23:59:59' },
             // Example for a future theme:
             // { id: 'winter', name: 'Winter', requiredPerk: 'unlock_winter_theme', expiresOn: '2026-01-31T23:59:59' },
         ];
