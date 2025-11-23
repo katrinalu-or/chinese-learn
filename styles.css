@@ -2901,7 +2901,7 @@ input:checked + .slider:before {
     margin-bottom: 1.5rem;
 }
 .exchange-points-display strong {
-    color: var(--c-text-primary); /* THEME FIX */
+    color: var(--c-text-primary);
     text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
 }
 .exchange-buy-options {
@@ -2960,6 +2960,12 @@ input:checked + .slider:before {
     width: 400px;
     transition: all 0.3s ease;
     background: var(--c-dropdown-bg);
+    color: var(--c-text-primary);
+}
+
+.specific-exchange-wrapper select:focus {
+  outline: none;
+  border-color: var(--c-border-dark); /* to overwrite system default color blue */
 }
 
 .ticket-icon {

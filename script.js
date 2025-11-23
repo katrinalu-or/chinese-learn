@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.4.3';
+        this.APP_VERSION = '1.4.4';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.4.3';
-        this.LATEST_MINIGAME_VERSION = '1.4.3';
+        this.DEFAULT_WORDS_VERSION = '1.4.4';
+        this.LATEST_MINIGAME_VERSION = '1.4.4';
 
         this.REVIEW_WORDS_PER_SESSION = 20;
         this.REVIEW_CURRENT_LEVEL_COMPLETIONS = 1;
@@ -4086,6 +4086,8 @@ Draw 10 guarantees one Epic or Legendary!`;
 
     createDragClone(item, touch) {
         const clone = item.cloneNode(true);
+        const styles = window.getComputedStyle(item);
+
         clone.id = 'touch-drag-clone';
         clone.style.position = 'fixed';
         clone.style.zIndex = '9999';
@@ -4095,8 +4097,11 @@ Draw 10 guarantees one Epic or Legendary!`;
         clone.style.transition = 'none'; // Remove any transitions that might interfere
         clone.style.left = (touch.clientX - 30) + 'px';
         clone.style.top = (touch.clientY - 20) + 'px';
-        clone.style.background = '#fff';
-        clone.style.border = '2px solid #007bff';
+
+        // Apply styles from the original item instead of hardcoding them
+        clone.style.background = styles.backgroundColor;
+        clone.style.color = styles.color;
+        clone.style.border = styles.border;
         clone.style.borderRadius = '8px';
         clone.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.3)';
 
@@ -4331,18 +4336,10 @@ Draw 10 guarantees one Epic or Legendary!`;
                 const prevLevelProgress = progress[category]?.[prevLevelNum];
 
                 // Check if the user has passed the *previous* level
-                if (prevLevelProgress?.finalScore) {
-                    const [score, total] = prevLevelProgress.finalScore.split('/').map(Number);
-                    const percentage = total > 0 ? (score / total) * 100 : 0;
-                    if (percentage >= this.SOCIAL_STUDIES_PASSING_SCORE) {
-                        // If they passed, this new level is now unlocked
-                        highestUnlockedLevel = Math.max(highestUnlockedLevel, levelNum);
-                    } else {
-                        // If they haven't passed the previous level, they can't access this one, so we stop.
-                        break;
-                    }
+                if (prevLevelProgress?.hasPassed) {
+                    highestUnlockedLevel = Math.max(highestUnlockedLevel, levelNum);
                 } else {
-                    // If there's no score for the previous level, they can't proceed.
+                    // If the previous level has never been passed, stop unlocking further levels.
                     break;
                 }
             }
@@ -4607,6 +4604,7 @@ Draw 10 guarantees one Epic or Legendary!`;
 
             // Did the user pass the level?
             if (percentage >= this.SOCIAL_STUDIES_PASSING_SCORE) {
+                levelProgress.hasPassed = true; // permanent flag
                 let alertMessage = `Congratulations! You passed Level ${level}!`;
 
                 // If this is the first time passing, award points.
