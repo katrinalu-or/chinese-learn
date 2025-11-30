@@ -209,7 +209,7 @@ body.theme-xmas {
     --c-bg-button: rgba(255,255,255,0.1);
     --c-bg-button-hover: rgba(196, 196, 196, 0.5);
     --c-bg-button-theme: #ab1c2b;
-    --c-bg-draggable: rgb(202, 200, 194, 0.5);
+    --c-bg-draggable: rgb(202, 200, 194, 0.75);
     --c-bg-tab-active: var(--c-bg-card);
     --c-bg-warning-section: rgba(87, 25, 25, 0.75);
     --c-bg-exchange: var(--c-bg-card);
@@ -1903,6 +1903,10 @@ body.no-scroll {
 }
 .answer-bank-btn:hover {
     transform: scale(1.1);
+}
+.answer-bank-btn.used {
+    opacity: 0.6;
+    transform: scale(0.95);
 }
 
 .quiz-navigation-controls {

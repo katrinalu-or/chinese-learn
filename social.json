@@ -482,6 +482,214 @@
                     }
                 }
             ]
+        },
+        "2": {
+            "title": "中國",
+            "pages": [
+                {
+                    "type": "cover",
+                    "data": {
+                        "cover_image": "social/geography2/cover_china.png",
+                        "description": "Learn China cities, landmarks, and thier characteristics"
+                    }
+                },
+                {
+                    "type": "pic_label",
+                    "data": {
+                        "image": "social/geography2/china_cities.jpg",
+                        "description": "Identify the 4 Tier-1 cities 北上廣深 in China",
+                        "hotspots": [
+                            {
+                                "id": "beijing",
+                                "label": "北京",
+                                "coords": { "x": 72.4, "y": 38.2 }
+                            },
+                            {
+                                "id": "shanghai",
+                                "label": "上海",
+                                "coords": { "x": 84.2, "y": 62.2 }
+                            },
+                            {
+                                "id": "guangzhou",
+                                "label": "廣州",
+                                "coords": { "x": 68.5, "y": 83.5 }
+                            },
+                            {
+                                "id": "shenzhen",
+                                "label": "深圳",
+                                "coords": { "x": 70.8, "y": 88.2 }
+                            }
+                        ],
+                        "wordBank": [
+                            "北京",
+                            "上海",
+                            "廣州",
+                            "深圳"
+                        ]
+                    }
+                },
+                {
+                    "type": "pic_match",
+                    "data": {
+                        "items": [
+                            { "image": "social/geography2/great_wall.jpg", "text": "萬里長城" },
+                            { "image": "social/geography2/oriental_pearl.jpg", "text": "東方明珠" },
+                            { "image": "social/geography2/qinshihuang.jpg", "text": "兵馬俑" },
+                            { "image": "social/geography2/forbidden_city.jpg", "text": "故宮" },
+                            { "image": "social/geography2/yellow_river.jpg", "text": "黃河" },
+                            { "image": "social/geography2/biggest_current.jpg", "text": "錢塘江" },
+                            { "image": "social/geography2/mount_everest.jpg", "text": "喜馬拉雅山" }
+                        ]
+                    }
+                },
+                {
+                    "type": "match",
+                    "data": {
+                        "image": "social/geography2/travel_map.jpg",
+                        "description": "Match China providence with their famous sight seeings",
+                        "pairs": [
+                            ["四川", "貓熊 panda"],
+                            ["西藏", "布達拉宮 Potala"],
+                            ["西藏", "珠穆朗瑪峰 Qomolangma"],
+                            ["北京", "萬里長城 The Great Wall"],
+                            ["北京", "故宮 Forbidden Forest"],
+                            ["陝西", "兵馬俑 Qin Terracotta Army"],
+                            ["山東", "孔子 Confucius"],
+                            ["青海", "駱駝 camal"],
+                            ["河南", "龍門石窟 Longmen Grottoes"]
+                        ]
+                    }
+                },
+                {
+                    "type": "mchoice",
+                    "data": {
+                        "questions": [
+                            {
+                                "id": "q1",
+                                "image": "social/geography2/population_line.jpg",
+                                "question": "這條線是什麼線？",
+                                "options": [
+                                    "人口分界線",
+                                    "GPD分界線",
+                                    "氣候分界線",
+                                    "山脈"
+                                ],
+                                "answer": "人口分界線"
+                            },
+                            {
+                                "id": "q2",
+                                "question": "下面哪個不是中國東部人口較多的原因？",
+                                "options": [
+                                    "下雨量充足",
+                                    "靠近港口",
+                                    "平原多",
+                                    "以前人先從東部搬進中國"
+                                ],
+                                "answer": "以前人先從東部搬進中國"
+                            },
+                            {
+                                "id": "q3",
+                                "image": "social/geography2/world_population.png",
+                                "question": "2025年中國人口是世界上第幾名？",
+                                "options": [
+                                    "第一名",
+                                    "第二名",
+                                    "第三名",
+                                    "第四名"
+                                ],
+                                "answer": "第二名"
+                            },
+                            {
+                                "id": "q4",
+                                "image": "social/geography2/elevation.png",
+                                "question": "這三個區是在分什麼？",
+                                "options": [
+                                    "人口",
+                                    "地形高度",
+                                    "天氣",
+                                    "GPD"
+                                ],
+                                "answer": "地形高度"
+                            },
+                            {
+                                "id": "q5",
+                                "image": "social/geography2/rain_line.png",
+                                "question": "這條線是什麼線？",
+                                "options": [
+                                    "人口分界線",
+                                    "GPD分界線",
+                                    "南北分界線",
+                                    "山脈"
+                                ],
+                                "answer": "南北分界線"
+                            },
+                            {
+                                "id": "q6",
+                                "question": "上海是南部還是北部？",
+                                "options": [
+                                    "南部",
+                                    "北部"
+                                ],
+                                "answer": "南部"
+                            },
+                            {
+                                "id": "q7",
+                                "question": "哪邊下雨量比較高？",
+                                "options": [
+                                    "南部",
+                                    "北部"
+                                ],
+                                "answer": "南部"
+                            },
+                            {
+                                "id": "q8",
+                                "question": "種植方面，下面哪個是對的？稻=rice, 麥=wheat",
+                                "options": [
+                                    "南稻北麥",
+                                    "南麥北稻"
+                                ],
+                                "answer": "南稻北麥"
+                            },
+                            {
+                                "id": "q9",
+                                "question": "主食方面，下面哪個是對的？",
+                                "options": [
+                                    "南米北麵",
+                                    "南麵北米"
+                                ],
+                                "answer": "南米北麵"
+                            },
+                            {
+                                "id": "q10",
+                                "question": "衣服方面，下面哪個是對的？",
+                                "options": [
+                                    "南薄北厚",
+                                    "南厚北薄"
+                                ],
+                                "answer": "南薄北厚"
+                            },
+                            {
+                                "id": "q11",
+                                "question": "房子方面，下面哪個是對的？",
+                                "options": [
+                                    "南尖北平",
+                                    "南平北尖"
+                                ],
+                                "answer": "南尖北平"
+                            },
+                            {
+                                "id": "q12",
+                                "question": "交通方面，下面哪個是對的？",
+                                "options": [
+                                    "南船北馬",
+                                    "南馬北船"
+                                ],
+                                "answer": "南船北馬"
+                            }
+                        ]
+                    }
+                }
+            ]
         }
     },
     "history": {

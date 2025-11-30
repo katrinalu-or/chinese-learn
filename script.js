@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.4.7';
+        this.APP_VERSION = '1.4.8';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.4.7';
-        this.LATEST_MINIGAME_VERSION = '1.4.7';
+        this.DEFAULT_WORDS_VERSION = '1.4.8';
+        this.LATEST_MINIGAME_VERSION = '1.4.8';
         this.LEVEL_UP_DIAMOND_BONUS = 2;
 
         // Word Reivew Activity Configuration
@@ -287,13 +287,22 @@ class ChineseLearningApp {
         for (const category in progress) {
             for (const level in progress[category]) {
                 const levelProgress = progress[category][level];
-                // Only run migration if hasPassed is not already set and a score exists.
-                if (levelProgress && typeof levelProgress.hasPassed === 'undefined' && levelProgress.finalScore) {
-                    const [score, total] = levelProgress.finalScore.split('/').map(Number);
-                    const percentage = total > 0 ? (score / total) * 100 : 0;
-                    if (percentage >= this.SOCIAL_STUDIES_PASSING_SCORE) {
+                // Only run migration if hasPassed is not already set.
+                if (levelProgress && typeof levelProgress.hasPassed === 'undefined') {
+                    // If culturalPointsAwarded was true, the level was passed.
+                    if (levelProgress.culturalPointsAwarded === true) {
                         levelProgress.hasPassed = true;
                     }
+                    // If not, check the score manually for older data.
+                    else if (levelProgress.finalScore) {
+                        const [score, total] = levelProgress.finalScore.split('/').map(Number);
+                        const percentage = total > 0 ? (score / total) * 100 : 0;
+                        if (percentage >= this.SOCIAL_STUDIES_PASSING_SCORE) {
+                            levelProgress.hasPassed = true;
+                  }
+                    }
+                    // Clean up the old redundant flag.
+                    delete levelProgress.culturalPointsAwarded;
                 }
             }
         }
@@ -4425,8 +4434,7 @@ Draw 10 guarantees one Epic or Legendary!`;
                 pageData: [],
                 finalScore: null,
                 currentTotalScore: 0,
-                currentTotalPossible: 0,
-                culturalPointsAwarded: false
+                currentTotalPossible: 0
             };
         }
         const levelProgress = this.currentUser.socialStudiesProgress[category][level];
@@ -4566,7 +4574,6 @@ Draw 10 guarantees one Epic or Legendary!`;
             levelProgress.finalScore = null;
             levelProgress.currentTotalScore = 0;
             levelProgress.currentTotalPossible = 0;
-            // We DO NOT reset culturalPointsAwarded here
         }
 
         this.saveUserData();
@@ -4622,10 +4629,9 @@ Draw 10 guarantees one Epic or Legendary!`;
                 let alertMessage = `Congratulations! You passed Level ${level}!`;
 
                 // If this is the first time passing, award points.
-                if (!levelProgress.culturalPointsAwarded) {
+                if (!levelProgress.hasPassed) {
                     const pointsEarned = this.SOCIAL_STUDIES_BASE_CULTURAL_POINTS_EARNED + (parseInt(level) - 1) * this.SOCIAL_STUDIES_CULTURAL_POINTS_INCREMENT;
                     this.currentUser.culturalPoints = (this.currentUser.culturalPoints || 0) + pointsEarned;
-                    levelProgress.culturalPointsAwarded = true; // Mark as awarded
 
                     // Add to the alert message
                     alertMessage += `\n\nYou earned ${pointsEarned} cultural points 🎵 and unlocked the next level`;
@@ -4741,6 +4747,8 @@ Draw 10 guarantees one Epic or Legendary!`;
         document.querySelectorAll('.pic-match-item').forEach(item => {
             item.addEventListener('click', e => this.handlePicMatchImageClick(e));
         });
+        // Run once on setup to handle any pre-filled answers correctly
+        this.updateAnswerBankVisuals();
     }
 
     handlePicMatchAnswerSelect(event) {
@@ -4763,6 +4771,9 @@ Draw 10 guarantees one Epic or Legendary!`;
         // Deselect the answer from the bank
         document.querySelectorAll('.answer-bank-btn').forEach(btn => btn.classList.remove('selected'));
         this.currentSelectedAnswer = null;
+
+         // Update visuals after placing an answer
+        this.updateAnswerBankVisuals();
     }
 
     submitPicMatch() {
@@ -4807,6 +4818,147 @@ Draw 10 guarantees one Epic or Legendary!`;
 
         // Re-render the content to show the graded view
         this.renderSocialStudiesContent();
+    }
+
+    // --- Pic Label Quiz (Image Labeling) Implementation ---
+    renderPicLabelQuiz(container, pageData, savedProgress) {
+        let html = `
+            <div class="match-quiz-description">${pageData.data.description || ''}</div>
+            <div class="pic-label-container">
+                <img src="${pageData.data.image}" alt="Labeling quiz background">`;
+
+        pageData.data.hotspots.forEach(hotspot => {
+            const userAnswer = savedProgress?.answers?.[hotspot.id] || '?';
+            let correctnessClass = '';
+
+            if (savedProgress) {
+                correctnessClass = userAnswer === hotspot.label ? 'correct' : 'wrong';
+            }
+
+            html += `<div class="pic-label-hotspot ${correctnessClass}"
+                          style="left: ${hotspot.coords.x}%; top: ${hotspot.coords.y}%;"
+                          data-hotspot-id="${hotspot.id}">
+                       ${userAnswer}
+                     </div>`;
+        });
+        html += `</div>`;
+
+        // Render the word bank using the same style as pic_match
+        // It's only shown if the quiz is active (not graded)
+        if (!savedProgress) {
+            html += '<div class="pic-match-answer-bank">'; // Re-use class
+            const wordBank = [...pageData.data.wordBank].sort(() => 0.5 - Math.random());
+            wordBank.forEach(answer => {
+                html += `<button class="answer-bank-btn" data-answer-text="${answer}">${answer}</button>`;
+            });
+            html += '</div>';
+        }
+
+        container.innerHTML = html;
+
+        if (!savedProgress) {
+            this.setupPicLabelEvents();
+        }
+    }
+
+    setupPicLabelEvents() {
+        // This is the same selection logic as pic_match
+        document.querySelectorAll('.answer-bank-btn').forEach(btn => {
+            btn.addEventListener('click', e => this.handlePicMatchAnswerSelect(e));
+        });
+
+        // This is the placement logic
+        document.querySelectorAll('.pic-label-hotspot').forEach(hotspot => {
+            hotspot.addEventListener('click', (e) => this.handlePicLabelHotspotClick(e));
+        });
+
+        // Run once on setup
+        this.updateAnswerBankVisuals();
+    }
+
+    handlePicLabelHotspotClick(event) {
+        if (!this.currentSelectedAnswer) return; // Do nothing if no answer is selected
+
+        const clickedHotspot = event.currentTarget;
+        clickedHotspot.textContent = this.currentSelectedAnswer;
+        clickedHotspot.style.color = 'inherit'; // Use themed color
+
+        // Deselect the answer from the bank
+        document.querySelectorAll('.answer-bank-btn').forEach(btn => btn.classList.remove('selected'));
+        this.currentSelectedAnswer = null;
+
+        // Update visuals after placing an answer
+        this.updateAnswerBankVisuals();
+    }
+
+    submitPicLabelQuiz() {
+        const activeTabButton = document.querySelector('.social-studies-tab-button.active');
+        const category = activeTabButton.dataset.tab;
+        const level = document.getElementById(`${category}-level-select`).value;
+        const pageIndex = this.currentSocialStudiesPage;
+        const pageData = this.socialStudiesContent[category][level].pages[pageIndex];
+
+        const quizHotspots = document.querySelectorAll('.pic-label-hotspot');
+        let score = 0;
+        const userAnswers = {};
+
+        quizHotspots.forEach(hotspotEl => {
+            const hotspotId = hotspotEl.dataset.hotspotId;
+            const userAnswer = hotspotEl.textContent.trim();
+            userAnswers[hotspotId] = userAnswer;
+
+            // Find the correct answer from the original data using the ID
+            const hotspotDef = pageData.data.hotspots.find(h => h.id === hotspotId);
+            if (hotspotDef && userAnswer === hotspotDef.label) {
+                score++;
+            }
+        });
+
+        const total = pageData.data.hotspots.length;
+
+        // Save progress
+        const progressToSave = {
+            score: `${score}/${total}`,
+            answers: userAnswers
+        };
+
+        const levelProgress = this.currentUser.socialStudiesProgress[category][level];
+        levelProgress.pageData[pageIndex] = progressToSave;
+
+        levelProgress.currentTotalScore = (levelProgress.currentTotalScore || 0) + score;
+        levelProgress.currentTotalPossible = (levelProgress.currentTotalPossible || 0) + total;
+
+        this.saveUserData();
+        alert(`Page submitted! Your score: ${score}/${total}`);
+
+        this.checkSocialStudiesLevelCompletion(category, level);
+        this.renderSocialStudiesContent();
+    }
+
+    updateAnswerBankVisuals() {
+        // Step 0: Initialize a map to store how many times each answer is used.
+        const usageCounts = new Map();
+        const answerBoxes = document.querySelectorAll('.pic-match-answer-box, .pic-label-hotspot');
+
+        // Step 1: Count the current usage of all answers on the board.
+        answerBoxes.forEach(box => {
+            const text = box.textContent.trim();
+            if (text !== '?') {
+                usageCounts.set(text, (usageCounts.get(text) || 0) + 1);
+            }
+        });
+
+        // Step 2: Update the answer bank buttons based on the counts.
+        document.querySelectorAll('.answer-bank-btn').forEach(btn => {
+            const answerText = btn.dataset.answerText;
+            const count = usageCounts.get(answerText) || 0;
+
+            if (count > 0) {
+                btn.classList.add('used');
+            } else {
+                btn.classList.remove('used');
+            }
+        });
     }
 
     // --- Match Quiz Implementation ---
@@ -5653,116 +5805,6 @@ Draw 10 guarantees one Epic or Legendary!`;
         perkBox.innerHTML = contentHTML;
         grid.appendChild(perkBox);
     }
-
-    // --- Pic Label Quiz (Image Labeling) Implementation ---
-    renderPicLabelQuiz(container, pageData, savedProgress) {
-        let html = `
-            <div class="match-quiz-description">${pageData.data.description || ''}</div>
-            <div class="pic-label-container">
-                <img src="${pageData.data.image}" alt="Labeling quiz background">`;
-
-        pageData.data.hotspots.forEach(hotspot => {
-            const userAnswer = savedProgress?.answers?.[hotspot.id] || '?';
-            let correctnessClass = '';
-
-            if (savedProgress) {
-                correctnessClass = userAnswer === hotspot.label ? 'correct' : 'wrong';
-            }
-
-            html += `<div class="pic-label-hotspot ${correctnessClass}"
-                          style="left: ${hotspot.coords.x}%; top: ${hotspot.coords.y}%;"
-                          data-hotspot-id="${hotspot.id}">
-                       ${userAnswer}
-                     </div>`;
-        });
-        html += `</div>`;
-
-        // Render the word bank using the same style as pic_match
-        // It's only shown if the quiz is active (not graded)
-        if (!savedProgress) {
-            html += '<div class="pic-match-answer-bank">'; // Re-use class
-            const wordBank = [...pageData.data.wordBank].sort(() => 0.5 - Math.random());
-            wordBank.forEach(answer => {
-                html += `<button class="answer-bank-btn" data-answer-text="${answer}">${answer}</button>`;
-            });
-            html += '</div>';
-        }
-
-        container.innerHTML = html;
-
-        if (!savedProgress) {
-            this.setupPicLabelEvents();
-        }
-    }
-
-    setupPicLabelEvents() {
-        // This is the same selection logic as pic_match
-        document.querySelectorAll('.answer-bank-btn').forEach(btn => {
-            btn.addEventListener('click', e => this.handlePicMatchAnswerSelect(e));
-        });
-
-        // This is the placement logic
-        document.querySelectorAll('.pic-label-hotspot').forEach(hotspot => {
-            hotspot.addEventListener('click', (e) => this.handlePicLabelHotspotClick(e));
-        });
-    }
-
-    handlePicLabelHotspotClick(event) {
-        if (!this.currentSelectedAnswer) return; // Do nothing if no answer is selected
-
-        const clickedHotspot = event.currentTarget;
-        clickedHotspot.textContent = this.currentSelectedAnswer;
-        clickedHotspot.style.color = 'inherit'; // Use themed color
-
-        // Deselect the answer from the bank
-        document.querySelectorAll('.answer-bank-btn').forEach(btn => btn.classList.remove('selected'));
-        this.currentSelectedAnswer = null;
-    }
-
-    submitPicLabelQuiz() {
-        const activeTabButton = document.querySelector('.social-studies-tab-button.active');
-        const category = activeTabButton.dataset.tab;
-        const level = document.getElementById(`${category}-level-select`).value;
-        const pageIndex = this.currentSocialStudiesPage;
-        const pageData = this.socialStudiesContent[category][level].pages[pageIndex];
-
-        const quizHotspots = document.querySelectorAll('.pic-label-hotspot');
-        let score = 0;
-        const userAnswers = {};
-
-        quizHotspots.forEach(hotspotEl => {
-            const hotspotId = hotspotEl.dataset.hotspotId;
-            const userAnswer = hotspotEl.textContent.trim();
-            userAnswers[hotspotId] = userAnswer;
-
-            // Find the correct answer from the original data using the ID
-            const hotspotDef = pageData.data.hotspots.find(h => h.id === hotspotId);
-            if (hotspotDef && userAnswer === hotspotDef.label) {
-                score++;
-            }
-        });
-
-        const total = pageData.data.hotspots.length;
-
-        // Save progress
-        const progressToSave = {
-            score: `${score}/${total}`,
-            answers: userAnswers
-        };
-
-        const levelProgress = this.currentUser.socialStudiesProgress[category][level];
-        levelProgress.pageData[pageIndex] = progressToSave;
-
-        levelProgress.currentTotalScore = (levelProgress.currentTotalScore || 0) + score;
-        levelProgress.currentTotalPossible = (levelProgress.currentTotalPossible || 0) + total;
-
-        this.saveUserData();
-        alert(`Page submitted! Your score: ${score}/${total}`);
-
-        this.checkSocialStudiesLevelCompletion(category, level);
-        this.renderSocialStudiesContent();
-    }
-
 }
 
 const app = new ChineseLearningApp();
