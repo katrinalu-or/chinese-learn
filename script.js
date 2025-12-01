@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.4.8';
+        this.APP_VERSION = '1.4.9';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.4.8';
-        this.LATEST_MINIGAME_VERSION = '1.4.8';
+        this.DEFAULT_WORDS_VERSION = '1.4.9';
+        this.LATEST_MINIGAME_VERSION = '1.4.9';
         this.LEVEL_UP_DIAMOND_BONUS = 2;
 
         // Word Reivew Activity Configuration
@@ -38,7 +38,7 @@ class ChineseLearningApp {
         this.MINI_GAMES_GROUPING_MAX_GROUPS = 3;
         this.MINI_GAMES_GROUPING_MIN_GROUPS = 2;
         this.MINI_GAMES_FORMING_SENTENCE_NUM_SENTENCES = 5;
-        this.MINI_GAMES_SENTENCE_COMPLETION_MIN_WORDS = 8;
+        this.MINI_GAMES_SENTENCE_COMPLETION_MIN_WORDS = 10;
 
         // Gacha probabilities (must add up to 100)
         this.GACHA_PROBABILITIES = {
