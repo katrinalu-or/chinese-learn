@@ -222,6 +222,218 @@
                     }
                 }
             ]
+        },
+        "2": {
+            "title": "家庭關係",
+            "pages": [
+                {
+                    "type": "cover",
+                    "data": {
+                        "cover_image": "social/culture2/cover_family.png",
+                        "description": "Learn Chinese major holidays, their meanings and what people do"
+                    }
+                },
+                {
+                    "type": "pic_label",
+                    "data": {
+                        "image": "social/culture2/family_simple.png",
+                        "description": "Identify relationship in first degree family tree",
+                        "hotspots": [
+                            {
+                                "id": "grandpa1",
+                                "label": "爺爺",
+                                "coords": { "x": 30.2, "y": 20.0 }
+                            },
+                            {
+                                "id": "gradma1",
+                                "label": "奶奶",
+                                "coords": { "x": 39.1, "y": 20.0 }
+                            },
+                            {
+                                "id": "grandpa2",
+                                "label": "阿公",
+                                "coords": { "x": 78.5, "y": 20.0 }
+                            },
+                            {
+                                "id": "gradma2",
+                                "label": "阿嬤",
+                                "coords": { "x": 87.3, "y": 20.0 }
+                            },
+                            {
+                                "id": "aunt1",
+                                "label": "嬸嬸",
+                                "coords": { "x": 2.4, "y": 52.4 }
+                            },
+                            {
+                                "id": "aunt2",
+                                "label": "伯母",
+                                "coords": { "x": 18.7, "y": 52.4 }
+                            },
+                            {
+                                "id": "uncle1",
+                                "label": "姑丈",
+                                "coords": { "x": 35.9, "y": 52.4 }
+                            },
+                            {
+                                "id": "aunt3",
+                                "label": "姑姑",
+                                "coords": { "x": 44.3, "y": 52.4 }
+                            },
+                            {
+                                "id": "aunt4",
+                                "label": "阿姨",
+                                "coords": { "x": 70.2, "y": 52.4 }
+                            },
+                            {
+                                "id": "uncle2",
+                                "label": "姨丈",
+                                "coords": { "x": 79.3, "y": 52.4 }
+                            },
+                            {
+                                "id": "uncle3",
+                                "label": "舅舅",
+                                "coords": { "x": 87.4, "y": 52.4 }
+                            },
+                            {
+                                "id": "aunt5",
+                                "label": "舅媽",
+                                "coords": { "x": 95.9, "y": 52.4 }
+                            },
+                            {
+                                "id": "cousin1",
+                                "label": "堂兄弟姐妹",
+                                "coords": { "x": 6.8, "y": 96.8 }
+                            },
+                            {
+                                "id": "cousin2",
+                                "label": "堂兄弟姐妹",
+                                "coords": { "x": 23.8, "y": 96.8 }
+                            },
+                            {
+                                "id": "cousin3",
+                                "label": "表兄弟姐妹",
+                                "coords": { "x": 40.5, "y": 96.8 }
+                            },
+                            {
+                                "id": "cousin4",
+                                "label": "表兄弟姐妹",
+                                "coords": { "x": 74.7, "y": 96.8 }
+                            },
+                            {
+                                "id": "cousin5",
+                                "label": "表兄弟姐妹",
+                                "coords": { "x": 91.8, "y": 96.8 }
+                            }
+                        ],
+                        "wordBank": [
+                            "爺爺",
+                            "奶奶",
+                            "阿公",
+                            "阿嬤",
+                            "嬸嬸",
+                            "伯母",
+                            "姑丈",
+                            "姑姑",
+                            "阿姨",
+                            "姨丈",
+                            "舅舅",
+                            "舅媽",
+                            "堂兄弟姐妹",
+                            "堂兄弟姐妹",
+                            "表兄弟姐妹",
+                            "表兄弟姐妹",
+                            "表兄弟姐妹"
+                        ]
+                    }
+                },
+                {
+                    "type": "pic_label",
+                    "data": {
+                        "image": "social/culture2/family_younger.png",
+                        "description": "Identify relationship with yours and next generation",
+                        "hotspots": [
+                            {
+                                "id": "inlaw1",
+                                "label": "嫂嫂",
+                                "coords": { "x": 5.9, "y": 52.4 }
+                            },
+                            {
+                                "id": "inlaw2",
+                                "label": "弟媳",
+                                "coords": { "x": 28.3, "y": 52.4 }
+                            },
+                            {
+                                "id": "inlaw3",
+                                "label": "姐夫",
+                                "coords": { "x": 72.4, "y": 52.4 }
+                            },
+                            {
+                                "id": "inlaw4",
+                                "label": "妹夫",
+                                "coords": { "x": 94.1, "y": 52.4 }
+                            },
+                            {
+                                "id": "nephew1",
+                                "label": "姪子姪女",
+                                "coords": { "x": 13.2, "y": 96.8 }
+                            },
+                            {
+                                "id": "nephew2",
+                                "label": "姪子姪女",
+                                "coords": { "x": 34.5, "y": 96.8 }
+                            },
+                            {
+                                "id": "nephew3",
+                                "label": "外甥外甥女",
+                                "coords": { "x": 67.2, "y": 96.8 }
+                            },
+                            {
+                                "id": "nephew4",
+                                "label": "外甥外甥女",
+                                "coords": { "x": 88.9, "y": 96.8 }
+                            }
+                        ],
+                        "wordBank": [
+                            "嫂嫂",
+                            "弟媳",
+                            "姐夫",
+                            "妹夫",
+                            "姪子姪女",
+                            "姪子姪女",
+                            "外甥外甥女",
+                            "外甥外甥女"
+                        ]
+                    }
+                },
+                {
+                    "type": "match",
+                    "data": {
+                        "description": "Determine if they are relatives on dad's side or on mom's side",
+                        "pairs": [
+                            ["爺爺", "爸爸那邊"],
+                            ["伯伯", "爸爸那邊"],
+                            ["堂姐", "爸爸那邊"],
+                            ["舅媽", "媽媽那邊"],
+                            ["姑姑", "爸爸那邊"],
+                            ["姨丈", "媽媽那邊"]
+                        ]
+                    }
+                },
+                {
+                    "type": "match",
+                    "data": {
+                        "description": "Solve these puzzles",
+                        "pairs": [
+                            ["爸爸的媽媽的老公", "爺爺"],
+                            ["媽媽的爸爸的堂妹", "姑婆"],
+                            ["舅媽的老公的女兒", "表妹"],
+                            ["媽媽的姊姊的老公", "姨丈"],
+                            ["姊姊的姑姑的兒子", "表弟"],
+                            ["爺爺的兒子的姑丈", "姑丈"]
+                        ]
+                    }
+                }
+            ]
         }
     },
     "geography": {
@@ -552,7 +764,7 @@
                             ["西藏", "布達拉宮 Potala"],
                             ["西藏", "珠穆朗瑪峰 Qomolangma"],
                             ["北京", "萬里長城 The Great Wall"],
-                            ["北京", "故宮 Forbidden Forest"],
+                            ["北京", "故宮 Forbidden City"],
                             ["陝西", "兵馬俑 Qin Terracotta Army"],
                             ["山東", "孔子 Confucius"],
                             ["青海", "駱駝 camal"],

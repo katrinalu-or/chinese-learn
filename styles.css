@@ -2234,8 +2234,8 @@ body.no-scroll {
 /* Pic Label Quiz Styles */
 .pic-label-container {
     position: relative;
+    /* max-width is defined in renderPicLabelQuiz */
     width: 100%;
-    max-width: 530px;
     margin: 20px auto;
     user-select: none;
 }

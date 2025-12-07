@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.4.9';
+        this.APP_VERSION = '1.4.10';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.4.9';
-        this.LATEST_MINIGAME_VERSION = '1.4.9';
+        this.DEFAULT_WORDS_VERSION = '1.4.10';
+        this.LATEST_MINIGAME_VERSION = '1.4.10';
         this.LEVEL_UP_DIAMOND_BONUS = 2;
 
         // Word Reivew Activity Configuration
@@ -4855,6 +4855,25 @@ Draw 10 guarantees one Epic or Legendary!`;
         }
 
         container.innerHTML = html;
+
+        // --- Define max-width based on image aspect ratio ---
+        const quizContainer = container.querySelector('.pic-label-container');
+        const image = quizContainer?.querySelector('img');
+
+        if (image) {
+            const applyStyle = () => {
+                const isPortrait = image.naturalHeight > image.naturalWidth - 200;
+                quizContainer.style.maxWidth = isPortrait ? '530px' : '1000px';
+            };
+
+            // Handle images that are already loaded/cached
+            if (image.complete) {
+                applyStyle();
+            } else {
+                // Wait for the image to load before checking its dimensions
+                image.onload = applyStyle;
+            }
+        }
 
         if (!savedProgress) {
             this.setupPicLabelEvents();
