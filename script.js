@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.4.10';
+        this.APP_VERSION = '1.4.11';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.4.10';
-        this.LATEST_MINIGAME_VERSION = '1.4.10';
+        this.DEFAULT_WORDS_VERSION = '1.4.11';
+        this.LATEST_MINIGAME_VERSION = '1.4.11';
         this.LEVEL_UP_DIAMOND_BONUS = 2;
 
         // Word Reivew Activity Configuration
