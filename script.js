@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.5.0';
+        this.APP_VERSION = '1.5.1';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.5.0';
-        this.LATEST_MINIGAME_VERSION = '1.5.0';
+        this.DEFAULT_WORDS_VERSION = '1.5.1';
+        this.LATEST_MINIGAME_VERSION = '1.5.1';
         this.LEVEL_UP_DIAMOND_BONUS = 2;
 
         // Word Reivew Activity Configuration
@@ -118,10 +118,10 @@ class ChineseLearningApp {
             { id: 'harry', name: 'Harry', rarity: 'Epic', image: 'harrypotter/harry.jpg' },
             { id: 'ron', name: 'Ron', rarity: 'Epic', image: 'harrypotter/ron.jpg' },
             { id: 'dumbledore', name: 'Dumbledore', rarity: 'Epic', image: 'harrypotter/dumbledore.jpg' },
-            { id: 'snape', name: 'Snape', rarity: 'Rare', image: 'harrypotter/snape.jpg' },
-            { id: 'bellatrix', name: 'Bellatrix', rarity: 'Rare', image: 'harrypotter/bellatrix.jpg' },
-            { id: 'black', name: 'Black', rarity: 'Rare', image: 'harrypotter/black.jpg' },
-            { id: 'mcGonagall', name: 'mcGonagall', rarity: 'Rare', image: 'harrypotter/mcGonagall.jpg' },
+            { id: 'snape', name: 'Severus Snape', rarity: 'Rare', image: 'harrypotter/snape.jpg' },
+            { id: 'bellatrix', name: 'Bellatrix Lestrange', rarity: 'Rare', image: 'harrypotter/bellatrix.jpg' },
+            { id: 'black', name: 'Sirius Black', rarity: 'Rare', image: 'harrypotter/black.jpg' },
+            { id: 'mcGonagall', name: 'Professor McGonagall', rarity: 'Rare', image: 'harrypotter/mcGonagall.jpg' },
             { id: 'ginny', name: 'Ginny', rarity: 'Common', image: 'harrypotter/ginny.jpg' },
             { id: 'draco', name: 'Draco Malfoy', rarity: 'Common', image: 'harrypotter/draco.jpg' },
             { id: 'luna', name: 'Luna Lovegood', rarity: 'Common', image: 'harrypotter/luna.jpg' },
@@ -5542,7 +5542,7 @@ Draw 10 guarantees one Epic or Legendary!`;
                 maxLevel: 1,
                 cost: () => 200,
                 levels: [
-                    { description: 'Unlock it for Kpop Demon Hunter collection. Will reset in next collection', effects: [] }
+                    { description: 'Unlock it for Harry Potter collection. Will reset in next collection', effects: [] }
                 ],
                 implemented: true,
                 getBenefitDescription(currentLevel) {
@@ -5555,7 +5555,7 @@ Draw 10 guarantees one Epic or Legendary!`;
                 maxLevel: 1,
                 cost: () => 200,
                 levels: [
-                    { description: 'Unlock it for Kpop Demon Hunter collection. Will reset in next collection', effects: [] }
+                    { description: 'Unlock it for Harry Potter collection. Will reset in next collection', effects: [] }
                 ],
                 implemented: true,
                 getBenefitDescription(currentLevel) {
