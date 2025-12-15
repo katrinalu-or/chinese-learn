@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.4.11';
+        this.APP_VERSION = '1.5.0';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.4.11';
-        this.LATEST_MINIGAME_VERSION = '1.4.11';
+        this.DEFAULT_WORDS_VERSION = '1.5.0';
+        this.LATEST_MINIGAME_VERSION = '1.5.0';
         this.LEVEL_UP_DIAMOND_BONUS = 2;
 
         // Word Reivew Activity Configuration
@@ -71,15 +71,15 @@ class ChineseLearningApp {
             diamond_10: 50
         };
 
-        this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE = 15; // 15% chance for Legendary on a guaranteed pull
+        this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE = 20; // Temporary change 15% to 20% in Harry Potter collection
         this.DRAW_TEN_DIAMOND_REWARD_AMOUNT = 10;
         this.DRAW_TEN_COST = 10;
 
         this.isExchangeMode = false;
         this.exchangeSelection = {}; // { id: count }
 
-        this.currentGachaPool = 'kpop';
-        this.archivedGachaPools = ['villains', 'greek'];
+        this.currentGachaPool = 'harrypotter';
+        this.archivedGachaPools = ['kpop', 'villains', 'greek'];
         this.currentArchiveIndex = 0;
         this.gachaPool = this.defineGachaPool();
 
@@ -111,8 +111,27 @@ class ChineseLearningApp {
     }
 
     defineGachaPool() {
-        // Current active pool - Kpop Demon Hunters
-        const kpopPool = [
+        // Current active pool - Harry Potter
+        return [
+            { id: 'voldemort', name: 'Voldemort', rarity: 'Legendary', image: 'harrypotter/voldemort.jpg' },
+            { id: 'hermione', name: 'Hermione', rarity: 'Legendary', image: 'harrypotter/hermione.jpg' },
+            { id: 'harry', name: 'Harry', rarity: 'Epic', image: 'harrypotter/harry.jpg' },
+            { id: 'ron', name: 'Ron', rarity: 'Epic', image: 'harrypotter/ron.jpg' },
+            { id: 'dumbledore', name: 'Dumbledore', rarity: 'Epic', image: 'harrypotter/dumbledore.jpg' },
+            { id: 'snape', name: 'Snape', rarity: 'Rare', image: 'harrypotter/snape.jpg' },
+            { id: 'bellatrix', name: 'Bellatrix', rarity: 'Rare', image: 'harrypotter/bellatrix.jpg' },
+            { id: 'black', name: 'Black', rarity: 'Rare', image: 'harrypotter/black.jpg' },
+            { id: 'mcGonagall', name: 'mcGonagall', rarity: 'Rare', image: 'harrypotter/mcGonagall.jpg' },
+            { id: 'ginny', name: 'Ginny', rarity: 'Common', image: 'harrypotter/ginny.jpg' },
+            { id: 'draco', name: 'Draco Malfoy', rarity: 'Common', image: 'harrypotter/draco.jpg' },
+            { id: 'luna', name: 'Luna Lovegood', rarity: 'Common', image: 'harrypotter/luna.jpg' },
+            { id: 'hagrid', name: 'Hagrid', rarity: 'Common', image: 'harrypotter/hagrid.jpg' },
+            { id: 'dobby', name: 'Dobby', rarity: 'Common', image: 'harrypotter/dobby.jpg' }
+        ];
+    }
+
+    getKpopPool() {
+        return [
             { id: 'birthday', name: 'Birthday', rarity: 'Free', image: 'kpopdemon/birthday.jpg' },
             { id: 'rumi', name: 'Rumi', rarity: 'Legendary', image: 'kpopdemon/rumi.jpg' },
             { id: 'jinu', name: 'Jinu', rarity: 'Legendary', image: 'kpopdemon/jinu.jpg' },
@@ -128,7 +147,6 @@ class ChineseLearningApp {
             { id: 'demons', name: 'Demons', rarity: 'Common', image: 'kpopdemon/demons.png' },
             { id: 'weapons', name: 'Weapons', rarity: 'Common', image: 'kpopdemon/weapons.jpg' }
         ];
-        return kpopPool;
     }
 
     getVillainsPool() {
@@ -173,6 +191,7 @@ class ChineseLearningApp {
             case 'greek': return { title: 'Greek Gods Collection', subtitle: 'Event: Sep 14 ~ Oct 15 2025' };
             case 'villains': return { title: 'Disney Villains Collection', subtitle: 'Event: Oct 16 ~ Nov 16 2025' };
             case 'kpop': return { title: 'K-pop Demon Hunters', subtitle: 'Event: Nov 17 ~ Dec 14 2025' };
+            case 'harrypotter': return { title: 'Harry Potter Collection', subtitle: 'Event: Dec 15 2025 ~ Jan 31 2026' };
             default: return { title: 'Unknown Collection', subtitle: '(Archived)' };
         }
     }
@@ -181,7 +200,8 @@ class ChineseLearningApp {
         switch (poolName) {
             case 'villains': return this.getVillainsPool();
             case 'greek': return this.getGreekGodsPool();
-            case 'kpop': return this.defineGachaPool(); // Current pool
+            case 'kpop': return this.getKpopPool();
+            case 'harrypotter': return this.defineGachaPool(); // Current pool
             default: return [];
         }
     }
@@ -2170,51 +2190,32 @@ Draw 10 guarantees one Epic or Legendary!`;
     }
 
     migrateCollectionData() {
-        // Handle backward compatibility for existing users who have an array
-        if (Array.isArray(this.currentUser.collection)) {
-            const newCollection = {};
-            this.currentUser.collection.forEach(id => {
-                newCollection[id] = (newCollection[id] || 0) + 1;
-            });
-            this.currentUser.collection = newCollection;
-        }
-
-        // Initialize the main pool container if it doesn't exist
+        // This is the one-time migration for users who have a 'collection' object
+        // but have not yet been migrated to the 'collectionsByPool' structure.
         if (!this.currentUser.collectionsByPool) {
+            // 1. Create the new parent object.
             this.currentUser.collectionsByPool = {
+                harrypotter: {},
                 kpop: {},
                 villains: {},
                 greek: {}
             };
-
-            // This block handles the OLDEST users (pre-pools) and migrates them
-            const originalCollection = this.currentUser.collection || {};
-
-            // Handle the specific 'hades' name collision
-            if (originalCollection['hades']) {
-                this.currentUser.collectionsByPool.greek['hades_greek'] = originalCollection['hades'];
-                delete originalCollection['hades'];
-            }
-
-            // Distribute items from the old flat collection into the correct pools
-            const greekIds = this.getGreekGodsPool().map(item => item.id);
-            const villainIds = this.getVillainsPool().map(item => item.id);
-
-            Object.keys(originalCollection).forEach(itemId => {
-                const itemCount = originalCollection[itemId];
-                if (greekIds.includes(itemId)) {
-                    this.currentUser.collectionsByPool.greek[itemId] = itemCount;
-                } else if (villainIds.includes(itemId)) {
-                    // This handles users from the villains era who haven't been migrated yet
-                    this.currentUser.collectionsByPool.villains[itemId] = itemCount;
-                }
-            });
+            // 2. Directly move the old collection object into the kpop pool.
+            this.currentUser.collectionsByPool.kpop = this.currentUser.collection || {};
         }
 
-        // Ensure all modern pools exist for any returning user ---
-        // This is a safety net for users from the Villains era.
+        // --- Safety net for ensuring all modern pools exist for any returning user ---
         if (!this.currentUser.collectionsByPool.kpop) {
             this.currentUser.collectionsByPool.kpop = {};
+        }
+        if (!this.currentUser.collectionsByPool.harrypotter) {
+            this.currentUser.collectionsByPool.harrypotter = {};
+        }
+        if (!this.currentUser.collectionsByPool.villains) { // Added for completeness
+            this.currentUser.collectionsByPool.villains = {};
+        }
+        if (!this.currentUser.collectionsByPool.greek) { // Added for completeness
+            this.currentUser.collectionsByPool.greek = {};
         }
 
         // ALWAYS point the active collection to the current pool defined in the constructor
