@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.5.2';
+        this.APP_VERSION = '1.5.3';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.5.2';
-        this.LATEST_MINIGAME_VERSION = '1.5.2';
+        this.DEFAULT_WORDS_VERSION = '1.5.3';
+        this.LATEST_MINIGAME_VERSION = '1.5.3';
         this.LEVEL_UP_DIAMOND_BONUS = 2;
 
         // Word Reivew Activity Configuration
@@ -28,7 +28,7 @@ class ChineseLearningApp {
         this.SENTENCE_WORDS_PER_SESSION = 15;
 
         // Mini Game Configuration
-        this.MINI_GAME_ENABLED_LEVELS = [5, 7, 8, 10, 11, 13, 14, 16, 18];
+        this.MINI_GAME_ENABLED_LEVELS = [5, 7, 8, 10, 11, 13, 14, 16, 18, 20];
         this.MINI_GAMES_PER_LEVEL = 8;
         this.MINI_GAMES_LEVEL_RANGE = 7;
         this.MINI_GAMES_PAIRING_MAX_PAIRS = 10;
@@ -78,8 +78,8 @@ class ChineseLearningApp {
         this.isExchangeMode = false;
         this.exchangeSelection = {}; // { id: count }
 
-        this.currentGachaPool = 'harrypotter';
-        this.archivedGachaPools = ['kpop', 'villains', 'greek'];
+        this.currentGachaPool = 'taylorswift';
+        this.archivedGachaPools = ['harrypotter', 'kpop', 'villains', 'greek'];
         this.currentArchiveIndex = 0;
         this.gachaPool = this.defineGachaPool();
 
@@ -112,6 +112,23 @@ class ChineseLearningApp {
 
     defineGachaPool() {
         // Current active pool - Harry Potter
+        return [
+            { id: 'folklore', name: 'Folklore Era', rarity: 'Legendary', image: 'taylorswift/folklore.png' },
+            { id: '1989', name: '1989 Era', rarity: 'Legendary', image: 'taylorswift/1989.png' },
+            { id: 'midnights', name: 'Midnights Era', rarity: 'Epic', image: 'taylorswift/midnights.png' },
+            { id: 'fearless', name: 'Fearless Era', rarity: 'Epic', image: 'taylorswift/fearless.png' },
+            { id: 'red', name: 'Red Era', rarity: 'Epic', image: 'taylorswift/red.png' },
+            { id: 'reputation', name: 'Reputation Era', rarity: 'Rare', image: 'taylorswift/reputation.png' },
+            { id: 'lover', name: 'Lover Era', rarity: 'Rare', image: 'taylorswift/lover.png' },
+            { id: 'ttpd', name: 'TTPD Era', rarity: 'Rare', image: 'taylorswift/ttpd.png' },
+            { id: 'speaknow', name: 'Speak Now Era', rarity: 'Common', image: 'taylorswift/speaknow.png' },
+            { id: 'debut', name: 'Debut Era', rarity: 'Common', image: 'taylorswift/debut.png' },
+            { id: 'evermore', name: 'Evermore Era', rarity: 'Common', image: 'taylorswift/evermore.png' },
+            { id: 'showgirl', name: 'The Life of a Showgirl Era', rarity: 'Common', image: 'taylorswift/showgirl.png' },
+        ];
+    }
+
+    getHarryPotterPool() {
         return [
             { id: 'voldemort', name: 'Voldemort', rarity: 'Legendary', image: 'harrypotter/voldemort.jpg' },
             { id: 'hermione', name: 'Hermione', rarity: 'Legendary', image: 'harrypotter/hermione.jpg' },
@@ -192,6 +209,7 @@ class ChineseLearningApp {
             case 'villains': return { title: 'Disney Villains Collection', subtitle: 'Event: Oct 16 ~ Nov 16 2025' };
             case 'kpop': return { title: 'K-pop Demon Hunters', subtitle: 'Event: Nov 17 ~ Dec 14 2025' };
             case 'harrypotter': return { title: 'Harry Potter Collection', subtitle: 'Event: Dec 15 2025 ~ Jan 31 2026' };
+            case 'taylorswift': return { title: 'Taylor Swift Eras Collection', subtitle: 'Event: Feb 01 2026 ~ Feb 28 2026' };
             default: return { title: 'Unknown Collection', subtitle: '(Archived)' };
         }
     }
@@ -201,7 +219,8 @@ class ChineseLearningApp {
             case 'villains': return this.getVillainsPool();
             case 'greek': return this.getGreekGodsPool();
             case 'kpop': return this.getKpopPool();
-            case 'harrypotter': return this.defineGachaPool(); // Current pool
+            case 'harrypotter': return this.getHarryPotterPool();
+            case 'taylorswift': return this.defineGachaPool(); // Current pool
             default: return [];
         }
     }
@@ -2195,26 +2214,30 @@ Draw 10 guarantees one Epic or Legendary!`;
         if (!this.currentUser.collectionsByPool) {
             // 1. Create the new parent object.
             this.currentUser.collectionsByPool = {
+                taylorswift: {},
                 harrypotter: {},
                 kpop: {},
                 villains: {},
                 greek: {}
             };
             // 2. Directly move the old collection object into the kpop pool.
-            this.currentUser.collectionsByPool.kpop = this.currentUser.collection || {};
+            this.currentUser.collectionsByPool.harrypotter = this.currentUser.collection || {};
         }
 
         // --- Safety net for ensuring all modern pools exist for any returning user ---
-        if (!this.currentUser.collectionsByPool.kpop) {
-            this.currentUser.collectionsByPool.kpop = {};
+        if (!this.currentUser.collectionsByPool.taylorswift) {
+            this.currentUser.collectionsByPool.taylorswift = {};
         }
         if (!this.currentUser.collectionsByPool.harrypotter) {
             this.currentUser.collectionsByPool.harrypotter = {};
         }
-        if (!this.currentUser.collectionsByPool.villains) { // Added for completeness
+        if (!this.currentUser.collectionsByPool.kpop) {
+            this.currentUser.collectionsByPool.kpop = {};
+        }
+        if (!this.currentUser.collectionsByPool.villains) {
             this.currentUser.collectionsByPool.villains = {};
         }
-        if (!this.currentUser.collectionsByPool.greek) { // Added for completeness
+        if (!this.currentUser.collectionsByPool.greek) {
             this.currentUser.collectionsByPool.greek = {};
         }
 
