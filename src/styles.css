@@ -3306,7 +3306,7 @@ input:checked + .slider:before {
 .collection-item.Legendary { border-color: #F5A623; }
 
 
-/* REMOVE LATER - Birthday item */
+/* Birthday item */
 #collections-screen .collection-grid .collection-item.Free {
     border: 1px transparent var(--c-text-placeholder);
     box-shadow: 0 8px 15px var(--c-bg-box-shadow);

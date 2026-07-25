@@ -5,10 +5,10 @@ class ChineseLearningApp {
         this.calendar = null;
 
         // --- GLOBAL CONFIGURATION VARIABLES ---
-        this.APP_VERSION = '1.5.3';
+        this.APP_VERSION = '1.6.0';
         this.MAX_LEVEL = 22;
-        this.DEFAULT_WORDS_VERSION = '1.5.3';
-        this.LATEST_MINIGAME_VERSION = '1.5.3';
+        this.DEFAULT_WORDS_VERSION = '1.6.0';
+        this.LATEST_MINIGAME_VERSION = '1.6.0';
         this.LEVEL_UP_DIAMOND_BONUS = 2;
 
         // Word Reivew Activity Configuration
@@ -71,15 +71,15 @@ class ChineseLearningApp {
             diamond_10: 50
         };
 
-        this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE = 20; // Temporary change 15% to 20% in Harry Potter collection
+        this.DRAW_TEN_GUARANTEE_LEGENDARY_CHANCE = 15;
         this.DRAW_TEN_DIAMOND_REWARD_AMOUNT = 10;
         this.DRAW_TEN_COST = 10;
 
         this.isExchangeMode = false;
         this.exchangeSelection = {}; // { id: count }
 
-        this.currentGachaPool = 'taylorswift';
-        this.archivedGachaPools = ['harrypotter', 'kpop', 'villains', 'greek'];
+        this.currentGachaPool = 'marvels';
+        this.archivedGachaPools = ['taylorswift', 'harrypotter', 'kpop', 'villains', 'greek'];
         this.currentArchiveIndex = 0;
         this.gachaPool = this.defineGachaPool();
 
@@ -111,20 +111,39 @@ class ChineseLearningApp {
     }
 
     defineGachaPool() {
-        // Current active pool - Harry Potter
+        // Current active pool
         return [
-            { id: 'folklore', name: 'Folklore Era', rarity: 'Legendary', image: 'taylorswift/folklore.png' },
-            { id: '1989', name: '1989 Era', rarity: 'Legendary', image: 'taylorswift/1989.png' },
-            { id: 'midnights', name: 'Midnights Era', rarity: 'Epic', image: 'taylorswift/midnights.png' },
-            { id: 'fearless', name: 'Fearless Era', rarity: 'Epic', image: 'taylorswift/fearless.png' },
-            { id: 'red', name: 'Red Era', rarity: 'Epic', image: 'taylorswift/red.png' },
-            { id: 'reputation', name: 'Reputation Era', rarity: 'Rare', image: 'taylorswift/reputation.png' },
-            { id: 'lover', name: 'Lover Era', rarity: 'Rare', image: 'taylorswift/lover.png' },
-            { id: 'ttpd', name: 'TTPD Era', rarity: 'Rare', image: 'taylorswift/ttpd.png' },
-            { id: 'speaknow', name: 'Speak Now Era', rarity: 'Common', image: 'taylorswift/speaknow.png' },
-            { id: 'debut', name: 'Debut Era', rarity: 'Common', image: 'taylorswift/debut.png' },
-            { id: 'evermore', name: 'Evermore Era', rarity: 'Common', image: 'taylorswift/evermore.png' },
-            { id: 'showgirl', name: 'The Life of a Showgirl Era', rarity: 'Common', image: 'taylorswift/showgirl.png' },
+            { id: 'birthday', name: 'Birthday', rarity: 'Free', image: 'marvels/birthday.png' },
+            { id: 'ironman', name: 'Iron Man', rarity: 'Legendary', image: 'marvels/ironman.jpg' },
+            { id: 'thor', name: 'Thor', rarity: 'Legendary', image: 'marvels/thor.jpg' },
+            { id: 'captainamerica', name: 'Captain America', rarity: 'Legendary', image: 'marvels/cap.jpg' },
+            { id: 'blackwidow', name: 'Black Widow', rarity: 'Epic', image: 'marvels/blackwidow.jpg' },
+            { id: 'hulk', name: 'Hulk', rarity: 'Epic', image: 'marvels/hulk.jpg' },
+            { id: 'hawkeye', name: 'Hawkeye', rarity: 'Epic', image: 'marvels/hawkeye.jpg' },
+            { id: 'spiderman', name: 'Spider Man', rarity: 'Rare', image: 'marvels/spiderman.jpg' },
+            { id: 'strange', name: 'Strange', rarity: 'Rare', image: 'marvels/strange.jpg' },
+            { id: 'wanda', name: 'wanda', rarity: 'Common', image: 'marvels/wanda.jpg' },
+            { id: 'blackpanther', name: 'Black Panther', rarity: 'Common', image: 'marvels/blackpanther.jpg' },
+            { id: 'vision', name: 'vision', rarity: 'Common', image: 'marvels/vision.jpg' },
+            { id: 'falcon', name: 'Falcon', rarity: 'Common', image: 'marvels/falcon.jpg' },
+            { id: 'antman', name: 'Antman', rarity: 'Common', image: 'marvels/antman.jpg' },
+        ];
+    }
+
+    getTaylorSwiftPool() {
+        return [
+                { id: 'folklore', name: 'Folklore Era', rarity: 'Legendary', image: 'taylorswift/folklore.png' },
+                { id: '1989', name: '1989 Era', rarity: 'Legendary', image: 'taylorswift/1989.png' },
+                { id: 'midnights', name: 'Midnights Era', rarity: 'Epic', image: 'taylorswift/midnights.png' },
+                { id: 'fearless', name: 'Fearless Era', rarity: 'Epic', image: 'taylorswift/fearless.png' },
+                { id: 'red', name: 'Red Era', rarity: 'Epic', image: 'taylorswift/red.png' },
+                { id: 'reputation', name: 'Reputation Era', rarity: 'Rare', image: 'taylorswift/reputation.png' },
+                { id: 'lover', name: 'Lover Era', rarity: 'Rare', image: 'taylorswift/lover.png' },
+                { id: 'ttpd', name: 'TTPD Era', rarity: 'Rare', image: 'taylorswift/ttpd.png' },
+                { id: 'speaknow', name: 'Speak Now Era', rarity: 'Common', image: 'taylorswift/speaknow.png' },
+                { id: 'debut', name: 'Debut Era', rarity: 'Common', image: 'taylorswift/debut.png' },
+                { id: 'evermore', name: 'Evermore Era', rarity: 'Common', image: 'taylorswift/evermore.png' },
+                { id: 'showgirl', name: 'The Life of a Showgirl Era', rarity: 'Common', image: 'taylorswift/showgirl.png' }
         ];
     }
 
@@ -209,7 +228,8 @@ class ChineseLearningApp {
             case 'villains': return { title: 'Disney Villains Collection', subtitle: 'Event: Oct 16 ~ Nov 16 2025' };
             case 'kpop': return { title: 'K-pop Demon Hunters', subtitle: 'Event: Nov 17 ~ Dec 14 2025' };
             case 'harrypotter': return { title: 'Harry Potter Collection', subtitle: 'Event: Dec 15 2025 ~ Jan 31 2026' };
-            case 'taylorswift': return { title: 'Taylor Swift Eras Collection', subtitle: 'Event: Feb 01 2026 ~ Feb 28 2026' };
+            case 'taylorswift': return { title: 'Taylor Swift Eras Collection', subtitle: 'Event: Feb 01 2026 ~ July 22 2026' };
+            case 'marvels': return { title: 'Marvel Heroes Collection', subtitle: 'Event: July 23 2026 ~ Aug 31 2026' };
             default: return { title: 'Unknown Collection', subtitle: '(Archived)' };
         }
     }
@@ -220,7 +240,8 @@ class ChineseLearningApp {
             case 'greek': return this.getGreekGodsPool();
             case 'kpop': return this.getKpopPool();
             case 'harrypotter': return this.getHarryPotterPool();
-            case 'taylorswift': return this.defineGachaPool(); // Current pool
+            case 'taylorswift': return this.getTaylorSwiftPool();
+            case 'marvels': return this.defineGachaPool(); // Current pool
             default: return [];
         }
     }
@@ -1909,7 +1930,7 @@ class ChineseLearningApp {
                     // If not owned, show the promotional text.
                     itemDiv.innerHTML = `
                         <div class="free-item-promo-text">
-                            Draw 10 before<br>end of Nov 17, 2025<br>to get it for FREE!
+                            Draw 10 before<br>end of Aug 15, 2026<br>to get it for FREE!
                         </div>
                     `;
                 }
@@ -2093,7 +2114,7 @@ class ChineseLearningApp {
         // If it falls into "nothing", bonusReward remains null.
 
         // REMOVE LATER - birthday item
-        const freebieDeadline = new Date('2025-11-18T00:00:00');
+        const freebieDeadline = new Date('2026-08-16T00:00:00');
         if (new Date() < freebieDeadline && !this.currentUser.collection['birthday']) {
             this.currentUser.collection['birthday'] = 1;
             const birthdayItem = this.gachaPool.find(item => item.id === 'birthday');
@@ -2138,7 +2159,7 @@ class ChineseLearningApp {
                 const itemData = items[index];
                 // Add classes to trigger the reveal and rarity flash animation
                 itemEl.classList.add('is-revealed', `${itemData.rarity}-reveal`);
-            }, index * 800 + 350); // Slower reveal: 350ms delay between each item
+            }, index * 500 + 250); // Slower reveal: 350ms delay between each item
         });
 
         // --- Add Bonus Reward Display ---
@@ -2214,6 +2235,7 @@ Draw 10 guarantees one Epic or Legendary!`;
         if (!this.currentUser.collectionsByPool) {
             // 1. Create the new parent object.
             this.currentUser.collectionsByPool = {
+                marvels: {},
                 taylorswift: {},
                 harrypotter: {},
                 kpop: {},
@@ -2225,6 +2247,9 @@ Draw 10 guarantees one Epic or Legendary!`;
         }
 
         // --- Safety net for ensuring all modern pools exist for any returning user ---
+        if (!this.currentUser.collectionsByPool.marvels) {
+            this.currentUser.collectionsByPool.marvels = {};
+        }
         if (!this.currentUser.collectionsByPool.taylorswift) {
             this.currentUser.collectionsByPool.taylorswift = {};
         }
